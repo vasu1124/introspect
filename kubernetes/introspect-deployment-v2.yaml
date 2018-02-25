@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: introspect-v2
+  labels:
+    app: introspect
+    version: v2
+    visualize: "true"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: introspect
+        version: v2
+        visualize: "true"
+    spec:
+      containers:
+      - image: vasu1124/goalpine:v2.0
+    #    imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
+        name: introspect
+        resources:
+          requests:
+            cpu: 500m
+          limits:
+            cpu: 1000m
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthzr
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 1
+          failureThreshold: 2
+        volumeMounts:
+        - mountPath: /etc/secret
+          name: secret-volume
+          readOnly: true
+        - mountPath: /etc/config
+          name: config-volume
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: mongodb-secret
+      - name: config-volume
+        configMap:
+          name: introspect-config

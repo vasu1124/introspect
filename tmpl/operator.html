@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://unpkg.com/vuetify@0.16.9/dist/vuetify.min.css">
+<link rel="stylesheet" href="css/switch.css">
+</head>
+<body>
+
+
+<div id="app">
+  <v-app class="grey darken-4">
+    <main>
+      <v-container fluid grid-list-xl>
+        <v-layout row wrap>
+            <v-flex xs12>
+              <v-btn v-if="onConnectEnable" v-on:click="onConnect">connect with server</v-btn>
+            </v-flex>
+        </v-layout>
+        <v-layout row wrap>
+          <v-flex xs3 v-for="item in itemList" :key="item.metadata.uid">
+            <v-card raised color="blue-grey darken-2" class="text-xs-center">
+              <v-card-title primary-title style="height: 80px;">
+                <div class="title grey--text text--lighten-2">{{"{{item.metadata.name}}"}}</div>
+               </v-card-title>
+              <v-container class="grey--text text--darken-2">
+                <v-layout row wrap>
+                    <v-flex xs12 class="blue-grey darken-3">
+                    <useless-switch prefix="rs" :id="item.metadata.uid" :state.sync="item.status.state"></useless-switch>
+                  </v-flex>
+                </v-layout>
+              </v-container>
+                <v-alert color="success" :value="item.spec.desiredstate == item.status.state">
+                  Everthing is under control
+                </v-alert>
+                <v-alert color="error" :value="item.spec.desiredstate != item.status.state">
+                  Houston, we have a problem
+                </v-alert>
+            </v-card>
+          </v-flex>
+        </v-layout>
+      </v-container>
+    </main>
+  </v-app>
+</div>
+
+
+
+<script src="https://unpkg.com/vue@2.5.3/dist/vue.js"></script>
+<script src="https://unpkg.com/vuetify@0.16.9/dist/vuetify.js"></script>
+<script>
+Vue.component('useless-switch', {
+  props: ['prefix', 'id', 'state'],
+  computed: {
+    checked: {
+      get() {
+          return this.state
+        },
+        set(value) {
+          this.$emit('update:state', value)
+        }
+    },
+    _id() {
+      return this.prefix + '-' + this.id
+    }
+  },
+  template: `
+<span class="switch">
+  <span class="switch-border1">
+		<span class="switch-border2">
+			<input :id="_id" type="checkbox" v-model="checked">
+			<label :for="_id"></label>
+			<span class="switch-top"></span>
+			<span class="switch-shadow"></span>
+			<span class="switch-handle"></span>
+			<span class="switch-handle-left"></span>
+			<span class="switch-handle-right"></span>
+			<span class="switch-handle-top"></span>
+			<span class="switch-handle-bottom"></span>
+			<span class="switch-handle-base"></span>
+			<span class="switch-led switch-led-green">
+				<span class="switch-led-border">
+					<span class="switch-led-light">
+						<span class="switch-led-glow"></span>
+					</span>
+				</span>
+			</span>
+			<span class="switch-led switch-led-red">
+				<span class="switch-led-border">
+					<span class="switch-led-light">
+						<span class="switch-led-glow"></span>
+					</span>
+				</span>
+			</span>
+		</span>
+	</span>
+</span>`
+})
+
+let ws
+
+const app = new Vue({
+  el: '#app',
+  data: {
+    onConnectEnable: true,
+    delay: 2000,
+    itemList: []
+  },
+  mounted () {
+    this.updateState()
+  },
+  watch: {
+    itemList: {
+      handler () {
+      	this.updateState()
+      },
+      deep: true
+    }
+  },
+  methods: {
+    onConnect () {
+      if (ws) {
+        return false
+      }
+      let wsurl = window.location.origin
+      wsurl = wsurl.replace(/^http/, 'ws')
+      ws = new WebSocket(wsurl + "/operatorws");
+      ws.onopen = evt => {
+        console.log("OPEN")
+        ws.send(JSON.stringify({
+          kind: "GET_ITEMS"
+        }))
+        this.onConnectEnable = false
+      }
+      ws.onclose = evt => {
+        console.log("CLOSE")
+        ws = null
+        this.onConnectEnable = true
+      }
+      ws.onmessage = evt => {
+        // console.log("RESPONSE: " + evt.data);
+        try {
+          const message = JSON.parse(evt.data)
+          const kind = message.kind
+          switch (kind) {
+            case "UselessList":
+              this.itemList = message.items
+              break
+          }
+        }
+        catch (err)
+        {
+          // ignore!
+          // console.error(err)
+        }
+      }
+      ws.onerror = evt => {
+        console.log("ERROR: " + evt.data);
+      }
+    },
+  	updateItemState (item) {
+  		setTimeout(() => {
+      	item.status.state = item.spec.desiredstate
+      }, this.delay)
+  	},
+    updateState () {
+      let UselessList = {
+        kind: "CHANGED_ITEMS",
+        items: this.itemList
+       }
+      if (ws) {
+        ws.send(JSON.stringify(UselessList))
+      }
+//      console.log(UselessList)
+//      this.itemList
+//        .filter(item => item.status.state !== item.spec.desiredstate)
+//        .forEach(item => this.updateItemState(item))
+    }
+  }
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <style>
+      {{if eq .Version "v1.0" }}
+      body { background-color: #F0FFF0; }
+      {{end}}
+      {{if eq .Version "v2.0" }}
+      body { background-color: #F0F0FF; }
+      {{end}}
+      </style>
+  </head>
+  <div class="container">
+  <body>
+  <h1>Introspection-{{.Version}}: Hits {{.Counter}}</h1>
+
+  <h3>Server</h3>
+  <table class="table table-striped">
+    {{range $key, $value := .Server}}
+    <tr>
+      <td>{{$key}}</td><td>{{$value}}</td>
+    </tr>{{end}}
+  </table>
+
+  <h3>OS</h3>
+  <table class="table table-striped">
+    {{range $key, $value := .OS}}
+    <tr>
+      <td>{{$key}}</td><td>{{$value}}</td>
+    </tr>{{end}}
+  </table>
+
+  <h3>Process</h3>
+  <table class="table table-striped">
+    {{range $key, $value := .Process}}
+    <tr>
+      <td>{{$key}}</td><td>{{$value}}</td>
+    </tr>{{end}}
+  </table>
+
+  <h3>Network</h3>
+  <table class="table table-striped">
+    <tr>
+      <th>#</th><th>iface</th><th>MAC</th><th>ip</th><th>Mcast ip</th><th>MTU</th>
+    </tr>
+    {{range $key, $value := .Network.Interfaces}}
+    <tr>
+      <td>{{$key}}</td>
+      <td>{{$value.Name}}</td>
+      <td>{{$value.HardwareAddr}}</td>
+      <td>
+        <ul>{{range $addr := $value.Addrs}}
+          <li>{{$addr.String}}</li>{{end}}
+        </ul>
+      </td>
+      <td>
+        <ul>{{range $addr := $value.MulticastAddrs}}
+          <li>{{$addr.String}}</li>{{end}}
+        </ul>
+      </td>
+      <td>{{$value.MTU}}</td>
+    </tr>{{end}}
+  </table>
+
+  <h3>HTTP Request</h3>
+  <table class="table table-striped">
+    {{range $key, $value := .Request}}
+    <tr>
+      <td>{{$key}}</td><td>{{range $value}}{{.}} {{end}}</td>
+    </tr>{{end}}
+  </table>
+
+  <h3>HTTP Header</h3>
+  <table class="table table-striped">
+    {{range $key, $value := .Header}}
+    <tr>
+      <td>{{$key}}</td><td>{{range $value}}{{.}}{{end}}</td>
+    </tr>{{end}}
+  </table>
+
+  <h3>HTTP Form</h3>
+  <table class="table table-striped">
+    {{range $key, $value := .Form}}
+    <tr>
+      <td>{{$key}}</td><td>{{range $value}}{{.}}{{end}}</td>
+    </tr>{{end}}
+  </table>
+  
+  <h3>Environment Variables</h3>
+  <table class="table table-striped">
+    {{range $key, $value := .Environment}}
+    <tr>
+      <td>{{$key}}</td><td>{{$value}}</td>
+    </tr>{{end}}
+  </table>
+  </body>
+</html>

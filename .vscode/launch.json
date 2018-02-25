@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+  {
+    "name": "Introspect",
+    "type": "go",
+    "request": "launch",
+    "mode": "debug",
+    "program": "${workspaceRoot}",
+    "env": {},
+    "args": [
+      "--kubeconfig", "${env:HOME}/.kube/config",
+      "--port", "8080"
+    ],
+    "showLog": true
+  }
+  ]
+}

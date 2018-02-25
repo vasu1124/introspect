@@ -1,0 +1,6 @@
+{
+  "Addrs": ["127.0.0.1:27017"],
+  "Database": "guestbook",
+  "Timeout": 5000000000,
+  "FailFast": true
+}

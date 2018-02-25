@@ -1,0 +1,16 @@
+apiVersion: config.istio.io/v1alpha2
+kind: RouteRule
+metadata:
+  name: introspect-firefox
+spec:
+  destination: 
+    name: introspect
+  precedence: 2
+  match:
+    request:
+      headers:
+        user-agent:
+          regex: "^(.*?)(Firefox)(.*)?$"
+  route:
+  - labels:
+      version: v2

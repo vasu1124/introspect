@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: introspect-config
+data:
+  config.json: |+
+    {
+      "Addrs": ["mongodb:27017"],
+      "Database": "guestbook",
+      "Timeout": 5000000000,
+      "FailFast": true
+    }
+  example.yaml: |+
+    foo: bar
+    exact: true
+    timeout: 18

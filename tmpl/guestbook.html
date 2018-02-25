@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/bootstrap.css">
+  </head>
+  <div class="container">
+  <body>
+  <div class="page-header">
+    <h1>Guestbook</h1>
+  </div>
+
+  <form action="/guestbook" method="post">
+    <div class="row">
+      <div class="form-group col-md-3">
+        <label for="name" class="col-form-label">Name</label>
+        <input type="text" class="form-control" name="name" placeholder="Your name">
+      </div>
+      <div class="form-group col-md-6">
+        <label for="comment" class="col-form-label">Comment</label>
+        <input type="text" class="form-control" name="comment" placeholder="Your comment">
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group col-md-1">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </form>
+
+  <h3>Entries</h3>
+  <table class="table table-striped">
+    <tr>
+        <th>Time</th><th>Name</th><th>Comment</th>
+    </tr>
+    {{range $key, $value := .}}
+    <tr>
+      <td>{{$value.Date}}</td><td>{{$value.Name}}</td><td>{{$value.Comment}}</td>
+    </tr>{{end}}
+  </table>
+  </body>
+</html>

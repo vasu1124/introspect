@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: introspect-istio
+  annotations:
+    kubernetes.io/ingress.class: "istio"
+  labels:
+    app: introspect
+spec:
+  rules:
+  - host: introspect.istio.vasu1124.k8s.example.com
+    http:
+      paths:
+      - path: /.*
+        backend:
+          serviceName: introspect
+          servicePort: 80

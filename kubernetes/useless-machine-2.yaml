@@ -1,0 +1,6 @@
+apiVersion: "introspect.actvirtual.com/v1"
+kind: Useless
+metadata:
+  name: useless-machine-2
+spec:
+  desiredstate: off
