@@ -19,13 +19,18 @@ endif
 all: ${all}
 
 clean:
-	-rm -f ${BINARY}-* debug
+	-rm -f ${BINARY}-* debug Gopkg.lock
 
-dep:
+deepcopy: 
+	./hack/update-codegen.sh
+
+${GOPATH}/bin/dep:
+	go env
 	-mkdir ${GOPATH}/bin
 	go get -v -u github.com/golang/dep/cmd/dep
+
+depensure: ${GOPATH}/bin/dep
 	${GOPATH}/bin/dep ensure -v
-	./hack/update-codegen.sh
 
 SOURCES := $(shell find . -type f -name '*.go')
 
