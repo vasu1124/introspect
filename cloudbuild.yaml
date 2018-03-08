@@ -1,5 +1,5 @@
 steps:
-- name: 'golang:1.10'
+- name: 'busybox'
   dir: 'src/github.com/vasu1124/introspect'
   args: ['/bin/sh', '-c', 'mv -f /workspace/* /workspace/.??* . ; ls -la']
   env: ['GOPATH=/workspace', 'PROJECT_ROOT=github.com/vasu1124/introspect']
