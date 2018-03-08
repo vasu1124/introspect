@@ -4,8 +4,8 @@ LABEL maintainer="vasu1124@actvirtual.com"
 RUN apk --no-cache add --update bash ca-certificates libc6-compat \
     && rm -rf /var/cache/apk/*
     
-ADD introspect-linux-amd64 /
-ADD /tmpl /tmpl
-ADD /css /css
+COPY /introspect-linux-amd64 /
+COPY /tmpl /tmpl
+COPY /css /css
 EXPOSE 8080
 CMD ["/introspect-linux-amd64"]

@@ -1,8 +1,8 @@
 FROM opensuse:42.3
 LABEL maintainer="vasu1124@actvirtual.com"
 
-ADD introspect-linux-amd64 /
-ADD /tmpl /tmpl
-ADD /css /css
+COPY /introspect-linux-amd64 /
+COPY /tmpl /tmpl
+COPY /css /css
 EXPOSE 8080
 CMD ["/introspect-linux-amd64"]
