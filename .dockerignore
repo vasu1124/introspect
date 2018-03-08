@@ -1,0 +1,6 @@
+.infrabox
+.vscode
+.infraboxsecrets.json
+introspect-linux-amd64
+vendor
+kubernetes

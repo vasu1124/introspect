@@ -29,3 +29,7 @@ _testmain.go
 *.prof
 introspect*amd64
 debug
+
+# infrabox
+.infrabox
+.infraboxsecrets.json

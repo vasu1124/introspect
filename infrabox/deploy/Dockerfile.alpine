@@ -1,0 +1,14 @@
+FROM alpine:3.7
+LABEL maintainer="vasu1124@actvirtual.com"
+
+ARG VERSION_TO_BUILD
+ARG INPUT_JOB
+
+RUN apk --no-cache add --update bash ca-certificates libc6-compat \
+    && rm -rf /var/cache/apk/*
+    
+ADD .infrabox/inputs/$INPUT_JOB/introspect-linux-amd64 /
+ADD /tmpl /tmpl
+ADD /css /css
+EXPOSE 8080
+CMD ["/introspect-linux-amd64"]
