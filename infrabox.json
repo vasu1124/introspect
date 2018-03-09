@@ -48,8 +48,8 @@
       "deployments": [
         {
           "type": "docker-registry",
-          "host": "docker.io",
-          "repository": "vasu1124/introspect",
+          "host": "vasu1124",
+          "repository": "introspect",
           "tag": "v1.0",
           "username": "vasu1124",
           "password": { "$secret": "docker-vasu1124" }
@@ -77,8 +77,8 @@
       "deployments": [
         {
           "type": "docker-registry",
-          "host": "docker.io",
-          "repository": "vasu1124/introspect",
+          "host": "vasu1124",
+          "repository": "introspect",
           "tag": "v2.0",
           "username": "vasu1124",
           "password": { "$secret": "docker-vasu1124" }
