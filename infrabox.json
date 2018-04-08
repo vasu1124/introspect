@@ -52,7 +52,7 @@
           "repository": "vasu1124/introspect",
           "tag": "v1.0",
           "username": "vasu1124",
-          "password": { "$secret": "docker-vasu1124" }
+          "password": { "$secret": "docker_vasu1124" }
         }
       ],
       "build_arguments": {
@@ -81,7 +81,7 @@
           "repository": "vasu1124/introspect",
           "tag": "v2.0",
           "username": "vasu1124",
-          "password": { "$secret": "docker-vasu1124" }
+          "password": { "$secret": "docker_vasu1124" }
         }
       ],
       "build_arguments": {
