@@ -47,43 +47,43 @@ docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker docker/o
 
 docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 	docker build -f docker/Dockerfile.scratch \
-		-t="${DOCKERREPO}/goscratch:${VERSION}" \
+		-t="${DOCKERREPO}/introspectscratch:${VERSION}" \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 		.
 	touch docker/scratch.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/goscratch:v1.0
+# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspectscratch:v1.0
 
 docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 	docker build -f docker/Dockerfile.alpine \
-		-t="${DOCKERREPO}/goalpine:${VERSION}" \
+		-t="${DOCKERREPO}/introspect:${VERSION}" \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/alpine.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/goalpine:v1.0
+# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspect:v1.0
 
 docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 	docker build -f docker/Dockerfile.ubuntu \
-		-t="${DOCKERREPO}/goubuntu:${VERSION}" \
+		-t="${DOCKERREPO}/introspectubuntu:${VERSION}" \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/ubuntu.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/goubuntu:v1.0
+# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspectubuntu:v1.0
 
 docker/opensuse.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.opensuse
 	docker build -f docker/Dockerfile.opensuse \
-		-t="${DOCKERREPO}/goopensuse:${VERSION}" \
+		-t="${DOCKERREPO}/introspectopensuse:${VERSION}" \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/opensuse.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/goopensuse:v1.0
+# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspectopensuse:v1.0
 
 v1.0:
 	echo "v1.0" >introspect.VERSION
@@ -95,7 +95,7 @@ v2.0:
 
 # we are only pushing alpine
 docker-push: docker/alpine.docker
-	docker push ${DOCKERREPO}/goalpine:${VERSION}
+	docker push ${DOCKERREPO}/introspect:${VERSION}
 
 kubernetes/k8s-visualizer:
 #	original was git clone https://github.com/brendandburns/gcp-live-k8s-visualizer.git

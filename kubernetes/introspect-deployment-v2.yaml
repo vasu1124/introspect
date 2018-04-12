@@ -16,7 +16,7 @@ spec:
         visualize: "true"
     spec:
       containers:
-      - image: vasu1124/goalpine:v2.0
+      - image: vasu1124/introspect:v2.0
     #    imagePullPolicy: IfNotPresent
         imagePullPolicy: Always
         name: introspect
