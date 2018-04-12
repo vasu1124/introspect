@@ -28,7 +28,7 @@
       "docker_file": "infrabox/build/Dockerfile.golang",
       "build_only": false,
       "build_arguments": {
-        "VERSION_TO_BUILD": "v1.0"
+        "VERSION_TO_BUILD": "v2.0"
       }
     },
     {
