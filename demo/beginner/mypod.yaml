@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - image: busybox
+    imagePullPolicy: IfNotPresent
+    name: busybox
+    command: ["/bin/sleep", "3600"]
+    volumeMounts:
+    - mountPath: /var/secret
+      name: secret
+      readOnly: true
+    - mountPath: /etc/config
+      name: config-volume
+    - mountPath: /data
+      name: data
+  securityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  volumes:
+  - name: secret
+    secret:
+      secretName: mysecret
+  - name: config-volume
+    configMap:
+      name: myconfig
+  - name: data
+    persistentVolumeClaim:
+      claimName: myclaim

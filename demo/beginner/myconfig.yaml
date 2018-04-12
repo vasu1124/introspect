@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myconfig
+data:
+  config.json: |+
+    {
+      "root_folder": "/data",
+      "production_crops":
+        {
+          "corn": 
+            {
+              "model_name":"production_corn",
+              "root_folder":"/data/corn",
+            }
+        },
+      "num_simultaneous_connections":1
+    }
+  data.json: |+
+    {
+      "in_topic": "produce02",
+      "out_topic": "consume"
+    }
