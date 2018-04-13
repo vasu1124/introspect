@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: introspect-a
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/use-port-in-redirects: "true"
+  labels:
+    uses: introspect-a
+spec:
+  tls:
+  - hosts:
+    - introspect.k8s.actvirtual.com
+    secretName: introspect-a-tls
+  rules:
+  - host: introspect.k8s.actvirtual.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: introspect
+          servicePort: 80

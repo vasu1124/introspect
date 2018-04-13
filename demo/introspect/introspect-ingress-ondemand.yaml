@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: introspect
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/use-port-in-redirects: "true"
+  labels:
+    uses: introspect
+spec:
+  tls:
+  - hosts:
+    - intro.ingress.devx023462.core.shoot.dev.k8s-hana.ondemand.com
+    secretName: introspect-tls
+  rules:
+  - host: intro.ingress.devx023462.core.shoot.dev.k8s-hana.ondemand.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: introspect
+          servicePort: 80
