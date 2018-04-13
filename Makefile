@@ -101,4 +101,4 @@ kubernetes/k8s-visualizer:
 #	original was git clone https://github.com/brendandburns/gcp-live-k8s-visualizer.git
 	git clone https://github.com/vasu1124/k8s-visualizer.git kubernetes/k8s-visualizer
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
-	echo open browset with http://localhost:8001/static/
+	echo open browser with http://localhost:8001/static/
