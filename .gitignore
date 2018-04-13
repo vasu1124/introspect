@@ -22,6 +22,7 @@ _testmain.go
 
 # state files
 *.docker
+Gopkg.lock
 
 # built binaries
 *.exe
