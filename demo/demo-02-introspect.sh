@@ -41,13 +41,13 @@ pe "ls ../kubernetes/all-in-one/"
 pe "kubectl apply -f ../kubernetes/all-in-one/"
 
 echo
-echo "# expose internal service via L3 TCP LoadBalancer"
+echo "# expose internal service via L4 TCP LoadBalancer"
 echo
 pe "kubectl edit service introspect"
 wait
 
 echo
-echo "# expose internal service via L4 Http Ingress"
+echo "# expose internal service via L7 Http Ingress"
 echo
 pe "less introspect/introspect-ingress-ondemand.yaml"
 pe "kubectl apply -f introspect/introspect-ingress-ondemand.yaml"
@@ -78,7 +78,7 @@ wait
 echo
 echo "# creating a CRD and its API extension"
 echo
-pe "less introspect/introspect-crd.yaml"
+pe "less ../kubernetes/introspect-crd.yaml"
 pe "open http://localhost:8001"
 pe "open https://introspect.k8s.actvirtual.com/operator"
 wait
@@ -99,6 +99,6 @@ kubectl delete -f introspect/introspect-ingress-actvirtual.yaml
 kubectl delete -f introspect/introspect-ingress-ondemand.yaml
 kubectl delete -f ../kubernetes/useless-machine-1.yaml
 kubectl delete -f ../kubernetes/useless-machine-2.yaml
-kubectl delete -f introspect/introspect-crd.yaml
+kubectl delete -f ../kubernetes/introspect-crd.yaml
 
 kill $proxy_job
