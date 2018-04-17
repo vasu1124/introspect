@@ -66,7 +66,7 @@ pe "open http://localhost:8001/static/"
 
 echo
 echo "# scale the container manually"
-pe "kubectl edit deployment introspect"
+pe "kubectl scale --replicas=3 deployment/introspect --record"
 echo
 echo "# rolling update to v2.0"
 pe "kubectl edit deployment introspect --record"
