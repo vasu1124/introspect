@@ -31,6 +31,18 @@ ${GOPATH}/bin/dep:
 	-mkdir ${GOPATH}/bin
 	go get -v -u github.com/golang/dep/cmd/dep
 
+${GOPATH}/bin/cfssl:
+	go env
+	-mkdir ${GOPATH}/bin
+	go get -u github.com/cloudflare/cfssl/cmd/cfssl
+	go get -u github.com/cloudflare/cfssl/cmd/cfssljson
+
+TLSintermidiate :=  etc/mycerts/webhook.csr etc/mycerts/webhook-key.pem etc/mycerts/webhook.pem etc/mycerts/webhook.b64
+TLS: ${TLSintermidiate}
+${TLSintermidiate}: etc/mycerts/webhook.json
+	cfssl genkey etc/mycerts/webhook.json | cfssljson -bare etc/mycerts/webhook
+	hack/kube-sign.sh
+
 .PHONY: depensure
 depensure: ${GOPATH}/bin/dep
 	${GOPATH}/bin/dep ensure -v
