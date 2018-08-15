@@ -9,6 +9,6 @@ CODEGEN_PKG=${SCRIPT_ROOT}/../vendor/k8s.io/code-generator
 
 ${CODEGEN_PKG}/generate-groups.sh \
   "deepcopy" \
-  github.com/vasu1124/introspect/operator \
-  github.com/vasu1124/introspect/operator/apis \
+  github.com/vasu1124/introspect/pkg/operator \
+  github.com/vasu1124/introspect/pkg/operator/apis \
   useless:v1 

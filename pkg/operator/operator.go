@@ -14,9 +14,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	apiuseless "github.com/vasu1124/introspect/operator/apis/useless"
-	uselessv1 "github.com/vasu1124/introspect/operator/apis/useless/v1"
-	"github.com/vasu1124/introspect/version"
+	apiuseless "github.com/vasu1124/introspect/pkg/operator/apis/useless"
+	uselessv1 "github.com/vasu1124/introspect/pkg/operator/apis/useless/v1"
+	"github.com/vasu1124/introspect/pkg/version"
 
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"

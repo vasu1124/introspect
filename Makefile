@@ -8,7 +8,7 @@ VERSION=$(shell cat introspect.VERSION)
 COMMIT:=$(shell git rev-parse HEAD)
 BRANCH:=$(shell git rev-parse --abbrev-ref HEAD)
 
-LDFLAGS=-ldflags "-X github.com/vasu1124/introspect/version.Version=${VERSION} -X github.com/vasu1124/introspect/version.Commit=${COMMIT} -X github.com/vasu1124/introspect/version.Branch=${BRANCH}"
+LDFLAGS=-ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=${VERSION} -X github.com/vasu1124/introspect/pkg/version.Commit=${COMMIT} -X github.com/vasu1124/introspect/pkg/version.Branch=${BRANCH}"
 
 # Build the project
 ifeq ($(shell uname -s), Darwin)
@@ -43,13 +43,13 @@ test:
 	echo ${SOURCES}
 
 ${BINARY}-linux-${GOARCH}: ${SOURCES}
-	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} . 
+	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect 
 
 ${BINARY}-linux-${GOARCH}-1.9: ${SOURCES} 
-	docker run --rm -v ${GOPATH}:/go -w /go/src/actvirtual.com/inspect golang:1.9 go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} . 
+	docker run --rm -v ${GOPATH}:/go -w /go/src/actvirtual.com/inspect golang:1.9 go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect 
 
 ${BINARY}-darwin-${GOARCH}: ${SOURCES}
-	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} . 
+	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd/introspect
 
 .PHONY: docker
 docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker docker/opensuse.docker

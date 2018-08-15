@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vasu1124/introspect/network"
-	"github.com/vasu1124/introspect/osinfo"
-	"github.com/vasu1124/introspect/version"
+	"github.com/vasu1124/introspect/pkg/network"
+	"github.com/vasu1124/introspect/pkg/osinfo"
+	"github.com/vasu1124/introspect/pkg/version"
 
 	"github.com/prometheus/client_golang/prometheus"
 )

@@ -12,8 +12,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/vasu1124/introspect/election"
-	uselessv1 "github.com/vasu1124/introspect/operator/apis/useless/v1"
+	"github.com/vasu1124/introspect/pkg/election"
+	uselessv1 "github.com/vasu1124/introspect/pkg/operator/apis/useless/v1"
 )
 
 // UselessController Watcher is an UselessController of watching on resource create/update/delete events

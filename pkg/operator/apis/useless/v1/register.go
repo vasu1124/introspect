@@ -1,7 +1,7 @@
 package v1
 
 import (
-	apiuseless "github.com/vasu1124/introspect/operator/apis/useless"
+	apiuseless "github.com/vasu1124/introspect/pkg/operator/apis/useless"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
