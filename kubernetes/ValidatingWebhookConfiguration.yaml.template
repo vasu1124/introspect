@@ -1,0 +1,22 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: introspect-validationwebook
+webhooks:
+  - name: introspect.actvirtual.com
+    clientConfig:
+      caBundle: "$KUBE_CA"
+      service:
+        name: introspect
+        namespace: default
+        path: "/validate"
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+        resources:
+          - pods
+    failurePolicy: Ignore

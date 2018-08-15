@@ -17,6 +17,7 @@ import (
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/mandelbrot"
 	"github.com/vasu1124/introspect/pkg/operator"
+	"github.com/vasu1124/introspect/pkg/validate"
 	"github.com/vasu1124/introspect/pkg/version"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,6 +40,8 @@ func main() {
 	log.Println("[introspect] registered /cookie")
 	http.Handle("/metrics", promhttp.Handler())
 	log.Println("[introspect] registered /metrics")
+	http.Handle("/validate", logger.NewRequestLoggerHandler(validate.New()))
+	log.Println("[introspect] registered /validate")
 
 	http.Handle("/healthz", logger.NewRequestLoggerHandler(healthz.New()))
 	http.Handle("/healthzr", logger.NewRequestLoggerHandler(healthz.New()))
@@ -61,6 +64,12 @@ func main() {
 		log.Println("[introspect] registered /operator")
 	}()
 
+	go func() {
+		log.Printf("[introspect] serving TLS on port %d\n", *version.TLSPort)
+		log.Print(http.ListenAndServeTLS(fmt.Sprintf(":%d", *version.TLSPort), "etc/mycerts/webhook.pem", "etc/mycerts/webhook-key.pem", nil))
+	}()
+
+	log.Printf("[introspect] serving on port %d\n", *version.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *version.Port), nil))
 }
 
