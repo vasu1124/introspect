@@ -24,13 +24,12 @@ import (
 //Leader am I a Leader?
 //TODO: secure with mutex
 var Leader = false
+var Fail = true
 
 //Handler .
 type Handler struct {
-	config         *rest.Config
-	kubeClient     *clientset.Clientset
-	rc             record.EventRecorder
-	LeaderElection *leaderelection.LeaderElectionConfig
+	config     *rest.Config
+	kubeClient *clientset.Clientset
 }
 
 // New .
@@ -66,11 +65,13 @@ func New() *Handler {
 
 	leaderElectionConfig.Callbacks = leaderelection.LeaderCallbacks{
 		OnStartedLeading: func(stop <-chan struct{}) {
+			Fail = false
 			Leader = true
 			log.Println("[election] Got leadership.")
 			<-stop
 		},
 		OnStoppedLeading: func() {
+			Fail = false
 			Leader = false
 			log.Println("[election] Lost leadership.")
 		},
@@ -136,10 +137,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			<div class="container">
 				<body>
 				<h1>Introspection-{{.Version}}</h1>
-				{{if eq .Leader true }}
-				I am an active Leader
+				{{if eq .Fail true }}
+					No election could be negotiated
 				{{else}}
-				I am on standby
+					{{if eq .Leader true }}
+					I am an <b>active</b> Leader
+					{{else}}
+					I am on <b>standby</b>
+				{{end}}
 				{{end}}
 				</body>
 			</div>
@@ -154,8 +159,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	type EnvData struct {
 		Version string
 		Leader  bool
+		Fail    bool
 	}
-	data := EnvData{version.Version, Leader}
+
+	data := EnvData{version.Version, Leader, Fail}
 
 	err = t.Execute(w, data)
 	if err != nil {
