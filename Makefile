@@ -18,9 +18,11 @@ else
 endif
 all: ${all}
 
+.PHONY: clean
 clean:
 	-rm -f ${BINARY}-* debug Gopkg.lock
 
+.PHONY: deepcopy
 deepcopy: 
 	./hack/update-codegen.sh
 
@@ -29,10 +31,16 @@ ${GOPATH}/bin/dep:
 	-mkdir ${GOPATH}/bin
 	go get -v -u github.com/golang/dep/cmd/dep
 
+.PHONY: depensure
 depensure: ${GOPATH}/bin/dep
 	${GOPATH}/bin/dep ensure -v
 
-SOURCES := $(shell find . -type f -name '*.go')
+# SOURCES := $(shell find . -type f -name '*.go')
+SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
+
+.PHONY: test
+test:
+	echo ${SOURCES}
 
 ${BINARY}-linux-${GOARCH}: ${SOURCES}
 	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} . 
@@ -43,6 +51,7 @@ ${BINARY}-linux-${GOARCH}-1.9: ${SOURCES}
 ${BINARY}-darwin-${GOARCH}: ${SOURCES}
 	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} . 
 
+.PHONY: docker
 docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker docker/opensuse.docker
 
 docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
@@ -85,15 +94,18 @@ docker/opensuse.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.opensuse
 	touch docker/opensuse.docker
 # docker run --rm -p 8081:8080 ${DOCKERREPO}/introspectopensuse:v1.0
 
+.PHONY: v1.0
 v1.0:
 	echo "v1.0" >introspect.VERSION
 	VERSION="v1.0"
 
+.PHONY: v2.0
 v2.0:
 	echo "v2.0" >introspect.VERSION
 	VERSION="v2.0"
 
 # we are only pushing alpine
+.PHONY: docker-push
 docker-push: docker/alpine.docker
 	docker push ${DOCKERREPO}/introspect:${VERSION}
 
