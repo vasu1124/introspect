@@ -91,18 +91,20 @@ func serveHTTP(w http.ResponseWriter, r *http.Request) {
 			<div class="container">
 				<body>
 				<h1>Introspection-{{.Version}}</h1>
-			
-				<a href="/environ">/environ</a><br>
-				<a href="/guestbook">/guestbook</a><br>
-				<a href="/mandelbrot?xmin=-1.8&ymin=-1.5&xmax=1.2&ymax=1.5">/mandelbrot</a>, default window with xmin=-1.8 ymin=-1.5 xmax=1.2 ymax=1.5 <br>
-				<a href="/mandelbrot?steps=10&xfmin=-1.110&yfmin=0.228&xfmax=-1.106&yfmax=0.232">/mandelbrot</a>, generates animated gif with steps=10 and default zoom window with xfmin=-1.110 yfmin=0.228 xfmax=-1.106 yfmax=0.232 <br>
-				<a href="/cookie">/cookie</a><br>
-				<a href="/dynconfig">/dynconfig</a><br>
-				<a href="/election">/election</a><br>
-				<a href="/operator">/operator</a><br>
-				<a href="/metrics">/metrics</a><br>
-				<a href="/healthz">/healthz</a><br>
-				<a href="/healthzr">/healthzr</a><br>
+				<table class="table table-bordered">
+					<tr><td><a href="/environ">/environ</a></td><td>List Environment of runtime & HTTP Request</td></tr>
+					<tr><td><a href="/guestbook">/guestbook</a></td><td>Guestbook Demo with MongoDB</td></tr>
+					<tr><td><a href="/mandelbrot?xmin=-1.8&ymin=-1.5&xmax=1.2&ymax=1.5">/mandelbrot</a></td><td>Mandelbrot Demo, default window with xmin=-1.8 ymin=-1.5 xmax=1.2 ymax=1.5</td></tr>
+					<tr><td><a href="/mandelbrot?steps=10&xfmin=-1.110&yfmin=0.228&xfmax=-1.106&yfmax=0.232">/mandelbrot</a></td><td>Mandelbrot animated gif Demo, with steps=10 and default zoom window with xfmin=-1.110 yfmin=0.228 xfmax=-1.106 yfmax=0.232</td></tr>
+					<tr><td><a href="/cookie">/cookie</a></td><td>Cookie Demo</td></tr>
+					<tr><td><a href="/dynconfig">/dynconfig</a></td><td>Dynamic Configuration Demo</td></tr>
+					<tr><td><a href="/election">/election</a></td><td>Leadership Election</td></tr>
+					<tr><td><a href="/operator">/operator</a></td><td>Useless Machine Operator Demo</td></tr>
+					<tr><td><a href="/validate?ui">/validate?ui</a></td><td>ValidatingWebhook Demo</td></tr>
+					<tr><td><a href="/metrics">/metrics</a></td><td>Metrics endpoint for Prometheus</td></tr>
+					<tr><td><a href="/healthz">/healthz</a></td><td>Liveliness endpoint for Kubernetes</td></tr>
+					<tr><td><a href="/healthzr">/healthzr</a></td><td> Readyness endpoint for Kubernetes</td></tr>
+				</table>
 				</body>
 			</div>
 			</html>
