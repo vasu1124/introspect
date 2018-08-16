@@ -11,7 +11,12 @@ spec:
   ports:
   - name: http
     port: 80
+    protocol: TCP
     targetPort: 8080
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 10443
   selector:
     app: introspect
   type: ClusterIP
