@@ -1,6 +1,11 @@
 package version
 
-import "flag"
+import (
+	"flag"
+	"log"
+	"os"
+	"path/filepath"
+)
 
 var (
 	// Version of inspect
@@ -22,8 +27,28 @@ var (
 
 func init() {
 	MasterURL = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	Kubeconfig = flag.String("kubeconfig", "", "Path to a kube config. Only required if out-of-cluster.")
+	if kc := os.Getenv("KUBECONFIG"); kc != "" {
+		Kubeconfig = flag.String("kubeconfig", kc, "(optional) Path to a kube config. Only required if out-of-cluster.")
+	} else if home := homeDir(); home != "" {
+		Kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) Path to a kube config. Only required if out-of-cluster.")
+	} else {
+		Kubeconfig = flag.String("kubeconfig", "", "(optional) Path to a kube config. Only required if out-of-cluster.")
+	}
 	Port = flag.Int("port", 8080, "Port to bind server.")
-	TLSPort = flag.Int("tlsport", 443, "TLS Port to bind server.")
+	TLSPort = flag.Int("tlsport", 10443, "TLS Port to bind server.")
 	flag.Parse()
+
+	if *Kubeconfig != "" {
+		log.Printf("[introspect] KUBECONFIG=%s\n", *Kubeconfig)
+	}
+	if *MasterURL != "" {
+		log.Printf("[introspect] Kubernets API=%s\n", *MasterURL)
+	}
+}
+
+func homeDir() string {
+	if home := os.Getenv("HOME"); home != "" {
+		return home
+	}
+	return os.Getenv("USERPROFILE") // windows
 }
