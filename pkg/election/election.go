@@ -14,22 +14,23 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
 )
 
-//Leader am I a Leader?
+//Leader ... am I a Leader?
 //TODO: secure with mutex
 var Leader = false
+
+//Fail ... did the electionprocess fail?
+//TODO: secure with mutex
 var Fail = true
 
 //Handler .
 type Handler struct {
-	config     *rest.Config
-	kubeClient *clientset.Clientset
+	leaderElector *leaderelection.LeaderElector
 }
 
 // New .
@@ -38,13 +39,13 @@ func New() *Handler {
 	var err error
 
 	// Create the client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
-	h.config, err = clientcmd.BuildConfigFromFlags(*version.MasterURL, *version.Kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags(*version.MasterURL, *version.Kubeconfig)
 	if err != nil {
 		log.Printf("[election] KubeConfig error: %v", err)
 		return &h
 	}
 
-	h.kubeClient, err = clientset.NewForConfig(h.config)
+	kubeClient, err := clientset.NewForConfig(config)
 	if err != nil {
 		log.Printf("[election] ClientSet error: %v", err)
 		return &h
@@ -56,9 +57,9 @@ func New() *Handler {
 	// }
 
 	// Set up leader election if enabled and prepare event recorder.
-	recorder := createRecorder(h.kubeClient)
+	recorder := createRecorder(kubeClient)
 
-	leaderElectionConfig, err := makeLeaderElectionConfig(h.kubeClient, recorder)
+	leaderElectionConfig, err := makeLeaderElectionConfig(kubeClient, recorder)
 	if err != nil {
 		log.Printf("[election] leaderElectionConfig error: %v", err)
 	}
@@ -76,11 +77,11 @@ func New() *Handler {
 			log.Println("[election] Lost leadership.")
 		},
 	}
-	leaderElector, err := leaderelection.NewLeaderElector(*leaderElectionConfig)
+	h.leaderElector, err = leaderelection.NewLeaderElector(*leaderElectionConfig)
 	if err != nil {
 		log.Printf("[election] leaderElection error: %v", err)
 	}
-	go leaderElector.Run()
+	go h.leaderElector.Run()
 
 	return &h
 }
@@ -141,10 +142,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					No election could be negotiated
 				{{else}}
 					{{if eq .Leader true }}
-					I am an <b>active</b> Leader
+						I am an <b>active</b> Leader<br>
 					{{else}}
-					I am on <b>standby</b>
-				{{end}}
+						I am on <b>standby</b><br>
+					{{end}}
+					<br>
+					Leader is {{.LeaderElection.GetLeader}}
 				{{end}}
 				</body>
 			</div>
@@ -157,12 +160,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type EnvData struct {
-		Version string
-		Leader  bool
-		Fail    bool
+		Version        string
+		Leader         bool
+		Fail           bool
+		LeaderElection *leaderelection.LeaderElector
 	}
 
-	data := EnvData{version.Version, Leader, Fail}
+	data := EnvData{version.Version, Leader, Fail, h.leaderElector}
 
 	err = t.Execute(w, data)
 	if err != nil {
