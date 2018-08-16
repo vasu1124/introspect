@@ -31,6 +31,15 @@ Gopkg.lock
 introspect*amd64
 debug
 
+#built artefacts
+/etc/mycerts/webhook*.b64
+/etc/mycerts/webhook*.csr
+/etc/mycerts/webhook*.pem
+
+#logs
+telepresence*.log
+/.play
+
 # infrabox
 .infrabox
 .infraboxsecrets.json
