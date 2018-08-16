@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <style>
+      {{if eq .Version "v1.0" }}
+      body { background-color: #F0FFF0; }
+      {{end}}
+      {{if eq .Version "v2.0" }}
+      body { background-color: #F0F0FF; }
+      {{end}}
+    </style>
+  </head>
+  <div class="container">
+  <body>
+  <div class="page-header">
+    <h1>Validating Webhook Demonstration</h1>
+  </div>
+
+  <form action="/validate?ui" method="post">
+    <table class="table table-striped">
+      <thead class="thead-dark">
+      <tr>
+        <th>Container Image</th>
+        <th>Source of Registry?</th>
+        <th>Crosscheck Labels?</th>
+        <th>Signature valid?</th>
+        <th>Digest valid?</th>
+        <th>Security approved?</th>
+        <th>Break glass exception?</th>
+        <th>Admission?</th>
+      </tr>
+      </thead>
+      <tbody>
+        {{range  $key, $value := .AdmissionResponse}}
+        <tr>
+          <td>{{$key}}</td>
+          <td>
+            <input type="checkbox" class="form-check-input">
+          </td>
+          <td>
+            <input type="checkbox" class="form-check-input">
+          </td>
+          <td>
+            <input type="checkbox" class="form-check-input">
+          </td>
+          <td>
+            <input type="checkbox" class="form-check-input">
+          </td>
+          <td>
+            <input type="checkbox" class="form-check-input">
+          </td>
+          <td>
+            <input type="checkbox" class="form-check-input">
+          </td>
+          <td>
+            <input type="checkbox" class="form-check-input" name="AdmissionResponse" value="{{$key}}" {{if $value}}checked{{end}}>
+          </td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">Submit Policy</button>
+    <h3>AdmissionReviews</h3>
+    {{$pods := .Pods}}
+    {{$admissionresponse := .AdmissionResponse}}
+    <table class="table table-striped">
+      <thead class="thead-dark">
+      <tr>
+        <th>Review UID</th>
+        <th>Pod
+            <table class="table">
+                <td>Container Name</td>
+                <td>Image</td>
+            </table>    
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      {{range  $key, $value := .AdmissionReviews}}
+      <tr>
+        <td>{{$key}}</td>
+        <td>
+          {{$pod := index $pods $key}}{{range $pod.Spec.Containers}}
+          <table class="table table-bordered">
+            <td>{{.Name}}</td>
+            <td>{{.Image}}</td>
+          </table>
+          {{end}}
+        </td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </form>
+
+  </body>
+</html>
