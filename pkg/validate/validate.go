@@ -8,6 +8,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/partial"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/vasu1124/introspect/pkg/version"
 	"k8s.io/api/admission/v1beta1"
 	"k8s.io/api/core/v1"
@@ -17,22 +21,24 @@ import (
 
 // Handler .
 type Handler struct {
-	AdmissionReviews  map[types.UID]v1beta1.AdmissionReview
-	Pods              map[types.UID]v1.Pod
-	AdmissionResponse map[string]bool
+	AdmissionReviews  map[types.UID][]v1.Container
+	ContainerResponse map[string]bool
+	ContainerLabels   map[string]map[string]string
 }
 
 // New .
 func New() *Handler {
 	var h Handler
-	h.AdmissionReviews = map[types.UID]v1beta1.AdmissionReview{}
-	h.Pods = map[types.UID]v1.Pod{}
-	h.AdmissionResponse = map[string]bool{}
+	h.AdmissionReviews = map[types.UID][]v1.Container{}
+	h.ContainerResponse = map[string]bool{}
+	h.ContainerLabels = map[string]map[string]string{}
+
 	return &h
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.RequestURI == "/validate?ui" {
+
+	if r.UserAgent() != "kube-apiserver-admission" {
 		h.userUI(w, r)
 	} else {
 		h.validate(w, r)
@@ -49,14 +55,14 @@ func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 		//set all to false
-		for uid := range h.AdmissionResponse {
-			h.AdmissionResponse[uid] = false
+		for uid := range h.ContainerResponse {
+			h.ContainerResponse[uid] = false
 		}
 
 		//set only checked to true
-		for _, uid := range r.Form["AdmissionResponse"] {
-			if _, ok := h.AdmissionResponse[uid]; ok {
-				h.AdmissionResponse[uid] = true
+		for _, uid := range r.Form["ContainerResponse"] {
+			if _, ok := h.ContainerResponse[uid]; ok {
+				h.ContainerResponse[uid] = true
 			}
 		}
 	}
@@ -71,12 +77,12 @@ func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
 
 	type EnvData struct {
 		Version           string
-		AdmissionReviews  map[types.UID]v1beta1.AdmissionReview
-		Pods              map[types.UID]v1.Pod
-		AdmissionResponse map[string]bool
+		AdmissionReviews  map[types.UID][]v1.Container
+		ContainerResponse map[string]bool
+		ContainerLabels   map[string]map[string]string
 	}
 
-	data := EnvData{version.Version, h.AdmissionReviews, h.Pods, h.AdmissionResponse}
+	data := EnvData{version.Version, h.AdmissionReviews, h.ContainerResponse, h.ContainerLabels}
 
 	err = t.Execute(w, data)
 	if err != nil {
@@ -84,8 +90,6 @@ func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "[validate] executing template: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-
-	//w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +112,6 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid := ar.Request.UID
-	h.AdmissionReviews[uid] = ar
 
 	pod := v1.Pod{}
 	if err := json.Unmarshal(ar.Request.Object.Raw, &pod); err != nil {
@@ -116,26 +119,48 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	h.Pods[uid] = pod
+
+	h.AdmissionReviews[uid] = pod.Spec.Containers
 
 	allowed := true
 	message := ""
 	for _, c := range pod.Spec.Containers {
-		if _, ok := h.AdmissionResponse[c.Image]; !ok {
-			h.AdmissionResponse[c.Image] = false
+		cref := c.Image
+		ref, err := name.ParseReference(cref, name.WeakValidation)
+		if err != nil {
+			log.Printf("[validate] parsing reference %q: %v", cref, err)
+		}
+
+		cname := ref.Name()
+
+		img, err := remote.Image(ref, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+		if err != nil {
+			log.Printf("[validate] reading image %q: %v", ref, err)
+		}
+
+		cf, err := partial.ConfigFile(img)
+		if err != nil {
+			log.Printf("[validate] parsing image config %q: %v", cf, err)
+		}
+
+		h.ContainerLabels[cname] = cf.Config.Labels
+		log.Printf("[validate] image labels: %v\n", cf.Config.Labels)
+
+		if _, ok := h.ContainerResponse[cname]; !ok {
+			h.ContainerResponse[cname] = false
 			allowed = false
 			break
-		} else if !h.AdmissionResponse[c.Image] {
-			message = fmt.Sprintf("[instrospect] human operator denied Container: %s", c.Image)
+		} else if !h.ContainerResponse[cname] {
+			message = fmt.Sprintf("[instrospect] human operator denied Container: %s", cname)
 			allowed = false
 			break
 		}
 	}
 
-	admissionResponse := v1beta1.AdmissionResponse{UID: uid, Allowed: allowed}
+	ContainerResponse := v1beta1.AdmissionResponse{UID: uid, Allowed: allowed}
 	if !allowed {
-		admissionResponse.Result = &metav1.Status{
-			Reason: metav1.StatusReasonUnauthorized,
+		ContainerResponse.Result = &metav1.Status{
+			Reason: metav1.StatusReasonNotAcceptable,
 			Details: &metav1.StatusDetails{
 				Causes: []metav1.StatusCause{
 					{Message: message},
@@ -145,7 +170,7 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ar = v1beta1.AdmissionReview{
-		Response: &admissionResponse,
+		Response: &ContainerResponse,
 	}
 
 	data, err = json.Marshal(ar)

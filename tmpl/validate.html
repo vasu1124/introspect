@@ -22,6 +22,7 @@
       <thead class="thead-dark">
       <tr>
         <th>Container Image</th>
+        <th>Container Labels</th>
         <th>Source of Registry?</th>
         <th>Crosscheck Labels?</th>
         <th>Signature valid?</th>
@@ -32,9 +33,11 @@
       </tr>
       </thead>
       <tbody>
-        {{range  $key, $value := .AdmissionResponse}}
+        {{$containerLabels := .ContainerLabels}}
+        {{range  $key, $value := .ContainerResponse}}
         <tr>
           <td>{{$key}}</td>
+          <td>{{$labels := index $containerLabels $key}}{{range $k,$v := $labels}}{{$k}}={{$v}} {{end}}</td>
           <td>
             <input type="checkbox" class="form-check-input">
           </td>
@@ -54,7 +57,7 @@
             <input type="checkbox" class="form-check-input">
           </td>
           <td>
-            <input type="checkbox" class="form-check-input" name="AdmissionResponse" value="{{$key}}" {{if $value}}checked{{end}}>
+            <input type="checkbox" class="form-check-input" name="ContainerResponse" value="{{$key}}" {{if $value}}checked{{end}}>
           </td>
         </tr>
         {{end}}
@@ -62,8 +65,6 @@
     </table>
     <button type="submit" class="btn btn-primary">Submit Policy</button>
     <h3>AdmissionReviews</h3>
-    {{$pods := .Pods}}
-    {{$admissionresponse := .AdmissionResponse}}
     <table class="table table-striped">
       <thead class="thead-dark">
       <tr>
@@ -81,7 +82,7 @@
       <tr>
         <td>{{$key}}</td>
         <td>
-          {{$pod := index $pods $key}}{{range $pod.Spec.Containers}}
+          {{range $value}}
           <table class="table table-bordered">
             <td>{{.Name}}</td>
             <td>{{.Image}}</td>
