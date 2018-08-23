@@ -6,7 +6,7 @@ set -o pipefail
 
 SCRIPT_ROOT=$(dirname ${0})
 
-kubectl delete csr introspect.default
+kubectl delete csr introspect.default || true
 
 cat <<EOF | kubectl create -f -
 apiVersion: certificates.k8s.io/v1beta1
