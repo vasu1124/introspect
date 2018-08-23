@@ -1,5 +1,13 @@
 FROM alpine:3.7
-LABEL maintainer="vasu1124@actvirtual.com"
+LABEL maintainer="vasu1124@actvirtual.com" \
+      immutable.labels=true \
+      org.label-schema.schema-version="1.0" \
+      org.label-schema.vendor="actvirtual" \
+      org.label-schema.license="GPLv3" \
+      org.label-schema.name="Introspect" \
+      com.actvirtual.quality="evaluation" \
+      com.actvirtual.product="DemoSuite" 
+
  
 RUN apk --no-cache add --update bash ca-certificates libc6-compat \
     && rm -rf /var/cache/apk/*
