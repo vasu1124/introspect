@@ -31,12 +31,13 @@ Gopkg.lock
 introspect*amd64
 debug
 
-#built artefacts
+#built TLS artefacts
 /etc/mycerts/webhook*.b64
 /etc/mycerts/webhook*.csr
 /etc/mycerts/webhook*.pem
+kubernetes/ValidatingWebhookConfiguration.yaml
 
-#logs
+#logs and play
 telepresence*.log
 /.play
 

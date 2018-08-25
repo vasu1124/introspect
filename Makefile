@@ -38,10 +38,13 @@ ${GOPATH}/bin/cfssl:
 	go get -u github.com/cloudflare/cfssl/cmd/cfssljson
 
 TLSintermidiate :=  etc/mycerts/webhook.csr etc/mycerts/webhook-key.pem etc/mycerts/webhook.pem etc/mycerts/webhook.b64
-TLS: ${TLSintermidiate}
+TLS: ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
 ${TLSintermidiate}: etc/mycerts/webhook.json
 	cfssl genkey etc/mycerts/webhook.json | cfssljson -bare etc/mycerts/webhook
 	hack/kube-sign.sh
+
+kubernetes/ValidatingWebhookConfiguration.yaml:
+	sed -e "s/\$${caBundle}/$$(cat etc/mycerts/webhook.b64)/" <$@.template >$@
 
 .PHONY: depensure
 depensure: ${GOPATH}/bin/dep

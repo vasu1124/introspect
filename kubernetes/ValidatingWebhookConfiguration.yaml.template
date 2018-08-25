@@ -5,7 +5,7 @@ metadata:
 webhooks:
   - name: introspect.actvirtual.com
     clientConfig:
-      caBundle: "$KUBE_CA"
+      caBundle: "${caBundle}"
       service:
         name: introspect
         namespace: default
