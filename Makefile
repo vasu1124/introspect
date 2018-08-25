@@ -20,7 +20,7 @@ all: ${all}
 
 .PHONY: clean
 clean:
-	-rm -f ${BINARY}-* debug Gopkg.lock
+	-rm -f ${BINARY}-* debug Gopkg.lock ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
 
 .PHONY: deepcopy
 deepcopy: 
@@ -38,7 +38,7 @@ ${GOPATH}/bin/cfssl:
 	go get -u github.com/cloudflare/cfssl/cmd/cfssljson
 
 TLSintermidiate :=  etc/mycerts/webhook.csr etc/mycerts/webhook-key.pem etc/mycerts/webhook.pem etc/mycerts/webhook.b64
-TLS: ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
+TLS: ${GOPATH}/bin/cfssl ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
 ${TLSintermidiate}: etc/mycerts/webhook.json
 	cfssl genkey etc/mycerts/webhook.json | cfssljson -bare etc/mycerts/webhook
 	hack/kube-sign.sh
