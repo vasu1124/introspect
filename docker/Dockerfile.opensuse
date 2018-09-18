@@ -1,5 +1,12 @@
 FROM opensuse:42.3
-LABEL maintainer="vasu1124@actvirtual.com"
+LABEL maintainer="vasu1124@actvirtual.com" \
+      immutable.labels=true \
+      org.opencontainers.image.vendor="actvirtual" \
+      org.opencontainers.image.licenses="GPL-3.0" \
+      org.opencontainers.image.title="Introspect" \
+      org.opencontainers.image.source="https://github.com/vasu1124/introspect" \
+      com.actvirtual.quality="evaluation" \
+      com.actvirtual.product="DemoSuite" 
 
 COPY /introspect-linux-amd64 /
 COPY /tmpl /tmpl
