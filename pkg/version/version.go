@@ -29,10 +29,13 @@ func init() {
 	MasterURL = flag.String("master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	if kc := os.Getenv("KUBECONFIG"); kc != "" {
 		Kubeconfig = flag.String("kubeconfig", kc, "(optional) Path to a kube config. Only required if out-of-cluster.")
-	} else if home := homeDir(); home != "" {
-		Kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) Path to a kube config. Only required if out-of-cluster.")
 	} else {
-		Kubeconfig = flag.String("kubeconfig", "", "(optional) Path to a kube config. Only required if out-of-cluster.")
+		kcdefault := filepath.Join(homeDir(), ".kube", "config")
+		if _, err := os.Stat(kcdefault); err == nil {
+			Kubeconfig = flag.String("kubeconfig", kcdefault, "(optional) Path to a kube config. Only required if out-of-cluster.")
+		} else {
+			Kubeconfig = flag.String("kubeconfig", "", "(optional) Path to a kube config. Only required if out-of-cluster.")
+		}
 	}
 	Port = flag.Int("port", 8080, "Port to bind server.")
 	TLSPort = flag.Int("tlsport", 10443, "TLS Port to bind server.")
