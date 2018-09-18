@@ -4,10 +4,18 @@ metadata:
   name: useless.introspect.actvirtual.com
 spec:
   group: introspect.actvirtual.com
+  version: v1
+  scope: Namespaced
   names:
     kind: Useless
     listKind: UselessList
     plural: useless
     singular: useless
-  scope: Namespaced
-  version: v1
+  validation:
+    # openAPIV3Schema is the schema for validating custom objects.
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            desiredstate:
+              type: boolean
