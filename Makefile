@@ -22,8 +22,28 @@ all: ${all}
 clean:
 	-rm -f ${BINARY}-* debug Gopkg.lock ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
 
+# Generate manifests e.g. CRD, RBAC etc.
+manifests:
+	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
+
+# Run go fmt against code
+fmt:
+	go fmt ./pkg/... ./cmd/...
+
+# Run go vet against code
+vet:
+	go vet ./pkg/... ./cmd/...
+
+# Generate code
+generate:
+	go generate ./pkg/... ./cmd/...
+
+# Run tests
+test: generate fmt vet manifests
+	go test ./pkg/... ./cmd/... -coverprofile cover.out
+
 .PHONY: deepcopy
-deepcopy: 
+deepcopy:
 	./hack/update-codegen.sh
 
 ${GOPATH}/bin/dep:
@@ -53,15 +73,11 @@ depensure: ${GOPATH}/bin/dep
 # SOURCES := $(shell find . -type f -name '*.go')
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
 
-.PHONY: test
-test:
-	echo ${SOURCES}
-
 ${BINARY}-linux-${GOARCH}: ${SOURCES}
-	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect 
+	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect
 
-${BINARY}-linux-${GOARCH}-1.9: ${SOURCES} 
-	docker run --rm -v ${GOPATH}:/go -w /go/src/actvirtual.com/inspect golang:1.9 go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect 
+${BINARY}-linux-${GOARCH}-1.9: ${SOURCES}
+	docker run --rm -v ${GOPATH}:/go -w /go/src/actvirtual.com/inspect golang:1.9 go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect
 
 ${BINARY}-darwin-${GOARCH}: ${SOURCES}
 	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd/introspect

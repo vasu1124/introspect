@@ -1,6 +1,7 @@
 package election
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"log"
@@ -9,15 +10,14 @@ import (
 	"time"
 
 	"github.com/vasu1124/introspect/pkg/version"
-
 	corev1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 //Leader ... am I a Leader?
@@ -38,14 +38,13 @@ func New() *Handler {
 	var h Handler
 	var err error
 
-	// Create the client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
-	config, err := clientcmd.BuildConfigFromFlags(*version.MasterURL, *version.Kubeconfig)
+	// Create the	 client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
+	rc, err := config.GetConfig()
 	if err != nil {
 		log.Printf("[election] KubeConfig error: %v", err)
 		return &h
 	}
-
-	kubeClient, err := clientset.NewForConfig(config)
+	kubeClient, err := clientset.NewForConfig(rc)
 	if err != nil {
 		log.Printf("[election] ClientSet error: %v", err)
 		return &h
@@ -65,11 +64,11 @@ func New() *Handler {
 	}
 
 	leaderElectionConfig.Callbacks = leaderelection.LeaderCallbacks{
-		OnStartedLeading: func(stop <-chan struct{}) {
+		OnStartedLeading: func(ctx context.Context) {
 			Fail = false
 			Leader = true
 			log.Println("[election] Got leadership.")
-			<-stop
+			<-ctx.Done()
 		},
 		OnStoppedLeading: func() {
 			Fail = false
@@ -81,7 +80,7 @@ func New() *Handler {
 	if err != nil {
 		log.Printf("[election] leaderElection error: %v", err)
 	}
-	go h.leaderElector.Run()
+	go h.leaderElector.Run(context.TODO())
 
 	return &h
 }

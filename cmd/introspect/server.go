@@ -1,5 +1,3 @@
-// Inspired from https://github.com/kelseyhightower/inspector/blob/master/logger.go
-
 package main
 
 import (
@@ -8,6 +6,13 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/vasu1124/introspect/pkg/websocket"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/vasu1124/introspect/pkg/apis"
+	introspect_v1alpha1 "github.com/vasu1124/introspect/pkg/apis/introspect/v1alpha1"
+	"github.com/vasu1124/introspect/pkg/controller/useless"
+	websocket_controller "github.com/vasu1124/introspect/pkg/controller/websocket"
 	"github.com/vasu1124/introspect/pkg/cookie"
 	"github.com/vasu1124/introspect/pkg/dynconfig"
 	"github.com/vasu1124/introspect/pkg/election"
@@ -19,13 +24,54 @@ import (
 	"github.com/vasu1124/introspect/pkg/operator"
 	"github.com/vasu1124/introspect/pkg/validate"
 	"github.com/vasu1124/introspect/pkg/version"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"gopkg.in/olahol/melody.v1"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 func main() {
 
 	log.Printf("[introspect] Version = %s/%s/%s", version.Version, version.Commit, version.Branch)
+	// TODO: use gin
+	// r := gin.Default()
+	m := melody.New()
+	fmt.Println()
+	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{})
+	if err != nil {
+		log.Fatalf("could not create manager: %v", err)
+	}
+
+	// Setup Scheme for all resources
+	log.Println("setting up scheme")
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Fatalf("unable add APIs to scheme :%v", err)
+	}
+
+	log.Println("registering components.")
+	_, err = builder.
+		ControllerManagedBy(mgr).
+		For(&introspect_v1alpha1.UselessMachine{}).
+		Build(&useless.ReconcileUselessMachine{})
+	if err != nil {
+		log.Fatalf("could not create useless controller: %v", err)
+	}
+
+	n := websocket.NewNotifier(m, mgr.GetClient())
+	_, err = builder.
+		ControllerManagedBy(mgr).
+		For(&introspect_v1alpha1.UselessMachine{}).
+		Build(websocket_controller.NewReconcileUselessMachine(n))
+	if err != nil {
+		log.Fatalf("could not create webhook controller: %v", err)
+	}
+
+	go func() {
+		if err := mgr.Start(nil); err != nil {
+			log.Fatalf("could not create start manager: %v", err)
+		}
+	}()
+	// r.Run(fmt.Sprintf(":%d", *version.Port))
 
 	// index.html
 	http.HandleFunc("/", serveHTTP)
@@ -54,13 +100,14 @@ func main() {
 	go func() {
 		http.Handle("/guestbook", logger.NewRequestLoggerHandler(guestbook.New()))
 		log.Println("[introspect] registered /guestbook")
-
 		http.Handle("/election", logger.NewRequestLoggerHandler(election.New()))
 		log.Println("[introspect] registered /election")
 
 		o := operator.New()
 		http.Handle("/operator", logger.NewRequestLoggerHandler(o))
-		http.HandleFunc("/operatorws", o.ServeWS)
+		http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+			m.HandleRequest(w, r)
+		})
 		log.Println("[introspect] registered /operator")
 	}()
 
