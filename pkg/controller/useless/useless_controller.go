@@ -63,7 +63,7 @@ func (r *ReconcileUselessMachine) Reconcile(request reconcile.Request) (reconcil
 }
 
 func (r *ReconcileUselessMachine) desiredStatus(u *introspectv1alpha1.UselessMachine) *introspectv1alpha1.UselessMachineStatus {
-	message := "Successfully corrected by introspect controller"
+	message := "State updated by introspect"
 	desiredState := u.Spec.DesiredState
 	return &introspectv1alpha1.UselessMachineStatus{
 		Message:     &message,
