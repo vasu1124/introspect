@@ -140,7 +140,7 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 
 		cf, err := partial.ConfigFile(img)
 		if err != nil {
-			log.Printf("[validate] parsing image config %q: %v", cf, err)
+			log.Printf("[validate] parsing image config %v: %v", cf, err)
 		}
 
 		h.ContainerLabels[cname] = cf.Config.Labels
