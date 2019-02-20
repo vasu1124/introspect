@@ -44,7 +44,7 @@ pe "kubectl apply -f ../kubernetes/all-in-one/"
 echo "Let's see the custom definition of your new UselessMachine resource"
 echo
 pe "less ../kubernetes/introspect-crd.yaml"
-pe "open http://localhost:8001"
+pe "kubectl api-versions"
 pe "open http://localhost:8001/apis/introspect.actvirtual.com/v1alpha1"
 wait
 
@@ -58,7 +58,7 @@ echo "View a single resource"
 echo
 pe "less ../config/samples/uselessmachine-1.yaml"
 pe "kubectl create -f ../config/samples/uselessmachine-1.yaml"
-pe "kubectl create -f ../config/samples/uselessmachine-2.yaml"
+# pe "kubectl create -f ../config/samples/uselessmachine-2.yaml"
 wait
 
 echo
@@ -83,4 +83,3 @@ kubectl delete -f ../kubernetes/all-in-one/
 kubectl delete uselessmachines --all
 
 kill $proxy_job
-
