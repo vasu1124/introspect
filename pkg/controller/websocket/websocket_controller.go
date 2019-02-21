@@ -19,7 +19,7 @@ package websocket
 import (
 	"context"
 
-	ws "github.com/vasu1124/introspect/pkg/websocket"
+	ws "github.com/vasu1124/introspect/pkg/operator/websocket"
 
 	introspectv1alpha1 "github.com/vasu1124/introspect/pkg/apis/introspect/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +32,7 @@ type ReconcileUselessMachine struct {
 	notifier *ws.Notfier
 }
 
+// NewReconcileUselessMachine ...
 func NewReconcileUselessMachine(n *ws.Notfier) *ReconcileUselessMachine {
 	return &ReconcileUselessMachine{notifier: n}
 }
