@@ -40,8 +40,8 @@ echo
 pe "ls ../kubernetes/all-in-one/"
 pe "kubectl apply -f ../kubernetes/all-in-one/"
 
-
-echo "Let's see the custom definition of your new UselessMachine resource"
+echo
+echo "# creating a CRD and its API extension"
 echo
 pe "less ../kubernetes/introspect-crd.yaml"
 pe "kubectl api-versions"
@@ -56,14 +56,11 @@ pe "open http://localhost:8001/api/v1/namespaces/default/services/http:introspec
 echo
 echo "View a single resource"
 echo
-pe "less ../config/samples/uselessmachine-1.yaml"
-pe "kubectl create -f ../config/samples/uselessmachine-1.yaml"
-# pe "kubectl create -f ../config/samples/uselessmachine-2.yaml"
+pe "less ../kubernetes/useless-machine-1.yaml"
+pe "kubectl apply -f ../kubernetes/useless-machine-1.yaml"
 wait
 
 echo
-
-
 echo "Deep dive into those changes"
 echo
 p "kubectl get uselessmachines -w"

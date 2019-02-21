@@ -40,53 +40,37 @@ echo
 pe "ls ../kubernetes/all-in-one/"
 pe "kubectl apply -f ../kubernetes/all-in-one/"
 
-echo
-echo "# expose internal service via L4 TCP LoadBalancer"
-echo
-pe "kubectl edit service introspect"
-wait
 
 echo
 echo "# expose internal service via L7 Http Ingress"
 echo
 pe "less introspect/introspect-ingress-ondemand.yaml"
 pe "kubectl apply -f introspect/introspect-ingress-ondemand.yaml"
+pe "kubectl describe ingress introspect"
 echo
-pe "open https://intro.ingress.d023462.core.shoot.dev.k8s-hana.ondemand.com"
-wait
+pe "open https://intro.ingress.d023462.core.shoot.canary.k8s-hana.ondemand.com"
 
-echo
-echo "# exposing introspect service via ingress with own domain"
-pe "kubectl apply -f introspect/introspect-ingress-actvirtual.yaml"
-echo
-pe "open https://introspect.k8s.actvirtual.com"
-
-echo
-pe "open http://localhost:8001/static/"
-
-echo
-echo "# scale the container manually"
-pe "kubectl scale --replicas=3 deployment/introspect --record"
-echo
-echo "# rolling update to v2.0"
-pe "kubectl edit deployment introspect --record"
-pe "kubectl rollout history deployment introspect"
-pe "kubectl rollout undo deployment introspect"
-pe "kubectl rollout history deployment introspect"
 wait
 
 echo
 echo "# creating a CRD and its API extension"
 echo
 pe "less ../kubernetes/introspect-crd.yaml"
-pe "open http://localhost:8001"
-pe "open https://introspect.k8s.actvirtual.com/operator"
+pe "kubectl api-versions"
+pe "open http://localhost:8001/apis/introspect.actvirtual.com/v1alpha1"
 wait
 
 echo
 pe "less ../kubernetes/useless-machine-1.yaml"
 pe "kubectl apply -f ../kubernetes/useless-machine-1.yaml"
 pe "kubectl apply -f ../kubernetes/useless-machine-2.yaml"
+
+echo "Watch changes"
+echo
+p "kubectl get uselessmachines -w"
+kubectl get uselessmachines -o custom-columns="NAME:.metadata.name,DESIRED:.spec.desiredState,ACTUAL:.status.actualState,MESSAGE:.status.message" -w & watch_job=$!
+wait
+kill $watch_job
 
 pe "kubectl edit useless useless-machine-1"
 
@@ -95,10 +79,8 @@ echo
 echo "delete or ctrl-c"
 wait
 kubectl delete -f ../kubernetes/all-in-one/
-kubectl delete -f introspect/introspect-ingress-actvirtual.yaml
 kubectl delete -f introspect/introspect-ingress-ondemand.yaml
-kubectl delete -f ../kubernetes/useless-machine-1.yaml
-kubectl delete -f ../kubernetes/useless-machine-2.yaml
+kubectl delete uselessmachines --all
 kubectl delete -f ../kubernetes/introspect-crd.yaml
 
 kill $proxy_job
