@@ -1,8 +1,20 @@
 {
   "version": "0.2.0",
   "configurations": [
+    {
+      "name": "Introspect attach on Kubernetes",
+      "type": "cloudcode",
+      "language": "Go",
+      "request": "attach",
+      "debugPort": 3000,
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "/go/src/github.com/vasu1124/introspect",
+      "podSelector": {
+        "app": "introspect"
+      }
+    },
   {
-    "name": "Introspect",
+    "name": "Introspect Launch",
     "type": "go",
     "request": "launch",
     "mode": "debug",

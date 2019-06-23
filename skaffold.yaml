@@ -1,0 +1,30 @@
+apiVersion: skaffold/v1beta11
+kind: Config
+profiles:
+- name: kind
+  build:
+    local:
+      push: false
+  activation:
+  - kubeContext: "kubernetes-admin@kind"
+- name: docker-desktop
+  build:
+    local:
+      push: false
+  activation:
+  - kubeContext: "docker-desktop"
+build:
+  tagPolicy:
+    envTemplate:
+      template: 'vasu1124/introspect:v1.0'
+#    sha256: {}
+  artifacts:
+  - image: vasu1124/introspect
+    context: .
+    docker:
+      dockerfile: docker/Dockerfile
+      buildArgs:
+        VERSION_TO_BUILD: 'v1.0'
+deploy:
+  kustomize:
+    path: kubernetes/all-in-one

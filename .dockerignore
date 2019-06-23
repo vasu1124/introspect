@@ -1,5 +1,5 @@
 .infrabox/work
 .vscode
 .infraboxsecrets.json
-vendor
+# vendor
 kubernetes
