@@ -4,7 +4,7 @@ metadata:
   name: introspect
   labels:
     app: introspect
-    visualize: "true"
+    visualize: 'true'
   annotations:
     prometheus.io/scrape: 'true'
 spec:

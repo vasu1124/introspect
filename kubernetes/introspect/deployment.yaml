@@ -4,14 +4,14 @@ metadata:
   name: introspect
   labels:
     app: introspect
-    visualize: "true"
+    visualize: 'true'
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
         app: introspect
-        visualize: "true"
+        visualize: 'true'
     spec:
       containers:
       - image: vasu1124/introspect:v1.0
@@ -21,6 +21,10 @@ spec:
         env:
         - name: OSENV_EXAMPLE
           value: some_value
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         resources:
           requests:
             cpu: 500m
@@ -42,6 +46,11 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 1
           failureThreshold: 2
+        ports:
+        - name: introspect
+          containerPort: 8080
+        - name: debug
+          containerPort: 3000
         volumeMounts:
         - mountPath: /etc/secret
           name: secret-volume
