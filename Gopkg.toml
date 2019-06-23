@@ -48,9 +48,9 @@ version="v1.4.7"
   branch = "master"
   name = "golang.org/x/sys"
 
-[[constraint]]
-  name = "github.com/gin-gonic/gin"
-  version = "v1.3.0"
+#[[constraint]]
+#  name = "github.com/gin-gonic/gin"
+#  version = "v1.3.0"
 
 [[constraint]]
   name = "gopkg.in/olahol/melody.v1"
