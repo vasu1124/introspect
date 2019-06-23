@@ -75,6 +75,11 @@ func New() *Handler {
 			Leader = false
 			log.Println("[election] Lost leadership.")
 		},
+		OnNewLeader: func(identity string) {
+			Fail = false
+			Leader = false
+			log.Printf("[election] %s else has leadership.\n", identity)
+		},
 	}
 	h.leaderElector, err = leaderelection.NewLeaderElector(*leaderElectionConfig)
 	if err != nil {
@@ -91,8 +96,13 @@ func makeLeaderElectionConfig(client *clientset.Clientset, recorder record.Event
 		return nil, fmt.Errorf("unable to get hostname: %v", err)
 	}
 
+	namespace, exists := os.LookupEnv("NAMESPACE")
+	if !exists {
+		namespace = "default"
+	}
+
 	lock, err := resourcelock.New(resourcelock.ConfigMapsResourceLock,
-		"default",
+		namespace,
 		"introspect-config",
 		client.CoreV1(),
 		resourcelock.ResourceLockConfig{
