@@ -58,11 +58,13 @@ func main() {
 		log.Println("[introspect] registered /election")
 
 		o := operator.New()
-		http.Handle("/operator", logger.NewRequestLoggerHandler(o))
-		http.HandleFunc("/operatorws", func(w http.ResponseWriter, r *http.Request) {
-			o.Melody.HandleRequest(w, r)
-		})
-		log.Println("[introspect] registered /operator")
+		if o != nil {
+			http.Handle("/operator", logger.NewRequestLoggerHandler(o))
+			http.HandleFunc("/operatorws", func(w http.ResponseWriter, r *http.Request) {
+				o.Melody.HandleRequest(w, r)
+			})
+			log.Println("[introspect] registered /operator")
+		}
 	}()
 
 	go func() {

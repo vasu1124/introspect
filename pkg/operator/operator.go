@@ -33,13 +33,15 @@ func New() *Handler {
 	h.Melody = melody.New()
 	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{})
 	if err != nil {
-		log.Fatalf("[operator] could not create manager: %v", err)
+		log.Printf("[operator] could not create manager: %v", err)
+		return nil
 	}
 
 	// Setup Scheme for all resources
 	log.Println("[operator] setting up scheme")
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Fatalf("[operator] unable add APIs to scheme :%v", err)
+		log.Printf("[operator] unable add APIs to scheme :%v", err)
+		return nil
 	}
 
 	log.Println("[operator] registering components.")
@@ -48,7 +50,8 @@ func New() *Handler {
 		For(&introspect_v1alpha1.UselessMachine{}).
 		Build(&useless.ReconcileUselessMachine{})
 	if err != nil {
-		log.Fatalf("[operator] could not create useless controller: %v", err)
+		log.Printf("[operator] could not create useless controller: %v", err)
+		return nil
 	}
 
 	n := websocket.NewNotifier(h.Melody, mgr.GetClient())
@@ -57,12 +60,13 @@ func New() *Handler {
 		For(&introspect_v1alpha1.UselessMachine{}).
 		Build(websocket_controller.NewReconcileUselessMachine(n))
 	if err != nil {
-		log.Fatalf("[operator] could not create webhook controller: %v", err)
+		log.Printf("[operator] could not create webhook controller: %v", err)
+		return nil
 	}
 
 	go func() {
 		if err := mgr.Start(nil); err != nil {
-			log.Fatalf("[operator] could not create start manager: %v", err)
+			log.Printf("[operator] could not create start manager: %v", err)
 		}
 	}()
 
