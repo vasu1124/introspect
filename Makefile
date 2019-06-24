@@ -12,9 +12,9 @@ LDFLAGS=-ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=${VERSIO
 
 # Build the project
 ifeq ($(shell uname -s), Darwin)
-    all=${BINARY}-darwin-${GOARCH} ${BINARY}-linux-${GOARCH} docker
+    all=${BINARY}-darwin-${GOARCH} ${BINARY}-linux-${GOARCH} docker/alpine.docker
 else
-    all=${BINARY}-linux-${GOARCH} docker
+    all=${BINARY}-linux-${GOARCH} docker/alpine.docker
 endif
 all: ${all}
 
