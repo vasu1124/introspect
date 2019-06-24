@@ -6,6 +6,8 @@ bases:
 - ../mongodb
 - ../introspect
 
+# namespace: introspect
+
 #images:
 #- name: introspect
 #  newName: vasu1124/introspect

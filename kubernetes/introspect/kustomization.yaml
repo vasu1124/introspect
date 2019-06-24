@@ -4,7 +4,7 @@ kind: Kustomization
 # list of Resource Config to be Applied
 resources:
 - config.yaml
-# - introspect_v1alpha1_uselessmachine.yaml
+- introspect_v1alpha1_uselessmachine.yaml
 - introspect-operator-rbac_role.yaml
 - introspect-operator-rbac_role_binding.yaml
 - deployment.yaml
