@@ -27,9 +27,9 @@ spec:
               fieldPath: metadata.namespace
         resources:
           requests:
-            cpu: 500m
+            cpu: 50m
           limits:
-            cpu: 1000m
+            cpu: 500m
         livenessProbe:
           httpGet:
             path: /healthz
