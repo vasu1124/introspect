@@ -144,6 +144,8 @@ func (h *Handler) readConfig(config *viper.Viper) {
 	if err != nil {
 		log.Printf("[guestbook] MongoDB dialInfo: %v\n", dialInfo)
 		log.Printf("[guestbook] MongoDB: %v\n", err)
+	} else {
+		log.Printf("[guestbook] Connected to MongoDB dialInfo: %v\n", dialInfo)
 	}
 
 	// Optional. Switch the session to a monotonic behavior.

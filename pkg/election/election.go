@@ -78,7 +78,7 @@ func New() *Handler {
 		OnNewLeader: func(identity string) {
 			Fail = false
 			Leader = false
-			log.Printf("[election] %s else has leadership.\n", identity)
+			log.Printf("[election] Got informed: %s has leadership.\n", identity)
 		},
 	}
 	h.leaderElector, err = leaderelection.NewLeaderElector(*leaderElectionConfig)
