@@ -113,7 +113,7 @@
         }
         let wsurl = window.location.href
         wsurl = wsurl.replace(/^http/, 'ws')
-        wsurl = wsurl.replace('operator', 'ws')
+        wsurl = wsurl.replace('operator', 'operatorws')
         ws = new WebSocket(wsurl);
         ws.onclose = evt => {
           ws = null
