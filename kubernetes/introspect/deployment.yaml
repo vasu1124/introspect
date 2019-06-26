@@ -34,16 +34,16 @@ spec:
           httpGet:
             path: /healthz
             port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          initialDelaySeconds: 15
+          periodSeconds: 20
           timeoutSeconds: 1
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /healthzr
             port: 8080
-          initialDelaySeconds: 6
-          periodSeconds: 5
+          initialDelaySeconds: 16
+          periodSeconds: 20
           timeoutSeconds: 1
           failureThreshold: 2
         ports:
