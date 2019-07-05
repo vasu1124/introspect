@@ -1,4 +1,4 @@
-FROM golang:1.10
+FROM golang:1.12
 LABEL maintainer="vasu1124@actvirtual.com"
 
 ARG VERSION_TO_BUILD

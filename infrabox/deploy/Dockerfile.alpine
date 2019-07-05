@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:3.9
 LABEL maintainer="vasu1124@actvirtual.com" \
       immutable.labels=true \
       org.opencontainers.image.vendor="actvirtual" \
