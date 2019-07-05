@@ -22,14 +22,6 @@ required = [
 
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 
-[[constraint]]
-  name="sigs.k8s.io/controller-runtime"
-  version="v0.1.1"
-
-[[constraint]]
-  name="sigs.k8s.io/controller-tools"
-  version="v0.1.1"
-
 # For dependency below: Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]
 name = "gopkg.in/fsnotify.v1"
@@ -42,7 +34,7 @@ version="v1.4.7"
 
 [[constraint]]
   name = "github.com/spf13/viper"
-  version = "1.1.0"
+  version = "1.4.0"
 
 [[constraint]]
   branch = "master"
