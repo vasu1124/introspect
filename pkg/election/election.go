@@ -11,6 +11,7 @@ import (
 
 	"github.com/vasu1124/introspect/pkg/version"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -101,24 +102,23 @@ func makeLeaderElectionConfig(client *clientset.Clientset, recorder record.Event
 		namespace = "default"
 	}
 
-	lock, err := resourcelock.New(resourcelock.ConfigMapsResourceLock,
-		namespace,
-		"introspect-config",
-		client.CoreV1(),
-		resourcelock.ResourceLockConfig{
-			Identity:      hostname,
-			EventRecorder: recorder,
+	lock := &resourcelock.LeaseLock{
+		LeaseMeta: metav1.ObjectMeta{
+			Name:      "introspect-config",
+			Namespace: namespace,
 		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create resource lock: %v", err)
+		Client: client.CoordinationV1(),
+		LockConfig: resourcelock.ResourceLockConfig{
+			Identity: hostname,
+		},
 	}
 
 	return &leaderelection.LeaderElectionConfig{
-		Lock:          lock,
-		LeaseDuration: 15 * time.Second,
-		RenewDeadline: 10 * time.Second,
-		RetryPeriod:   2 * time.Second,
+		Lock:            lock,
+		ReleaseOnCancel: true,
+		LeaseDuration:   15 * time.Second,
+		RenewDeadline:   10 * time.Second,
+		RetryPeriod:     2 * time.Second,
 	}, nil
 }
 
