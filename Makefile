@@ -20,7 +20,7 @@ all: ${all}
 
 .PHONY: clean
 clean:
-	-rm -f ${BINARY}-* debug Gopkg.lock ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
+	-rm -f ${BINARY}-* debug go.sum ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
@@ -46,11 +46,6 @@ test: generate fmt vet manifests
 deepcopy:
 	./hack/update-codegen.sh
 
-${GOPATH}/bin/dep:
-	go env
-	-mkdir ${GOPATH}/bin
-	go get -v -u github.com/golang/dep/cmd/dep
-
 ${GOPATH}/bin/cfssl:
 	go env
 	-mkdir ${GOPATH}/bin
@@ -65,10 +60,6 @@ ${TLSintermidiate}: etc/mycerts/webhook.json
 
 kubernetes/ValidatingWebhookConfiguration.yaml:
 	sed -e "s/\$${caBundle}/$$(cat etc/mycerts/webhook.b64)/" <$@.template >$@
-
-.PHONY: depensure
-depensure: ${GOPATH}/bin/dep
-	${GOPATH}/bin/dep ensure -v
 
 # SOURCES := $(shell find . -type f -name '*.go')
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
