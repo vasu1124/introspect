@@ -31,7 +31,7 @@ RUN make $VERSION_TO_BUILD introspect-linux-amd64
 #RUN apk --no-cache add --update bash ca-certificates libc6-compat \
 #    && rm -rf /var/cache/apk/*
 
-EXPOSE 8080
+EXPOSE 9090
 
 # If you want to use the debugger, you need to modify  the
 # container and point it to the "dlv debug" command:

@@ -33,7 +33,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: 9090
           initialDelaySeconds: 15
           periodSeconds: 20
           timeoutSeconds: 1
@@ -41,7 +41,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /healthzr
-            port: 8080
+            port: 9090
           initialDelaySeconds: 20
           periodSeconds: 20
           timeoutSeconds: 1
