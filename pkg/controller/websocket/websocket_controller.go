@@ -46,7 +46,7 @@ func NewReconcileUselessMachine(n *ws.Notfier) *ReconcileUselessMachine {
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselesses/status,verbs=update;patch
 func (r *ReconcileUselessMachine) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ul := &introspectv1alpha1.UselessMachineList{}
-	if err := r.Client.List(context.TODO(), &client.ListOptions{}, ul); err != nil {
+	if err := r.Client.List(context.TODO(), ul, &client.ListOptions{}); err != nil {
 		return reconcile.Result{}, err
 	}
 

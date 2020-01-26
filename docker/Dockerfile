@@ -1,4 +1,4 @@
-FROM golang:1.12-stretch as builder
+FROM golang:1.13-stretch as builder
 ARG VERSION_TO_BUILD
 ENV VERSION_TO_BUILD=$VERSION_TO_BUILD
 LABEL maintainer="vasu1124@actvirtual.com" \
@@ -11,17 +11,17 @@ LABEL maintainer="vasu1124@actvirtual.com" \
       com.actvirtual.product="DemoSuite" 
 
 WORKDIR /go/src/github.com/vasu1124/introspect
+COPY go.mod .
 RUN go get -u github.com/go-delve/delve/cmd/dlv
 
 COPY tmpl tmpl
 COPY css css
 COPY cmd cmd
 COPY pkg pkg
-COPY vendor vendor
+#COPY vendor vendor
 COPY introspect.VERSION .
 COPY .git .
 COPY Makefile .
-COPY Gopkg.toml .
 
 #RUN make depensure clean
 RUN make $VERSION_TO_BUILD introspect-linux-amd64 
