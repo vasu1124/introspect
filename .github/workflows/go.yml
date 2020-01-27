@@ -25,7 +25,7 @@ jobs:
 
     - name: Build v1.0 the Docker image
       if: success()
-      run: docker build --file docker/Dockerfile.alpine --tag vasu1124/introspect:v1.0
+      run: docker build --file docker/Dockerfile.alpine --tag vasu1124/introspect:v1.0 .
     
     - name: Log into registry
       if: success()
