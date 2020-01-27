@@ -23,7 +23,7 @@ jobs:
     - name: Build v1.0
       run: go build -v -ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=v1.0 -X github.com/vasu1124/introspect/pkg/version.Commit=${{github.sha}} -X github.com/vasu1124/introspect/pkg/version.Branch=${{github.ref}}" -o introspect-linux-amd64 ./cmd/introspect
 
-    - name: Build v1.0 the Docker image
+    - name: Build Docker image v1.0
       if: success()
       run: docker build --file docker/Dockerfile.alpine --tag vasu1124/introspect:v1.0 .
     
@@ -31,6 +31,17 @@ jobs:
       if: success()
       run: docker login -u vasu1124 -p ${{secrets.docker_token}}
 
-    - name: Push v1.0 the Docker image
+    - name: Push Docker image v1.0
+      if: success()
+      run: docker push vasu1124/introspect:v1.0
+
+    - name: Build v2.0
+      run: go build -v -ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=v2.0 -X github.com/vasu1124/introspect/pkg/version.Commit=${{github.sha}} -X github.com/vasu1124/introspect/pkg/version.Branch=${{github.ref}}" -o introspect-linux-amd64 ./cmd/introspect
+
+    - name: Build Docker image v2.0
+      if: success()
+      run: docker build --file docker/Dockerfile.alpine --tag vasu1124/introspect:v2.0 .
+    
+    - name: Push Docker image v2.0
       if: success()
       run: docker push vasu1124/introspect:v1.0
