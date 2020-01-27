@@ -5,6 +5,9 @@ on:
     - master
     - release/*
 
+env:
+  DOCKERREPO: vasu1124
+
 jobs:
   build:
     name: Build
@@ -21,4 +24,16 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Build v1.0
-      run: go build -v -ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=v1.0 -X github.com/vasu1124/introspect/pkg/version.Commit={{github.sha}} -X github.com/vasu1124/introspect/pkg/version.Branch={{github.ref}}" -o introspect-linux-amd64 ./cmd/introspect
+      run: go build -v -ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=v1.0 -X github.com/vasu1124/introspect/pkg/version.Commit=${{github.sha}} -X github.com/vasu1124/introspect/pkg/version.Branch=${{github.ref}}" -o introspect-linux-amd64 ./cmd/introspect
+
+    - name: Build v1.0 the Docker image
+      if: success()
+      run: docker build --file docker/Dockerfile.alpine --tag ${{DOCKERREPO}}/introspect:v1.0
+    
+    - name: Log into registry
+      if: success()
+      run: docker login -u ${{DOCKERREPO}} -p ${{docker_token}}
+
+    - name: Push v1.0 the Docker image
+      if: success()
+      run: docker push ${{DOCKERREPO}}/introspect:v1.0
