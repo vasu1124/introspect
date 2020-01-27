@@ -33,7 +33,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: 9090
           initialDelaySeconds: 15
           periodSeconds: 20
           timeoutSeconds: 1
@@ -41,14 +41,14 @@ spec:
         readinessProbe:
           httpGet:
             path: /healthzr
-            port: 8080
+            port: 9090
           initialDelaySeconds: 16
           periodSeconds: 20
           timeoutSeconds: 1
           failureThreshold: 2
         ports:
         - name: introspect
-          containerPort: 8080
+          containerPort: 9090
         - name: debug
           containerPort: 3000
         volumeMounts:

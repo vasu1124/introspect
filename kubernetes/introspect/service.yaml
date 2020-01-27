@@ -7,18 +7,18 @@ metadata:
     visualize: 'true'
   annotations:
     prometheus.io/scrape: 'true'
-    prometheus.io/port: '8080'
+    prometheus.io/port: '9090'
     prometheus.io/path: '/metrics'
 spec:
   ports:
   - name: http
     port: 80
     protocol: TCP
-    targetPort: 8080
+    targetPort: 9090
   - name: http2
-    port: 8080
+    port: 9090
     protocol: TCP
-    targetPort: 8080
+    targetPort: 9090
   - name: https
     port: 443
     protocol: TCP

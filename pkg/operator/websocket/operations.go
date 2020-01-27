@@ -22,7 +22,7 @@ type Notfier struct {
 func NewNotifier(m *melody.Melody, c client.Client) *Notfier {
 	m.HandleConnect(func(s *melody.Session) {
 		ul := &introspect_v1alpha1.UselessMachineList{}
-		if err := c.List(context.TODO(), &client.ListOptions{}, ul); err != nil {
+		if err := c.List(context.TODO(), ul, &client.ListOptions{}); err != nil {
 			fmt.Printf("can't list ueslessmachines: %v", err)
 			return
 		}

@@ -20,7 +20,7 @@ all: ${all}
 
 .PHONY: clean
 clean:
-	-rm -f ${BINARY}-* debug Gopkg.lock ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
+	-rm -f ${BINARY}-* debug go.sum ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
@@ -46,11 +46,6 @@ test: generate fmt vet manifests
 deepcopy:
 	./hack/update-codegen.sh
 
-${GOPATH}/bin/dep:
-	go env
-	-mkdir ${GOPATH}/bin
-	go get -v -u github.com/golang/dep/cmd/dep
-
 ${GOPATH}/bin/cfssl:
 	go env
 	-mkdir ${GOPATH}/bin
@@ -65,10 +60,6 @@ ${TLSintermidiate}: etc/mycerts/webhook.json
 
 kubernetes/ValidatingWebhookConfiguration.yaml:
 	sed -e "s/\$${caBundle}/$$(cat etc/mycerts/webhook.b64)/" <$@.template >$@
-
-.PHONY: depensure
-depensure: ${GOPATH}/bin/dep
-	${GOPATH}/bin/dep ensure -v
 
 # SOURCES := $(shell find . -type f -name '*.go')
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
@@ -93,7 +84,7 @@ docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 		--build-arg no_proxy=${no_proxy} \
 		.
 	touch docker/scratch.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspectscratch:v1.0
+# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspectscratch:v1.0
 
 docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 	docker build -f docker/Dockerfile.alpine \
@@ -103,7 +94,7 @@ docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/alpine.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspect:v1.0
+# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspect:v1.0
 
 docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 	docker build -f docker/Dockerfile.ubuntu \
@@ -113,7 +104,7 @@ docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/ubuntu.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspectubuntu:v1.0
+# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspectubuntu:v1.0
 
 docker/opensuse.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.opensuse
 	docker build -f docker/Dockerfile.opensuse \
@@ -123,7 +114,7 @@ docker/opensuse.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.opensuse
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/opensuse.docker
-# docker run --rm -p 8081:8080 ${DOCKERREPO}/introspectopensuse:v1.0
+# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspectopensuse:v1.0
 
 .PHONY: v1.0
 v1.0:

@@ -1,4 +1,4 @@
-FROM alpine:3.9
+FROM alpine:3.11
 LABEL maintainer="vasu1124@actvirtual.com" \
       immutable.labels=true \
       org.opencontainers.image.vendor="actvirtual" \
@@ -15,5 +15,5 @@ RUN apk --no-cache add --update bash ca-certificates libc6-compat \
 COPY /introspect-linux-amd64 /
 COPY /tmpl /tmpl
 COPY /css /css
-EXPOSE 8080
+EXPOSE 9090
 CMD ["/introspect-linux-amd64"]
