@@ -1,9 +1,0 @@
-FROM golang:1.13
-LABEL maintainer="vasu1124@actvirtual.com"
-
-ARG VERSION_TO_BUILD
-ENV VERSION_TO_BUILD=$VERSION_TO_BUILD
-WORKDIR /go/src/github.com/vasu1124/introspect
-COPY . .
-
-CMD echo "Building $VERSION_TO_BUILD" && make depensure clean $VERSION_TO_BUILD introspect-linux-amd64 && cp -r introspect-linux-amd64 /infrabox/output
