@@ -39,7 +39,7 @@ func New() *Handler {
 	var h Handler
 	var err error
 
-	// Create the	 client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
+	// Create the client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
 	rc, err := config.GetConfig()
 	if err != nil {
 		log.Printf("[election] KubeConfig error: %v", err)
@@ -147,8 +147,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			<div class="container">
 				<body>
 				<h1>Introspection-{{.Version}}</h1>
+				I am an <b>{{.Hostname}}</b>.<br>
 				{{if eq .Fail true }}
-					No election could be negotiated
+					No election could be negotiated<br>
 				{{else}}
 					{{if eq .Leader true }}
 						I am an <b>active</b> Leader<br>
@@ -163,7 +164,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			</html>
   `)
 	if err != nil {
-		log.Println("[election] parse template:", err)
+		log.Println("[election] parse template: ", err)
 		fmt.Fprint(w, "[election] parse template: ", err)
 		return
 	}
@@ -173,13 +174,19 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Leader         bool
 		Fail           bool
 		LeaderElection *leaderelection.LeaderElector
+		Hostname       string
 	}
 
-	data := EnvData{version.Version, Leader, Fail, h.leaderElector}
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Println("[election] unable to get hostname: ", err)
+		fmt.Fprint(w, "[election] unable to get hostname: ", err)
+	}
+	data := EnvData{version.Version, Leader, Fail, h.leaderElector, hostname}
 
 	err = t.Execute(w, data)
 	if err != nil {
-		log.Println("[election] executing template:", err)
+		log.Println("[election] executing template: ", err)
 		fmt.Fprint(w, "[election] executing template: ", err)
 	}
 
