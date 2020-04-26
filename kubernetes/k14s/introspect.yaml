@@ -1,0 +1,302 @@
+#@ load("@ytt:data", "data")
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: #@ data.values.namespace
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: introspect-config
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.introspect_labels
+data:
+  #@yaml/text-templated-strings
+  config.json: |+
+    {
+      "Addrs": ["mongodb:(@= str(data.values.mongodb_port) @)"],
+      "Database": "guestbook",
+      "Timeout": 5000000000,
+      "FailFast": true
+    }
+  example.yaml: |+
+    foo: bar
+    exact: true
+    timeout: 18
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: introspect
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.introspect_labels
+spec:
+  replicas: 1
+  selector:
+    matchLabels: #@ data.values.introspect_labels
+  template:
+    metadata:
+      labels: #@ data.values.introspect_labels
+    spec:
+      containers:
+      - image: vasu1124/introspect:v1.0
+        imagePullPolicy: #@ data.values.imagePullPolicy
+        name: introspect
+        env:
+        - name: OSENV_EXAMPLE
+          value: some_value
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            cpu: 50m
+          limits:
+            cpu: 500m
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: #@ data.values.introspect_port
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthzr
+            port: #@ data.values.introspect_port
+          initialDelaySeconds: 16
+          periodSeconds: 20
+          timeoutSeconds: 1
+          failureThreshold: 2
+        ports:
+        - name: introspect
+          containerPort: #@ data.values.introspect_port
+        - name: debug
+          containerPort: 3000
+        volumeMounts:
+        - mountPath: /etc/secret
+          name: secret-volume
+          readOnly: true
+        - mountPath: /etc/config
+          name: config-volume
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: mongodb-secret
+      - name: config-volume
+        configMap:
+          name: introspect-config
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: introspect-lease
+  namespace: #@ data.values.namespace
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: introspect-lease-rolebinding
+  namespace: #@ data.values.namespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: introspect-lease
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: #@ data.values.namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: introspect-role
+rules:
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselessmachines
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselessmachines/status
+  verbs:
+  - update
+  - patch
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselesses
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselesses/status
+  verbs:
+  - update
+  - patch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - services
+  - configmaps
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: introspect-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: introspect-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: #@ data.values.namespace
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: uselessmachines.introspect.actvirtual.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.desiredState
+    description: Desired state
+    name: Desired
+    type: string
+  - JSONPath: .status.actualState
+    description: Actual state
+    name: Actual
+    type: string
+  - JSONPath: .status.message
+    description: Controller message
+    name: Message
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
+  group: introspect.actvirtual.com
+  names:
+    kind: UselessMachine
+    plural: uselessmachines
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            desiredState:
+              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                Important: Run "make" to regenerate code after modifying this file'
+              enum:
+              - "On"
+              - "Off"
+              type: string
+          required:
+          - desiredState
+          type: object
+        status:
+          properties:
+            actualState:
+              enum:
+              - "On"
+              - "Off"
+              type: string
+            message:
+              type: string
+          type: object
+  version: v1alpha1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: introspect
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.introspect_labels
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '(@= str(data.values.introspect_port)'
+    prometheus.io/path: '/metrics'
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: #@ data.values.introspect_port
+  - name: http2
+    port: #@ data.values.introspect_port
+    protocol: TCP
+    targetPort: #@ data.values.introspect_port
+  selector: #@ data.values.introspect_labels
+  type: ClusterIP

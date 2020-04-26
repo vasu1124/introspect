@@ -1,0 +1,13 @@
+#@data/values
+---
+namespace: "test"
+imagePullPolicy: IfNotPresent
+introspect_port: 9090
+introspect_labels:
+  app: "introspect"
+  visualize: "True"
+mongodb_port: 27017
+mongodb_labels:
+  app: "mongodb"
+persistent: false
+pvc_size: "5Gi"

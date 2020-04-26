@@ -1,0 +1,102 @@
+#@ load("@ytt:data", "data")
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.mongodb_labels
+spec:
+  replicas: 1
+  selector:
+    matchLabels: #@ data.values.mongodb_labels
+  template:
+    metadata:
+      labels: #@ data.values.mongodb_labels
+    spec:
+      containers:
+      - env:
+        - name: MONGODB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mongodb-secret
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mongodb-secret
+        - name: MONGODB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: mongodb-secret
+        - name: MONGODB_DATABASE
+          value: guestbook
+        image: bitnami/mongodb:4.2.6
+        imagePullPolicy: #@ data.values.imagePullPolicy
+        livenessProbe:
+          exec:
+            command:
+            - mongo
+            - --eval
+            - db.adminCommand('ping')
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: mongodb
+        ports:
+        - containerPort: #@ data.values.mongodb_port
+          name: mongodb
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - mongo
+            - --eval
+            - db.adminCommand('ping')
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /bitnami/mongodb
+          name: data
+      volumes:
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongodb-secret
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.mongodb_labels
+type: Opaque
+data:
+  password: c29tZS1pbXBvcnRhbnQtcGFzc3dvcmQ=
+  username: dmFzdTExMjQ=
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.mongodb_labels
+spec:
+  ports:
+  - name: mongodb
+    port: #@ data.values.mongodb_port
+    protocol: TCP
+    targetPort: mongodb
+  selector: #@ data.values.mongodb_labels
+  sessionAffinity: None
+  type: ClusterIP

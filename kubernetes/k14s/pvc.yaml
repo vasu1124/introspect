@@ -1,0 +1,35 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+
+#@ if data.values.persistent:
+
+#@overlay/match by=overlay.subset({"kind":"Deployment","metadata":{"name":"mongodb"}})
+---
+spec:
+  template:
+    spec:
+      volumes:
+      #@overlay/match by="name"
+      - name: data
+        #@overlay/remove
+        emptyDir: {} 
+        #@overlay/match missing_ok=True
+        persistentVolumeClaim:
+          claimName: mongodb
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.mongodb_labels
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: #@ data.values.pvc_size
+#!  storageClassName: default
+---
+#@ end
