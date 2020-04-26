@@ -41,7 +41,7 @@ spec:
       labels: #@ data.values.introspect_labels
     spec:
       containers:
-      - image: vasu1124/introspect:v1.0
+      - image: introspect
         imagePullPolicy: #@ data.values.imagePullPolicy
         name: introspect
         env:

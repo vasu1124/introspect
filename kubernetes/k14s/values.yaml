@@ -11,3 +11,6 @@ mongodb_labels:
   app: "mongodb"
 persistent: false
 pvc_size: "5Gi"
+VERSION: "v1.0"
+COMMIT: "0000000000000000000000000000000000000000"
+BRANCH: "master"

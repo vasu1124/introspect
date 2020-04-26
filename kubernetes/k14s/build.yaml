@@ -1,0 +1,18 @@
+#@ load("@ytt:data", "data")
+
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Sources
+sources:
+- image: introspect
+  path: ../..
+  docker:
+    build:
+      #@yaml/text-templated-strings
+      rawOptions: ["--build-arg", "VERSION=(@= str(data.values.VERSION) @)", "--build-arg", "COMMIT=(@= str(data.values.COMMIT) @)", "--build-arg", "BRANCH=(@= str(data.values.BRANCH) @)"]
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: ImageDestinations
+destinations:
+- image: introspect
+  newImage: vasu1124/introspect
