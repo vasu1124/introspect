@@ -67,11 +67,6 @@ func main() {
 		}
 	}()
 
-	go func() {
-		log.Printf("[introspect] serving HTTPS on port %d\n", *version.TLSPort)
-		log.Print(http.ListenAndServeTLS(fmt.Sprintf(":%d", *version.TLSPort), "etc/mycerts/webhook.pem", "etc/mycerts/webhook-key.pem", nil))
-	}()
-
 	log.Printf("[introspect] serving HTTP  on port %d\n", *version.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *version.Port), nil))
 }
