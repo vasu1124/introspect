@@ -1,15 +1,15 @@
 module github.com/vasu1124/introspect
 
-go 1.13
+go 1.14
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/go-containerregistry v0.0.0-20200424115305-087a4bdef7c4
+	github.com/google/go-containerregistry v0.0.0-20200425101607-48f605c3b60a
 	github.com/onsi/gomega v1.9.0
 	github.com/prometheus/client_golang v1.5.1
 	github.com/spf13/viper v1.6.3
-	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd
+	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/olahol/melody.v1 v1.0.0-20170518105555-d52139073376
