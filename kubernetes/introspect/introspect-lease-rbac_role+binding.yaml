@@ -6,7 +6,6 @@ rules:
 - apiGroups:
   - coordination.k8s.io
   resources:
-  - lease
   - leases
   verbs:
   - get
