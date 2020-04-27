@@ -1,0 +1,31 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+
+#@ if data.values.ingress:
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: introspect
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.introspect_labels
+  annotations:
+    cert.gardener.cloud/purpose: managed
+    kubernetes.io/ingress.class: #@ data.values.ingress_class
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/use-port-in-redirects: "true"
+spec:
+  tls:
+  - hosts:
+    - #@ data.values.ingress_dns
+    secretName: introspect-tls
+  rules:
+  - host: #@ data.values.ingress_dns
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: introspect
+          servicePort: 80
+---
+#@ end

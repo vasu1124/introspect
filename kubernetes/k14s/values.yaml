@@ -1,5 +1,11 @@
 #@data/values
 ---
+#! build metadata
+VERSION: "v1.0"
+COMMIT: "0000000000000000000000000000000000000000"
+BRANCH: "master"
+
+#! configurables
 namespace: "test"
 imagePullPolicy: IfNotPresent
 introspect_port: 9090
@@ -11,6 +17,6 @@ mongodb_labels:
   app: "mongodb"
 persistent: false
 pvc_size: "5Gi"
-VERSION: "v1.0"
-COMMIT: "0000000000000000000000000000000000000000"
-BRANCH: "master"
+ingress: false
+ingress_dns: "introspect.ingress.example.com"
+ingress_class: "nginx"
