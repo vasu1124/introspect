@@ -2,11 +2,9 @@ FROM golang:1.14-stretch as builder
 ARG VERSION=v0.0
 ARG COMMIT=0000000000000000000000000000000000000000
 ARG BRANCH=master
-# ENV VERSION_TO_BUILD=$VERSION_TO_BUILD
 
-# WORKDIR /go/src/github.com/vasu1124/introspect
 WORKDIR /introspect
-RUN GO111MODULE=off go get github.com/go-delve/delve/cmd/dlv
+# RUN GO111MODULE=off go get github.com/go-delve/delve/cmd/dlv
 COPY go.* ./
 COPY cmd cmd
 COPY pkg pkg
@@ -33,12 +31,13 @@ LABEL maintainer="vasu1124@actvirtual.com" \
 WORKDIR /introspect
 RUN apk --no-cache add --update bash ca-certificates libc6-compat \
     && rm -rf /var/cache/apk/*
-COPY --from=builder /go/bin/dlv ./
+# COPY --from=builder /go/bin/dlv ./
 COPY --from=builder /introspect/introspect-linux-amd64 ./
 COPY tmpl tmpl
 COPY css css
 
 EXPOSE 9090
+CMD ["./introspect-linux-amd64"]
 
 # If you want to use the debugger, you need to modify  the
 # container and point it to the "dlv debug" command:
@@ -46,5 +45,3 @@ EXPOSE 9090
 # application process will NOT start until the debugger is attached.)
 # EXPOSE 3000
 # CMD ["./dlv", "debug", "./cmd/introspect",  "--api-version=2", "--headless", "--listen=:3000", "--log"]
-
-CMD ["./introspect-linux-amd64"]
