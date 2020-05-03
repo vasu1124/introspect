@@ -52,4 +52,4 @@ jobs:
     
     - name: Push Docker image v2.0
       if: success()
-      run: docker push vasu1124/introspect:v1.0
+      run: docker push vasu1124/introspect:v2.0
