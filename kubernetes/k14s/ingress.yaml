@@ -23,7 +23,8 @@ spec:
   - host: #@ data.values.ingress_dns
     http:
       paths:
-      - path: /
+      - path: /.*
+        pathType: Prefix
         backend:
           serviceName: introspect
           servicePort: 80
