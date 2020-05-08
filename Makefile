@@ -20,7 +20,7 @@ all: ${all}
 
 .PHONY: clean
 clean:
-	-rm -f ${BINARY}-* debug go.sum ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
+	-rm -f ${BINARY}-* debug go.sum ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml kubernetes/k14s/kbld.lock.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests:
@@ -66,12 +66,14 @@ SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{e
 
 ${BINARY}-linux-${GOARCH}: ${SOURCES}
 	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect
-
-${BINARY}-linux-${GOARCH}-1.9: ${SOURCES}
-	docker run --rm -v ${GOPATH}:/go -w /go/src/actvirtual.com/inspect golang:1.9 go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect
+	rm -f kubernetes/k14s/kbld.lock.yaml
 
 ${BINARY}-darwin-${GOARCH}: ${SOURCES}
 	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd/introspect
+	rm -f kubernetes/k14s/kbld.lock.yaml
+
+deploy: kubernetes/k14s/kbld.lock.yaml
+	kubernetes/k14s/kapp-deploy.sh
 
 .PHONY: docker
 docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker docker/opensuse.docker
