@@ -11,6 +11,7 @@ metadata:
   labels: #@ data.values.introspect_labels
   annotations:
     cert.gardener.cloud/purpose: managed
+    cert.gardener.cloud/issuer: #@ data.values.cert_issuer
     kubernetes.io/ingress.class: #@ data.values.ingress_class
     ingress.kubernetes.io/ssl-redirect: "true"
     ingress.kubernetes.io/use-port-in-redirects: "true"
