@@ -1,0 +1,64 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+
+#@ if data.values.istio:
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: introspect-gw
+  namespace: #@ data.values.namespace
+spec:
+  selector:
+    istio: ingressgateway #! use istio default ingress gateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+    hosts:
+    - #@ data.values.ingress_dns
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: wildcard-tls
+    hosts:
+    - #@ data.values.ingress_dns
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: introspect-vs
+  namespace: #@ data.values.namespace
+spec:
+  hosts:
+  - #@ data.values.ingress_dns
+  gateways:
+  - introspect-gw
+  http:
+  - match:
+    - uri:
+        regex: /.*
+    route:
+    - destination:
+        port:
+          number: 80
+        host: introspect
+---
+#! apiVersion: cert.gardener.cloud/v1alpha1
+#! kind: Certificate
+#! metadata:
+#!   name: introspect-cert
+#!   namespace: istio-system
+#! spec:
+#!   commonName: #@ data.values.ingress_dns
+#!   issuerRef:
+#!     name: #@ data.values.cert_issuer
+#!   secretName: introspect-tls2
+#! ---
+#@ end

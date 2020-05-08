@@ -5,6 +5,10 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: #@ data.values.namespace
+#@ if data.values.istio:
+  labels:
+    istio-injection: enabled
+#@ end
 ---
 apiVersion: v1
 kind: ConfigMap

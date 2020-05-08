@@ -18,5 +18,8 @@ mongodb_labels:
 persistent: false
 pvc_size: "5Gi"
 ingress: false
-ingress_dns: "introspect.ingress.example.com"
 ingress_class: "nginx"
+istio: false
+cert_issuer: "myissuer-staging"
+ingress_dns: "introspect.ingress.example.com"
+host_dns: "*.ingress.example.com"
