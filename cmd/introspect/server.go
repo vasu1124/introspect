@@ -46,7 +46,9 @@ func main() {
 	http.Handle("/healthzr", logger.NewRequestLoggerHandler(healthz.New()))
 	log.Println("[introspect] registered /healthz|r")
 
-	http.HandleFunc("/favicon.ico", http.NotFound)
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "tmpl"+r.URL.Path)
+	})
 	http.Handle("/css/", logger.NewRequestLoggerHandler(http.StripPrefix("/css/", http.FileServer(http.Dir("css")))))
 
 	//register in background due to possible timeouts in dependant backend services
