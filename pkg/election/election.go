@@ -78,7 +78,6 @@ func New() *Handler {
 		},
 		OnNewLeader: func(identity string) {
 			Fail = false
-			Leader = false
 			log.Printf("[election] Got informed: %s has leadership.\n", identity)
 		},
 	}
