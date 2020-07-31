@@ -72,7 +72,7 @@ ${BINARY}-darwin-${GOARCH}: ${SOURCES}
 	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd/introspect
 	rm -f kubernetes/k14s/kbld.lock.yaml
 
-deploy: kubernetes/k14s/kbld.lock.yaml
+deploy:
 	kubernetes/k14s/kapp-deploy.sh
 
 .PHONY: docker
