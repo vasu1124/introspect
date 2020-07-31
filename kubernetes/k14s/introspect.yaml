@@ -43,6 +43,8 @@ spec:
   template:
     metadata:
       labels: #@ data.values.introspect_labels
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundPorts: "443"
     spec:
       containers:
       - image: introspect
