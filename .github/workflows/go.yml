@@ -67,7 +67,7 @@ jobs:
           --tag ${DOCKER_IMAGE}:v1.0 \
           --build-arg VERSION=v1.0 \
           --build-arg COMMIT=${{github.sha}} \
-          --build-arg BRANCH=${{github.ref}} \
+          --build-arg BRANCH=${GITHUB_REF##*/} \
           --file ./Dockerfile .
 
     - name: Inspect image
@@ -86,7 +86,7 @@ jobs:
           --tag ${DOCKER_IMAGE}:v2.0 \
           --build-arg VERSION=v2.0 \
           --build-arg COMMIT=${{github.sha}} \
-          --build-arg BRANCH=${{github.ref}} \
+          --build-arg BRANCH=${GITHUB_REF##*/} \
           --file ./Dockerfile .
 
     - name: Inspect image
