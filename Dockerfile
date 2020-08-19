@@ -15,7 +15,7 @@ RUN go build \
     -X github.com/vasu1124/introspect/pkg/version.Commit=${COMMIT} \
     -X github.com/vasu1124/introspect/pkg/version.Branch=${BRANCH} \
     " \
-    -o introspect-linux-amd64 ./cmd/introspect
+    -o introspect-linux ./cmd/introspect
 
 # final stage
 FROM alpine
@@ -32,12 +32,12 @@ WORKDIR /introspect
 RUN apk --no-cache add --update bash ca-certificates libc6-compat \
     && rm -rf /var/cache/apk/*
 # COPY --from=builder /go/bin/dlv ./
-COPY --from=builder /introspect/introspect-linux-amd64 ./
+COPY --from=builder /introspect/introspect-linux ./
 COPY tmpl tmpl
 COPY css css
 
 EXPOSE 9090
-CMD ["./introspect-linux-amd64"]
+CMD ["./introspect-linux"]
 
 # If you want to use the debugger, you need to modify  the
 # container and point it to the "dlv debug" command:
