@@ -1,4 +1,5 @@
 DOCKERREPO:=vasu1124
+DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm/v7 #linux/arm64
 
 # nothing to edit beyond this point
 BINARY:=introspect
@@ -23,22 +24,27 @@ clean:
 	-rm -f ${BINARY}-* debug go.sum ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml kubernetes/k14s/kbld.lock.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
+.PHONY: manifests
 manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
 
 # Run go fmt against code
+.PHONY: fmt
 fmt:
 	go fmt ./pkg/... ./cmd/...
 
 # Run go vet against code
+.PHONY: vet
 vet:
 	go vet ./pkg/... ./cmd/...
 
 # Generate code
+.PHONY: generate
 generate:
 	go generate ./pkg/... ./cmd/...
 
 # Run tests
+.PHONY: test
 test: generate fmt vet manifests
 	go test ./pkg/... ./cmd/... -coverprofile cover.out
 
@@ -72,6 +78,31 @@ ${BINARY}-darwin-${GOARCH}: ${SOURCES}
 	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd/introspect
 	rm -f kubernetes/k14s/kbld.lock.yaml
 
+.PHONY: build
+build: ${SOURCES}
+	docker build \
+		--tag ${DOCKERREPO}/introspect:${VERSION} \
+		--build-arg VERSION=${VERSION} \
+		--build-arg COMMIT=${COMMIT} \
+		--build-arg BRANCH=${BRANCH} \
+		--file Dockerfile \
+		.
+	docker manifest inspect ${DOCKERREPO}/introspect:${VERSION}
+
+.PHONY: buildx
+buildx: ${SOURCES}
+	docker buildx build \
+		--output "type=image,push=false" \
+		--platform ${DOCKER_TARGET_PLATFORM} \
+		--tag ${DOCKERREPO}/introspect:${VERSION} \
+		--build-arg VERSION=${VERSION} \
+		--build-arg COMMIT=${COMMIT} \
+		--build-arg BRANCH=${BRANCH} \
+		--file Dockerfile \
+		.
+	docker buildx imagetools inspect ${DOCKERREPO}/introspect:${VERSION}
+
+.PHONY: deploy
 deploy:
 	kubernetes/k14s/kapp-deploy.sh
 
@@ -80,43 +111,39 @@ docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker docker/o
 
 docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 	docker build -f docker/Dockerfile.scratch \
-		-t="${DOCKERREPO}/introspectscratch:${VERSION}" \
+		--tag ${DOCKERREPO}/introspect-scratch:${VERSION} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 		.
 	touch docker/scratch.docker
-# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspectscratch:v1.0
 
 docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 	docker build -f docker/Dockerfile.alpine \
-		-t="${DOCKERREPO}/introspect:${VERSION}" \
+		--tag ${DOCKERREPO}/introspect:${VERSION} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/alpine.docker
-# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspect:v1.0
 
 docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 	docker build -f docker/Dockerfile.ubuntu \
-		-t="${DOCKERREPO}/introspectubuntu:${VERSION}" \
+		--tag ${DOCKERREPO}/introspect-ubuntu:${VERSION} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/ubuntu.docker
-# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspectubuntu:v1.0
 
 docker/opensuse.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.opensuse
 	docker build -f docker/Dockerfile.opensuse \
-		-t="${DOCKERREPO}/introspectopensuse:${VERSION}" \
+		--tag ${DOCKERREPO}/introspect-opensuse:${VERSION} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/opensuse.docker
-# docker run --rm -p 9091:9090 ${DOCKERREPO}/introspectopensuse:v1.0
 
 .PHONY: v1.0
 v1.0:
