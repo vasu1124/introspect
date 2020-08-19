@@ -12,9 +12,21 @@ jobs:
     env:
       DOCKER_REGISTRY: docker.io      
       DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/introspect
-      DOCKER_TARGET_PLATFORM: linux/amd64,linux/arm64,linux/arm/v7
+      # linux/arm64
+      DOCKER_TARGET_PLATFORM: linux/amd64,linux/arm/v7 
 
     steps:
+
+    - name: Check out cache
+      uses: actions/cache@v1
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/vendor
+          /tmp/.buildx-cache
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
 
     - name: Set up Go
       uses: actions/setup-go@v1
@@ -31,19 +43,8 @@ jobs:
     - name: Available platforms
       run: echo ${{ steps.buildx.outputs.platforms }}
 
-    - name: Check out code into the Go module directory
+    - name: Check out code
       uses: actions/checkout@v1
-
-    - name: Check out cache
-      uses: actions/cache@v1
-      with:
-        path: |
-          ~/go/pkg/mod
-          ~/vendor
-          /tmp/.buildx-cache
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
     
     - name: go mod vendor
       run: go mod vendor
@@ -55,7 +56,8 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
 
-    - name: Docker Buildx (build) v1.0
+    - name: Docker Buildx (build+push) v1.0
+      if: success()
       run: |
         docker buildx build \
           --cache-from "type=local,src=/tmp/.buildx-cache" \
@@ -69,5 +71,25 @@ jobs:
           --file ./Dockerfile .
 
     - name: Inspect image
+      if: success()
       run: |
         docker buildx imagetools inspect ${DOCKER_IMAGE}:v1.0
+
+    - name: Docker Buildx (build+push) v2.0
+      if: success()
+      run: |
+        docker buildx build \
+          --cache-from "type=local,src=/tmp/.buildx-cache" \
+          --cache-to "type=local,dest=/tmp/.buildx-cache" \
+          --output "type=image,push=true" \
+          --platform ${DOCKER_TARGET_PLATFORM} \
+          --tag ${DOCKER_IMAGE}:v2.0 \
+          --build-arg VERSION=v2.0 \
+          --build-arg COMMIT=${{github.sha}} \
+          --build-arg BRANCH=${{github.ref}} \
+          --file ./Dockerfile .
+
+    - name: Inspect image
+      if: success()
+      run: |
+        docker buildx imagetools inspect ${DOCKER_IMAGE}:v2.0
