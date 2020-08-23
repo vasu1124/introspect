@@ -6,6 +6,8 @@ metadata:
   name: mongodb
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: mongodb
@@ -33,7 +35,7 @@ spec:
               name: mongodb-secret
         - name: MONGODB_DATABASE
           value: guestbook
-        image: bitnami/mongodb:3.4.7-r0
+        image: bitnami/mongodb:latest
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
