@@ -6,9 +6,12 @@ bases:
 - ../mongodb
 - ../introspect
 
-# namespace: introspect
+namespace: default
 
-#images:
-#- name: introspect
-#  newName: vasu1124/introspect
-#  newTag: v1.0
+images:
+- name: vasu1124/introspect:v1.0
+  newName: vasu1124/introspect
+  newTag: "v1.0"
+- name: bitnami/mongodb:latest
+  newName: bitnami/mongodb
+  newTag: "4.2"
