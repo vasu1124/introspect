@@ -1,6 +1,0 @@
-apiVersion: introspect.actvirtual.com/v1alpha1
-kind: UselessMachine
-metadata:
-  name: machine-2
-spec:
-  desiredState: "Off"
