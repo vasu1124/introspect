@@ -1,0 +1,24 @@
+# permissions for end users to edit uselessmachines.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: uselessmachine-editor-role
+rules:
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselessmachines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselessmachines/status
+  verbs:
+  - get

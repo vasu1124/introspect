@@ -23,34 +23,29 @@ all: ${all}
 clean:
 	-rm -f ${BINARY}-* debug go.sum ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml kubernetes/k14s/kbld.lock.yaml
 
-# Generate manifests e.g. CRD, RBAC etc.
+# kubebuilder: Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
 manifests:
-	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go all
-
-# Run go fmt against code
-.PHONY: fmt
-fmt:
-	go fmt ./pkg/... ./cmd/...
-
-# Run go vet against code
-.PHONY: vet
-vet:
-	go vet ./pkg/... ./cmd/...
+	cd pkg/operator/useless; make manifests
 
 # Generate code
 .PHONY: generate
 generate:
-	go generate ./pkg/... ./cmd/...
+	cd pkg/operator/useless; make generate
+
+# Run go fmt against code
+fmt:
+	go fmt ./...
+
+# Run go vet against code
+vet:
+	go vet ./...
 
 # Run tests
 .PHONY: test
 test: generate fmt vet manifests
-	go test ./pkg/... ./cmd/... -coverprofile cover.out
+	go test ./... -coverprofile cover.out
 
-.PHONY: deepcopy
-deepcopy:
-	./hack/update-codegen.sh
 
 ${GOPATH}/bin/cfssl:
 	go env

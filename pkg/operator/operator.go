@@ -3,25 +3,36 @@ package operator
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
+	"os"
 
-	"github.com/vasu1124/introspect/pkg/apis"
-	introspect_v1alpha1 "github.com/vasu1124/introspect/pkg/apis/introspect/v1alpha1"
-	"github.com/vasu1124/introspect/pkg/controller/useless"
-	websocket_controller "github.com/vasu1124/introspect/pkg/controller/websocket"
+	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
 	"github.com/vasu1124/introspect/pkg/operator/websocket"
-	melody "gopkg.in/olahol/melody.v1"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/vasu1124/introspect/pkg/operator/useless/controllers"
 	"github.com/vasu1124/introspect/pkg/version"
+	melody "gopkg.in/olahol/melody.v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	controller_runtime "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 // Handler .
 type Handler struct {
 	Melody *melody.Melody
+}
+
+var (
+	scheme = runtime.NewScheme()
+	log    = controller_runtime.Log.WithName("operator")
+)
+
+func init() {
+	_ = clientgoscheme.AddToScheme(scheme)
+
+	_ = uselessmachinev1alpha1.AddToScheme(scheme)
+	// +kubebuilder:scaffold:scheme
 }
 
 // New .
@@ -31,42 +42,41 @@ func New() *Handler {
 	// TODO: use gin
 	// r := gin.Default()
 	h.Melody = melody.New()
-	mgr, err := manager.New(config.GetConfigOrDie(), manager.Options{})
+
+	namespace, exists := os.LookupEnv("NAMESPACE")
+	if !exists {
+		namespace = "default"
+	}
+
+	controller_runtime.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	mgr, err := controller_runtime.NewManager(controller_runtime.GetConfigOrDie(), controller_runtime.Options{
+		Scheme:                  scheme,
+		MetricsBindAddress:      "0", //turn off,
+		LeaderElection:          true,
+		LeaderElectionNamespace: namespace,
+		LeaderElectionID:        "useless.introspect.actvirtual.com",
+	})
 	if err != nil {
-		log.Printf("[operator] could not create manager: %v", err)
+		log.Error(err, "unable to start manager")
 		return nil
 	}
 
-	// Setup Scheme for all resources
-	log.Println("[operator] setting up scheme")
-	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
-		log.Printf("[operator] unable add APIs to scheme :%v", err)
+	if err = (&controllers.UselessMachineReconciler{
+		Client:   mgr.GetClient(),
+		Log:      controller_runtime.Log.WithName("controllers").WithName("UselessMachine"),
+		Scheme:   mgr.GetScheme(),
+		Notifier: websocket.NewNotifier(h.Melody, mgr.GetClient()),
+	}).SetupWithManager(mgr); err != nil {
+		log.Error(err, "unable to create controller", "controller", "UselessMachine")
 		return nil
 	}
-
-	log.Println("[operator] registering components.")
-	_, err = builder.
-		ControllerManagedBy(mgr).
-		For(&introspect_v1alpha1.UselessMachine{}).
-		Build(&useless.ReconcileUselessMachine{})
-	if err != nil {
-		log.Printf("[operator] could not create useless controller: %v", err)
-		return nil
-	}
-
-	n := websocket.NewNotifier(h.Melody, mgr.GetClient())
-	_, err = builder.
-		ControllerManagedBy(mgr).
-		For(&introspect_v1alpha1.UselessMachine{}).
-		Build(websocket_controller.NewReconcileUselessMachine(n))
-	if err != nil {
-		log.Printf("[operator] could not create webhook controller: %v", err)
-		return nil
-	}
+	// +kubebuilder:scaffold:builder
 
 	go func() {
-		if err := mgr.Start(nil); err != nil {
-			log.Printf("[operator] could not create start manager: %v", err)
+		log.Info("starting manager")
+		if err := mgr.Start(controller_runtime.SetupSignalHandler()); err != nil {
+			log.Error(err, "problem running manager")
 		}
 	}()
 
@@ -86,14 +96,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	homeTemplate, err := template.ParseFiles("tmpl/operator.html")
 	if err != nil {
 		fmt.Fprint(w, "[operator] parsing template: ", err)
-		log.Println("[operator] parsing template: ", err)
+		log.Error(err, "[operator] parsing template")
 		return
 	}
 
 	err = homeTemplate.Execute(w, data)
 	if err != nil {
 		fmt.Fprint(w, "[operator] executing template: ", err)
-		log.Println("[operator] executing template: ", err)
+		log.Error(err, "[operator] executing template")
 	}
 
 }

@@ -1,0 +1,7 @@
+domain: actvirtual.com
+repo: github.com/vasu1124/introspect/pkg/operator/useless
+resources:
+- group: introspect
+  kind: UselessMachine
+  version: v1alpha1
+version: "2"

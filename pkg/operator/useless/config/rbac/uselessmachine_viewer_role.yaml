@@ -1,0 +1,20 @@
+# permissions for end users to view uselessmachines.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: uselessmachine-viewer-role
+rules:
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselessmachines
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - introspect.actvirtual.com
+  resources:
+  - uselessmachines/status
+  verbs:
+  - get

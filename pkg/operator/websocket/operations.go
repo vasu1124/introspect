@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	introspect_v1alpha1 "github.com/vasu1124/introspect/pkg/apis/introspect/v1alpha1"
+	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
 	melody "gopkg.in/olahol/melody.v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -21,7 +21,7 @@ type Notifier struct {
 // NewNotifier .
 func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 	m.HandleConnect(func(s *melody.Session) {
-		ul := &introspect_v1alpha1.UselessMachineList{}
+		ul := &uselessmachinev1alpha1.UselessMachineList{}
 		if err := c.List(context.TODO(), ul, &client.ListOptions{}); err != nil {
 			fmt.Printf("can't list ueslessmachines: %v", err)
 			return
@@ -43,7 +43,7 @@ func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 			return
 		}
 		ctx := context.TODO()
-		useless := &introspect_v1alpha1.UselessMachine{}
+		useless := &uselessmachinev1alpha1.UselessMachine{}
 		if err := c.Get(ctx, client.ObjectKey{Name: message.Name, Namespace: message.Namespace}, useless); err != nil {
 			fmt.Printf("can't get uselessmachine: %v", err)
 			return
@@ -66,7 +66,7 @@ func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 }
 
 // BroadcastUpdates to all
-func (n *Notifier) BroadcastUpdates(ul *introspect_v1alpha1.UselessMachineList) error {
+func (n *Notifier) BroadcastUpdates(ul *uselessmachinev1alpha1.UselessMachineList) error {
 	b, err := json.Marshal(ul)
 	if err != nil {
 		return err
