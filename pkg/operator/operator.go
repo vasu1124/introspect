@@ -58,17 +58,17 @@ func New() *Handler {
 		LeaderElectionID:        "useless.introspect.actvirtual.com",
 	})
 	if err != nil {
-		log.Error(err, "unable to start manager")
+		log.Error(err, "unable to start manager", "operator", "UselessMachine")
 		return nil
 	}
 
 	if err = (&controllers.UselessMachineReconciler{
 		Client:   mgr.GetClient(),
-		Log:      controller_runtime.Log.WithName("controllers").WithName("UselessMachine"),
+		Log:      controller_runtime.Log.WithName("controller").WithName("UselessMachine"),
 		Scheme:   mgr.GetScheme(),
 		Notifier: websocket.NewNotifier(h.Melody, mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
-		log.Error(err, "unable to create controller", "controller", "UselessMachine")
+		log.Error(err, "unable to create controller", "operator", "UselessMachine")
 		return nil
 	}
 	// +kubebuilder:scaffold:builder
@@ -76,7 +76,7 @@ func New() *Handler {
 	go func() {
 		log.Info("starting manager")
 		if err := mgr.Start(controller_runtime.SetupSignalHandler()); err != nil {
-			log.Error(err, "problem running manager")
+			log.Error(err, "problem running manager", "operator", "UselessMachine")
 		}
 	}()
 
