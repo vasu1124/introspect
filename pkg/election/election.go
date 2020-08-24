@@ -103,7 +103,7 @@ func makeLeaderElectionConfig(client *clientset.Clientset, recorder record.Event
 
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
-			Name:      "introspect-config",
+			Name:      "election.introspect.actvirtual.com",
 			Namespace: namespace,
 		},
 		Client: client.CoordinationV1(),
