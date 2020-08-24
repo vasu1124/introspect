@@ -10,16 +10,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var (
-	UIMessage = "State updated by UI"
-)
+var uiMessage = "State updated by UI"
 
-type Notfier struct {
+//Notifier struct
+type Notifier struct {
 	websocket *melody.Melody
 	client    client.Client
 }
 
-func NewNotifier(m *melody.Melody, c client.Client) *Notfier {
+// NewNotifier .
+func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 	m.HandleConnect(func(s *melody.Session) {
 		ul := &introspect_v1alpha1.UselessMachineList{}
 		if err := c.List(context.TODO(), ul, &client.ListOptions{}); err != nil {
@@ -51,9 +51,10 @@ func NewNotifier(m *melody.Melody, c client.Client) *Notfier {
 		if useless.Status.ActualState == nil ||
 			useless.Status.Message == nil ||
 			*useless.Status.ActualState != message.State ||
-			*useless.Status.Message != UIMessage {
+			*useless.Status.Message != uiMessage {
+
 			useless.Status.ActualState = &message.State
-			useless.Status.Message = &UIMessage
+			useless.Status.Message = &uiMessage
 			if err := c.Status().Update(ctx, useless); err != nil {
 				fmt.Printf("can't update uselessmachine: %v", err)
 				return
@@ -61,10 +62,11 @@ func NewNotifier(m *melody.Melody, c client.Client) *Notfier {
 		}
 
 	})
-	return &Notfier{m, c}
+	return &Notifier{m, c}
 }
 
-func (n *Notfier) BroadcastUpdates(ul *introspect_v1alpha1.UselessMachineList) error {
+// BroadcastUpdates to all
+func (n *Notifier) BroadcastUpdates(ul *introspect_v1alpha1.UselessMachineList) error {
 	b, err := json.Marshal(ul)
 	if err != nil {
 		return err

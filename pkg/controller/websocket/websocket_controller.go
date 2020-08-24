@@ -29,11 +29,11 @@ import (
 // ReconcileUselessMachine reconciles a Useless object
 type ReconcileUselessMachine struct {
 	client.Client
-	notifier *ws.Notfier
+	notifier *ws.Notifier
 }
 
 // NewReconcileUselessMachine ...
-func NewReconcileUselessMachine(n *ws.Notfier) *ReconcileUselessMachine {
+func NewReconcileUselessMachine(n *ws.Notifier) *ReconcileUselessMachine {
 	return &ReconcileUselessMachine{notifier: n}
 }
 
