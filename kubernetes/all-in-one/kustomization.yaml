@@ -6,7 +6,7 @@ bases:
 - ../mongodb
 - ../introspect
 
-namespace: default
+# namespace: test
 
 images:
 - name: vasu1124/introspect:v1.0
