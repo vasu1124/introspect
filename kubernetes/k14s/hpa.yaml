@@ -1,0 +1,21 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+
+#@ if data.values.hpa:
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: introspect
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.introspect_labels
+spec:
+  maxReplicas: 8
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: introspect
+  targetCPUUtilizationPercentage: 50
+---
+#@ end

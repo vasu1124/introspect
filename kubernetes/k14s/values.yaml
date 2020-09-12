@@ -17,6 +17,7 @@ mongodb_labels:
   app: "mongodb"
 persistent: false
 pvc_size: "5Gi"
+hpa: true
 ingress: false
 ingress_class: "nginx"
 istio: false
