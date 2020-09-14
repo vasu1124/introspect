@@ -8,6 +8,7 @@ metadata:
   namespace: #@ data.values.namespace
   labels: #@ data.values.mongodb_labels
 spec:
+  progressDeadlineSeconds: 600
   replicas: 1
   selector:
     matchLabels: #@ data.values.mongodb_labels
@@ -17,6 +18,18 @@ spec:
     spec:
       containers:
       - env:
+        - name: BITNAMI_DEBUG
+          value: "false"
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "no"
+        - name: MONGODB_SYSTEM_LOG_VERBOSITY
+          value: "0"
+        - name: MONGODB_DISABLE_SYSTEM_LOG
+          value: "yes"
+        - name: MONGODB_ENABLE_IPV6
+          value: "no"
+        - name: MONGODB_ENABLE_DIRECTORY_PER_DB
+          value: "no"
         - name: MONGODB_USERNAME
           valueFrom:
             secretKeyRef:
@@ -34,7 +47,7 @@ spec:
               name: mongodb-secret
         - name: MONGODB_DATABASE
           value: guestbook
-        image: bitnami/mongodb:4.2.6
+        image: bitnami/mongodb:latest
         imagePullPolicy: #@ data.values.imagePullPolicy
         livenessProbe:
           exec:
@@ -63,6 +76,8 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
+        securityContext:
+          runAsUser: 1001
         resources:
           requests:
             cpu: 100m
@@ -73,6 +88,8 @@ spec:
       volumes:
       - name: data
         emptyDir: {}
+      securityContext:
+        fsGroup: 1001 
 ---
 apiVersion: v1
 kind: Secret
