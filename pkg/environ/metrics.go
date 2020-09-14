@@ -3,8 +3,8 @@ package environ
 import "github.com/prometheus/client_golang/prometheus"
 
 const (
-	namespace = "environ"
-	subsystem = "http"
+	namespace = "introspect"
+	subsystem = "environ"
 )
 
 var (
