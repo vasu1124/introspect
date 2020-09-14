@@ -4,33 +4,6 @@
 #@ if data.values.istio:
 ---
 apiVersion: networking.istio.io/v1beta1
-kind: Gateway
-metadata:
-  name: introspect-gw
-  namespace: #@ data.values.namespace
-spec:
-  selector:
-    istio: ingressgateway #! use istio default ingress gateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    tls:
-      httpsRedirect: true
-    hosts:
-    - #@ data.values.ingress_dns
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      credentialName: wildcard-tls
-    hosts:
-    - #@ data.values.ingress_dns
----
-apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: introspect-vs
@@ -39,7 +12,7 @@ spec:
   hosts:
   - #@ data.values.ingress_dns
   gateways:
-  - introspect-gw
+  - #@ data.values.istio_gw
   http:
   - match:
     - uri:
@@ -49,7 +22,34 @@ spec:
         port:
           number: 9090
         host: introspect
----
+#! ---
+#! apiVersion: networking.istio.io/v1beta1
+#! kind: Gateway
+#! metadata:
+#!   name: #@ data.values.istio_gw
+#!   namespace: istio-system
+#! spec:
+#!   selector:
+#!     istio: ingressgateway #! use istio default ingress gateway
+#!   servers:
+#!   - port:
+#!       number: 80
+#!       name: http
+#!       protocol: HTTP
+#!     tls:
+#!       httpsRedirect: true
+#!     hosts:
+#!     - #@ data.values.host_dns
+#!   - port:
+#!       number: 443
+#!       name: https
+#!       protocol: HTTPS
+#!     tls:
+#!       mode: SIMPLE
+#!       credentialName: wildcard-tls
+#!     hosts:
+#!     - #@ data.values.host_dns
+#! ---
 #! apiVersion: cert.gardener.cloud/v1alpha1
 #! kind: Certificate
 #! metadata:

@@ -6,7 +6,7 @@ COMMIT: "0000000000000000000000000000000000000000"
 BRANCH: "master"
 
 #! configurables
-namespace: "test"
+namespace: "demo"
 imagePullPolicy: IfNotPresent
 introspect_port: 9090
 introspect_labels:
@@ -24,3 +24,4 @@ istio: false
 cert_issuer: "myissuer-staging"
 ingress_dns: "introspect.ingress.example.com"
 host_dns: "*.ingress.example.com"
+istio_gw: "istio-system/garden_gw"
