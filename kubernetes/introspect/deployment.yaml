@@ -12,6 +12,8 @@ spec:
       labels:
         app: introspect
         visualize: 'true'
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundPorts: "443"
     spec:
       containers:
       - image: vasu1124/introspect:v1.0
