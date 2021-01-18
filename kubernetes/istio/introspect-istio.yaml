@@ -1,17 +1,54 @@
-apiVersion: extensions/v1beta1
-kind: Ingress
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: introspect-istio
-  annotations:
-    kubernetes.io/ingress.class: "istio"
+  name: default
   labels:
-    app: introspect
+    istio-injection: disabled
+    app.kubernetes.io/instance: introspect
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: garden-gw
+  namespace: istio-system
 spec:
-  rules:
-  - host: introspect.istio.vasu1124.k8s.example.com
-    http:
-      paths:
-      - path: /.*
-        backend:
-          serviceName: introspect
-          servicePort: 80
+  selector:
+    istio: ingressgateway #! use istio default ingress gateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+    hosts:
+    - "*.istio.example.com"
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: wildcard-tls
+    hosts:
+    - "*.istio.example.com"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: introspect-vs
+  namespace: default
+spec:
+  hosts:
+  - "introspect.istio.example.com"
+  gateways:
+  - istio-system/garden-gw
+  http:
+  - match:
+    - uri:
+        regex: /.*
+    route:
+    - destination:
+        port:
+          number: 9090
+        host: introspect
