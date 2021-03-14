@@ -6,4 +6,4 @@ docker run -d \
      -e MONGODB_PASSWORD=some-important-password \
      -e MONGODB_ROOT_PASSWORD=some-important-password \
      -e MONGODB_DATABASE=guestbook \
-     bitnami/mongodb:3.4.7-r0
+     bitnami/mongodb:latest
