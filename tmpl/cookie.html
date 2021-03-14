@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
     <style>
       {{if eq .Version "v1.0" }}
       body { background-color: #F0FFF0; }
@@ -18,25 +18,38 @@
   </div>
 
   <form action="/cookie" method="post">
-    <div class="row">
-      <div class="form-group col-md-3">
-        <label for="cookie" class="col-form-label">Cookie</label>
-        <input type="text" class="form-control" name="cookie" placeholder="Your cookie">
+    <fieldset class="form-group border px-3">
+      <legend class="w-auto px-2">Set Cookie</legend>
+      <div class="row">
+        <div class="form-group col-md-3">
+          <label for="cookie" class="col-form-label">Cookie</label>
+          <input type="text" list="cookie" class="form-control" name="cookie" placeholder="Your cookie">
+        </div>
+        <div class="form-group col-md-3">
+          <label for="value" class="col-form-label">Value</label>
+          <input type="text" list="value" class="form-control" name="value" placeholder="Your value">
+        </div>
+        <div class="form-group col-md-2">
+          <label for="expiry" class="col-form-label">Expiry [sec]</label>
+          <input type="text" class="form-control" name="expiry" placeholder="Expiry" value="60">
+        </div>
       </div>
-      <div class="form-group col-md-3">
-        <label for="value" class="col-form-label">Value</label>
-        <input type="text" class="form-control" name="value" placeholder="Your value">
+      <div class="row">
+        <div class="form-group col-md-1">
+          <button type="submit" class="btn btn-primary">set cookie</button>
+        </div>
       </div>
-      <div class="form-group col-md-2">
-        <label for="expiry" class="col-form-label">Expiry [sec]</label>
-        <input type="text" class="form-control" name="expiry" placeholder="Expiry" value="60">
-      </div>
-    </div>
-    <div class="row">
-      <div class="form-group col-md-1">
-        <button type="submit" class="btn btn-primary">set cookie</button>
-      </div>
-    </div>
+      <datalist id="cookie">
+        <option value="my-cookie"/>
+        <option value="your-cookie"/>
+        <option value="example"/>
+      </datalist>
+      <datalist id="value">
+        <option value="chocolate"/>
+        <option value="brownie"/>
+        <option value="banana"/>
+      </datalist>
+    </fieldset>
   </form>
   <h3>HTTP Cookies</h3>
   <table class="table table-striped">

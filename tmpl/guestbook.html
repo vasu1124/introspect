@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
   </head>
   <div class="container">
   <body>
@@ -10,21 +10,34 @@
   </div>
 
   <form action="/guestbook" method="post">
-    <div class="row">
-      <div class="form-group col-md-3">
-        <label for="name" class="col-form-label">Name</label>
-        <input type="text" class="form-control" name="name" placeholder="Your name">
+    <fieldset class="form-group border px-3">
+      <legend class="w-auto px-2">Set Guestbook Entry</legend>
+      <div class="row">
+        <div class="form-group col-md-3">
+          <label for="name" class="col-form-label">Name</label>
+          <input type="text" list="name" class="form-control" name="name" placeholder="Your name">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="comment" class="col-form-label">Comment</label>
+          <input type="text" list="comment" class="form-control" name="comment" placeholder="Your comment">
+        </div>
       </div>
-      <div class="form-group col-md-6">
-        <label for="comment" class="col-form-label">Comment</label>
-        <input type="text" class="form-control" name="comment" placeholder="Your comment">
+      <div class="row">
+        <div class="form-group col-md-1">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="form-group col-md-1">
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </div>
-    </div>
+      <datalist id="name">
+        <option value="John Doe"/>
+        <option value="Louis XIV"/>
+        <option value="Ashoka the Great"/>
+      </datalist>
+      <datalist id="comment">
+        <option value="My signature is my thumb"/>
+        <option value="I am the Sun King"/>
+        <option value="I was here 268 BCE"/>
+      </datalist>
+    </fieldset>
   </form>
 
   <h3>Entries</h3>
