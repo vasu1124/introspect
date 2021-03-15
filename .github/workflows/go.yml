@@ -39,9 +39,6 @@ jobs:
       with:
         platforms: linux/amd64,linux/arm/v7
 
-    - name: Available platforms
-      run: echo ${{ steps.qemu.outputs.platforms }}
-
     - name: Set up Docker Buildx      
       uses: docker/setup-buildx-action@v1
       with:
@@ -68,7 +65,7 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm/v7
         push: true
-        tags: ${DOCKER_IMAGE}:v1.0
+        tags: vasu1124/introspect:v1.0
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         build-args: VERSION=v1.0,COMMIT=${{github.sha}},BRANCH=${GITHUB_REF##*/}
@@ -95,7 +92,7 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm/v7
         push: true
-        tags: ${DOCKER_IMAGE}:v2.0
+        tags: vasu1124/introspect:v2.0
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         build-args: VERSION=v2.0,COMMIT=${{github.sha}},BRANCH=${GITHUB_REF##*/}
