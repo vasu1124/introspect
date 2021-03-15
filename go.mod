@@ -1,6 +1,6 @@
 module github.com/vasu1124/introspect
 
-go 1.15
+go 1.16
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9
