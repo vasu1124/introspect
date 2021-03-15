@@ -37,7 +37,7 @@ jobs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
       with:
-        platforms: ${{ DOCKER_TARGET_PLATFORM }}
+        platforms: $DOCKER_TARGET_PLATFORM
 
     - name: Available platforms
       run: echo ${{ steps.qemu.outputs.platforms }}
@@ -66,9 +66,9 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
-        platforms: ${{ DOCKER_TARGET_PLATFORM }}
+        platforms: $DOCKER_TARGET_PLATFORM
         push: true
-        tags: ${{ DOCKER_IMAGE }}:v1.0
+        tags: $DOCKER_IMAGE:v1.0
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         build-args: VERSION=v1.0,COMMIT=${{github.sha}},BRANCH=${GITHUB_REF##*/}
@@ -93,9 +93,9 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
-        platforms: ${{ DOCKER_TARGET_PLATFORM }}
+        platforms: $DOCKER_TARGET_PLATFORM
         push: true
-        tags: ${{ DOCKER_IMAGE }}:v2.0
+        tags: $DOCKER_IMAGE:v2.0
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         build-args: VERSION=v2.0,COMMIT=${{github.sha}},BRANCH=${GITHUB_REF##*/}
