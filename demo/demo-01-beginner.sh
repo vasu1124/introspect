@@ -48,7 +48,7 @@ pe "less beginner/mypod.yaml"
 pe "kubectl apply -f beginner/mypod.yaml"
 
 echo "# exec interactive shell in my pod"
-pe "kubectl exec -it mypod sh"
+pe "kubectl exec -it mypod -- sh"
 
 
 echo
