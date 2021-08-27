@@ -2,11 +2,14 @@
 *.o
 *.a
 *.so
+.DS_Store
+.cache_ggshield
 
 # Folders
 _obj
 _test
 vendor
+tilt_modules
 
 # Architecture specific extensions/prefixes
 *.[568vq]
