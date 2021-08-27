@@ -42,8 +42,8 @@ type UselessMachineReconciler struct {
 // Reconcile reads that state of the cluster for a UselessMachine object and makes changes based on the state read and what is in the Useless.Spec
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines/status,verbs=get;update;patch
-func (r *UselessMachineReconciler) Reconcile(req controller_runtime.Request) (controller_runtime.Result, error) {
-	ctx := context.Background()
+func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller_runtime.Request) (controller_runtime.Result, error) {
+	//	ctx := context.Background()
 	log := r.Log.WithValues("uselessmachine", req.NamespacedName)
 
 	if r.Notifier != nil {
@@ -60,7 +60,7 @@ func (r *UselessMachineReconciler) Reconcile(req controller_runtime.Request) (co
 	// Fetch the Useless instance
 	instance := &uselessmachinev1alpha1.UselessMachine{}
 	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
-		log.Error(err, "unable to fetch UselessMachine")
+		log.V(4).Info("unable to fetch UselessMachine")
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
