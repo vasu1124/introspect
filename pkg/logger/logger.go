@@ -30,7 +30,7 @@ func (r *RequestLogger) Log() {
 	// fmt.Fprintf(os.Stdout, "%s - [%s] \"%s %d %d\" %s %f\n",
 	// 	r.remoteAddr, timestamp, requestLine, r.status,
 	// 	r.responseBytes, r.userAgent, r.elapsedTime.Seconds())
-	log.Printf("%s - [%s] \"%s %d %d\" %f\n",
+	log.Printf("[logger] %s - [%s] \"%s %d %d\" %f\n",
 		r.remoteAddr, timestamp, requestLine, r.status,
 		r.responseBytes, r.elapsedTime.Seconds())
 }
