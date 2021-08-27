@@ -1,7 +1,17 @@
 domain: actvirtual.com
+layout: 
+- go.kubebuilder.io/v3
+projectName: useless
 repo: github.com/vasu1124/introspect/pkg/operator/useless
 resources:
-- group: introspect
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: actvirtual.com
+  group: introspect
   kind: UselessMachine
+  path: github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1
   version: v1alpha1
-version: "2"
+version: "3"
+

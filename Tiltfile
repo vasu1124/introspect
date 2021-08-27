@@ -26,7 +26,8 @@ docker_build_with_restart(
   only=[
     './introspect-linux-amd64',
     './css', 
-    './tmpl'
+    './tmpl',
+    './vendor'
   ],
   live_update=[
     sync('./css', '/css'),

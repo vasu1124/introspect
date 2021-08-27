@@ -42,6 +42,7 @@ type UselessMachineReconciler struct {
 // Reconcile reads that state of the cluster for a UselessMachine object and makes changes based on the state read and what is in the Useless.Spec
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines/finalizers,verbs=update
 func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller_runtime.Request) (controller_runtime.Result, error) {
 	//	ctx := context.Background()
 	log := r.Log.WithValues("uselessmachine", req.NamespacedName)
