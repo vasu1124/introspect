@@ -7,6 +7,8 @@ cat <<EOF | istioctl install -y -f -
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
+  meshConfig:
+    accessLogFile: /dev/stdout
   profile: default
   components:
     ingressGateways:
