@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine as builder
+FROM golang:1.16-alpine as builder
 ARG VERSION=v0.0
 ARG COMMIT=0000000000000000000000000000000000000000
 ARG BRANCH=master
@@ -18,7 +18,7 @@ RUN go build \
     -o introspect-linux ./cmd/introspect
 
 # final stage
-FROM alpine
+FROM alpine:3
 LABEL maintainer="vasu1124@actvirtual.com" \
       immutable.labels=true \
       org.opencontainers.image.vendor="actvirtual" \
