@@ -17,83 +17,47 @@
     <h1>Validating Webhook Demonstration</h1>
   </div>
 
-  <form action="/validate?ui" method="post">
-    <table class="table table-striped">
-      <thead class="thead-dark">
-      <tr>
-        <th>Container Image</th>
-        <th>Container Labels</th>
-        <th>Source of Registry?</th>
-        <th>Crosscheck Labels?</th>
-        <th>Signature valid?</th>
-        <th>Digest valid?</th>
-        <th>Security approved?</th>
-        <th>Break glass exception?</th>
-        <th>Admission?</th>
-      </tr>
-      </thead>
-      <tbody>
-        {{$containerLabels := .ContainerLabels}}
-        {{range  $key, $value := .ContainerResponse}}
-        <tr>
-          <td>{{$key}}</td>
-          <td>{{$labels := index $containerLabels $key}}{{range $k,$v := $labels}}{{$k}}={{$v}} {{end}}</td>
-          <td>
-            <input type="checkbox" class="form-check-input">
-          </td>
-          <td>
-            <input type="checkbox" class="form-check-input">
-          </td>
-          <td>
-            <input type="checkbox" class="form-check-input">
-          </td>
-          <td>
-            <input type="checkbox" class="form-check-input">
-          </td>
-          <td>
-            <input type="checkbox" class="form-check-input">
-          </td>
-          <td>
-            <input type="checkbox" class="form-check-input">
-          </td>
-          <td>
-            <input type="checkbox" class="form-check-input" name="ContainerResponse" value="{{$key}}" {{if $value}}checked{{end}}>
-          </td>
-        </tr>
-        {{end}}
-        </tbody>
-    </table>
-    <button type="submit" class="btn btn-primary">Submit Policy</button>
-    <h3>AdmissionReviews</h3>
-    <table class="table table-striped">
-      <thead class="thead-dark">
-      <tr>
-        <th>Review UID</th>
-        <th>Pod
-            <table class="table">
-                <td>Container Name</td>
-                <td>Image</td>
-            </table>    
-        </th>
-      </tr>
-      </thead>
-      <tbody>
-      {{range  $key, $value := .AdmissionReviews}}
-      <tr>
-        <td>{{$key}}</td>
-        <td>
-          {{range $value}}
-          <table class="table table-bordered">
-            <td>{{.Name}}</td>
-            <td>{{.Image}}</td>
-          </table>
-          {{end}}
-        </td>
-      </tr>
-      {{end}}
-      </tbody>
-    </table>
+  <form action="/validate" method="post">
+    <fieldset class="form-group border px-3">
+      <legend class="w-auto px-2">Regular Expression</legend>
+      <div class="row">
+        <div class="form-group col-md-3">
+          <label for="Regexp" class="col-form-label">Regexp</label>
+          <input type="text" list="regexp" class="form-control" name="Regexp"  aria-label="Regexp" value="{{.Handler.Regexp}}">
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group col-md-1">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <div class="form-group col-md-2">
+          <button type="submit" onclick="javascript:window.location.reload()" class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Refresh</button>
+        </div>
+      </div>
+      <datalist id="regexp">
+        <option value=".*"/>
+        <option value="mendhak.*"/>
+        <option value="nginx.*"/>
+      </datalist>
+    </fieldset>
   </form>
 
+  <h3>Entries</h3>
+  <table class="table table-striped">
+    <tr>
+        <th>UID</th>
+        <th>Namespace</th>
+        <th>Pod</th>
+        <th>Allowed</th> 
+    </tr>
+    {{range $key, $value := .Handler.AdmissionReviews}}
+    <tr>
+      <td>{{$key}}</td>
+      <td>{{$value.Request.Namespace}}</td>
+      <td>{{$value.Request.Name}}</td>
+      <td><input type="checkbox" aria-label="Allowed"  disabled="true" {{if eq $value.Response.Allowed true }}checked{{end}}></td>
+    </tr>{{end}}
+  </table>
+  </body>
   </body>
 </html>

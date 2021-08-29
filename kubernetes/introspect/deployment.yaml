@@ -51,11 +51,16 @@ spec:
         ports:
         - name: introspect
           containerPort: 9090
+        - name: introspect-s
+          containerPort: 9443
         - name: debug
           containerPort: 3000
         volumeMounts:
         - mountPath: /etc/secret
           name: secret-volume
+          readOnly: true
+        - mountPath: /etc/tls
+          name: tls-volume
           readOnly: true
         - mountPath: /etc/config
           name: config-volume
@@ -63,6 +68,9 @@ spec:
       - name: secret-volume
         secret:
           secretName: mongodb-secret
+      - name: tls-volume
+        secret:
+          secretName: introspect-tls
       - name: config-volume
         configMap:
           name: introspect-config

@@ -8,7 +8,6 @@ BRANCH: "master"
 #! configurables
 namespace: "demo"
 imagePullPolicy: IfNotPresent
-introspect_port: 9090
 introspect_labels:
   app: "introspect"
   visualize: "true"

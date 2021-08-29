@@ -13,10 +13,12 @@ var (
 	Branch = "dev"
 
 	//Port to bind
-	Port *int
+	Port       *int
+	SecurePort *int
 )
 
 func init() {
 	Port = flag.Int("port", 9090, "Port to bind server.")
+	SecurePort = flag.Int("secureport", 9443, "Secureport to bind server.")
 	flag.Parse()
 }

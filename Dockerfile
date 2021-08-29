@@ -36,7 +36,7 @@ COPY --from=builder /introspect/introspect-linux ./
 COPY tmpl tmpl
 COPY css css
 
-EXPOSE 9090
+EXPOSE 9090 9443
 CMD ["./introspect-linux"]
 
 # If you want to use the debugger, you need to modify  the

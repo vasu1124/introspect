@@ -4,6 +4,9 @@
 load('ext://restart_process', 'docker_build_with_restart')
 load('ext://local_output', 'local_output')
 
+default_registry('docker.io/vasu1124')
+allow_k8s_contexts('name-of-my-cluster')
+
 VERSION = local_output('cat introspect.VERSION')
 COMMIT  = local_output('git rev-parse HEAD')
 BRANCH  = local_output('git rev-parse --abbrev-ref HEAD')
@@ -15,7 +18,7 @@ print(compile_cmd)
 local_resource(
   'introspect-compile',
   compile_cmd,
-  deps=['./cmd', './pkg']
+  deps=['./cmd', './pkg', './vendor']
 )
 
 docker_build_with_restart(
@@ -27,7 +30,6 @@ docker_build_with_restart(
     './introspect-linux-amd64',
     './css', 
     './tmpl',
-    './vendor'
   ],
   live_update=[
     sync('./css', '/css'),
@@ -37,13 +39,18 @@ docker_build_with_restart(
 
 k8s_yaml(kustomize('./kubernetes/all-in-one'))
 k8s_resource('introspect', port_forwards=9090, resource_deps=['introspect-compile'])
-k8s_resource(new_name='kustomize', objects=[
+
+k8s_resource(workload='introspect', objects=[
+  'introspect-config:configmap',
+  'introspect-tls:secret',
+  'introspect-validationwebook:validatingwebhookconfiguration',
   'uselessmachines.introspect.actvirtual.com:customresourcedefinition',
   'introspect-lease:role',
   'introspect-role:clusterrole',
   'introspect-lease-rolebinding:rolebinding',
   'introspect-rolebinding:clusterrolebinding',
+])
+k8s_resource(workload='mongodb', objects=[
   'mongodb:persistentvolumeclaim',
-  'introspect-config:configmap',
   'mongodb-secret:secret'
 ])

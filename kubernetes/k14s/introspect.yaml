@@ -65,7 +65,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: #@ data.values.introspect_port
+            port: 9090
           initialDelaySeconds: 15
           periodSeconds: 20
           timeoutSeconds: 1
@@ -73,14 +73,14 @@ spec:
         readinessProbe:
           httpGet:
             path: /healthzr
-            port: #@ data.values.introspect_port
+            port: 9090
           initialDelaySeconds: 16
           periodSeconds: 20
           timeoutSeconds: 1
           failureThreshold: 2
         ports:
         - name: introspect
-          containerPort: #@ data.values.introspect_port
+          containerPort: 9090
         - name: debug
           containerPort: 3000
         volumeMounts:
@@ -301,13 +301,17 @@ metadata:
   labels: #@ data.values.introspect_labels
   annotations:
     prometheus.io/scrape: 'true'
-    prometheus.io/port: '(@= str(data.values.introspect_port)'
+    prometheus.io/port: '9090'
     prometheus.io/path: '/metrics'
 spec:
   ports:
   - name: http
-    port: #@ data.values.introspect_port
+    port: 9090
     protocol: TCP
-    targetPort: #@ data.values.introspect_port
+    targetPort: 9090
+  - name: https
+    port: 9443
+    protocol: TCP
+    targetPort: 9443
   selector: #@ data.values.introspect_labels
   type: ClusterIP

@@ -11,5 +11,5 @@ LABEL maintainer="vasu1124@actvirtual.com" \
 COPY /introspect-linux-amd64 /
 COPY /tmpl /tmpl
 COPY /css /css
-EXPOSE 9090
+EXPOSE 9090 9443
 CMD ["/introspect-linux-amd64"]
