@@ -19,9 +19,14 @@ else
 endif
 all: ${all}
 
+tlsfiles := kubernetes/introspect/introspect-validatingwh.yaml kubernetes/introspect/introspect-tls.yaml etc/tls/csr.conf etc/tls/server.crt etc/tls/server.key 
+.PHONY: tls
+tls: ${tlsfiles}
+	hack/kube-sign.sh
+
 .PHONY: clean
 clean:
-	-rm -f ${BINARY}-* debug go.sum ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml kubernetes/k14s/kbld.lock.yaml
+	-rm -f ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml
 
 # kubebuilder: Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
@@ -53,14 +58,6 @@ ${GOPATH}/bin/cfssl:
 	go get -u github.com/cloudflare/cfssl/cmd/cfssl
 	go get -u github.com/cloudflare/cfssl/cmd/cfssljson
 
-TLSintermidiate :=  etc/mycerts/webhook.csr etc/mycerts/webhook-key.pem etc/mycerts/webhook.pem etc/mycerts/webhook.b64
-TLS: ${GOPATH}/bin/cfssl ${TLSintermidiate} kubernetes/ValidatingWebhookConfiguration.yaml
-${TLSintermidiate}: etc/mycerts/webhook.json
-	cfssl genkey etc/mycerts/webhook.json | cfssljson -bare etc/mycerts/webhook
-	hack/kube-sign.sh
-
-kubernetes/ValidatingWebhookConfiguration.yaml:
-	sed -e "s/\$${caBundle}/$$(cat etc/mycerts/webhook.b64)/" <$@.template >$@
 
 # SOURCES := $(shell find . -type f -name '*.go')
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )

@@ -35,10 +35,6 @@ introspect*amd64
 debug
 
 #built TLS artefacts
-/etc/mycerts/webhook*.b64
-/etc/mycerts/webhook*.csr
-/etc/mycerts/webhook*.pem
-kubernetes/ValidatingWebhookConfiguration.yaml
 
 #logs and play
 telepresence*.log
