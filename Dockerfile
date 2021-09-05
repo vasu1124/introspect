@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine as builder
+FROM golang:1.17-alpine as builder
 ARG VERSION=v0.0
 ARG COMMIT=0000000000000000000000000000000000000000
 ARG BRANCH=master
