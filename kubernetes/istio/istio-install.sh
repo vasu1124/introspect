@@ -6,21 +6,38 @@ export issuer="garden"
 cat <<EOF | istioctl install -y -f -
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: cluster
 spec:
-  meshConfig:
-    accessLogFile: /dev/stdout
-  profile: default
+  profile: demo
   components:
+    egressGateways:
+    - name: istio-egressgateway
+      enabled: false
     ingressGateways:
     - name: istio-ingressgateway
       enabled: true
       k8s:
+        service:
+          ports:
+          - name: status-port
+            port: 15021
+            targetPort: 15021
+          - name: http2
+            port: 80
+            targetPort: 8080
+          - name: https
+            port: 443
+            targetPort: 8443
         serviceAnnotations:
           dns.gardener.cloud/dnsnames: "${domainname}"
           dns.gardener.cloud/ttl: "300" 
           dns.gardener.cloud/class: garden
           cert.gardener.cloud/issuer: "${issuer}"
           cert.gardener.cloud/secretname: wildcard-tls
+  meshConfig:
+    accessLogFile: /dev/stdout
 EOF
 
 cat <<EOF | kubectl apply -f -
