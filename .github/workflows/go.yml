@@ -71,7 +71,7 @@ jobs:
         build-args: |
           VERSION=v1.0
           COMMIT=${{github.sha}}
-          BRANCH=${GITHUB_REF}
+          BRANCH=${{github.ref}}
         file: ./Dockerfile
 
     # Temp fix
@@ -101,7 +101,7 @@ jobs:
         build-args: |
           VERSION=v2.0
           COMMIT=${{github.sha}}
-          BRANCH=${GITHUB_REF}
+          BRANCH=${{github.ref}}
         file: ./Dockerfile
 
     # Temp fix
