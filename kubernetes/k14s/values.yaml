@@ -1,7 +1,7 @@
 #@data/values
 ---
 #! build metadata
-VERSION: "v1.0"
+VERSION: "1.0.0"
 COMMIT: "0000000000000000000000000000000000000000"
 BRANCH: "master"
 

@@ -68,7 +68,7 @@ echo
 echo "# scale the container manually"
 pe "kubectl scale --replicas=3 deployment/introspect --record"
 echo
-echo "# rolling update to v2.0"
+echo "# rolling update to 2.0.0"
 pe "kubectl edit deployment introspect --record"
 pe "kubectl rollout history deployment introspect"
 pe "kubectl rollout undo deployment introspect"

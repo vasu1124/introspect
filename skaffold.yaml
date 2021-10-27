@@ -16,7 +16,7 @@ profiles:
 build:
   tagPolicy:
     envTemplate:
-      template: 'vasu1124/introspect:v1.0'
+      template: 'vasu1124/introspect:1.0.0'
 #    sha256: {}
   artifacts:
   - image: vasu1124/introspect
@@ -24,7 +24,7 @@ build:
     docker:
       dockerfile: docker/Dockerfile
       buildArgs:
-        VERSION_TO_BUILD: 'v1.0'
+        VERSION_TO_BUILD: '1.0.0'
 deploy:
   kustomize:
     path: kubernetes/all-in-one

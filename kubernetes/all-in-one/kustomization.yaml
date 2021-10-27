@@ -9,9 +9,9 @@ bases:
 # namespace: test
 
 images:
-- name: vasu1124/introspect:v1.0
+- name: vasu1124/introspect:1.0.0
   newName: vasu1124/introspect
-  newTag: "v1.0"
+  newTag: "1.0.0"
 - name: bitnami/mongodb:latest
   newName: bitnami/mongodb
   newTag: "4.2"

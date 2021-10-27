@@ -2,7 +2,7 @@
 dir="${0%/*}"
 cd $dir
 
-VERSION=v1.0
+VERSION=1.0.0
 COMMIT=`git rev-parse HEAD`
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 

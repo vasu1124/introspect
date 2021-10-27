@@ -9,18 +9,18 @@ steps:
   env: ['GOPATH=/workspace', 'PROJECT_ROOT=github.com/vasu1124/introspect']
 - name: 'golang:1.10'
   dir: 'src/github.com/vasu1124/introspect'
-  args: ['make', 'clean', 'v1.0', 'introspect-linux-amd64']
+  args: ['make', 'clean', '1.0.0', 'introspect-linux-amd64']
   env: ['GOPATH=/workspace', 'PROJECT_ROOT=github.com/vasu1124/introspect']
 - name: 'gcr.io/cloud-builders/docker'
   dir: 'src/github.com/vasu1124/introspect'
-  args: [ 'build', '-f', 'docker/Dockerfile.alpine', '-t', 'gcr.io/$PROJECT_ID/vasu1124:v1.0', '.' ]
+  args: [ 'build', '-f', 'docker/Dockerfile.alpine', '-t', 'gcr.io/$PROJECT_ID/vasu1124:1.0.0', '.' ]
 - name: 'golang:1.10'
   dir: 'src/github.com/vasu1124/introspect'
-  args: ['make', 'clean', 'v2.0', 'introspect-linux-amd64']
+  args: ['make', 'clean', '2.0.0', 'introspect-linux-amd64']
   env: ['GOPATH=/workspace', 'PROJECT_ROOT=github.com/vasu1124/introspect']
 - name: 'gcr.io/cloud-builders/docker'
   dir: 'src/github.com/vasu1124/introspect'
-  args: [ 'build', '-f', 'docker/Dockerfile.alpine', '-t', 'gcr.io/$PROJECT_ID/vasu1124:v2.0', '.' ]
+  args: [ 'build', '-f', 'docker/Dockerfile.alpine', '-t', 'gcr.io/$PROJECT_ID/vasu1124:2.0.0', '.' ]
 images:
-- 'gcr.io/$PROJECT_ID/vasu1124:v1.0'
-- 'gcr.io/$PROJECT_ID/vasu1124:v2.0'
+- 'gcr.io/$PROJECT_ID/vasu1124:1.0.0'
+- 'gcr.io/$PROJECT_ID/vasu1124:2.0.0'

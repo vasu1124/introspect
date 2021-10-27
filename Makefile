@@ -137,15 +137,15 @@ docker/opensuse.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.opensuse
 	 	.
 	touch docker/opensuse.docker
 
-.PHONY: v1.0
-v1.0:
-	echo "v1.0" >introspect.VERSION
-	VERSION="v1.0"
+.PHONY: 1.0.0
+1.0.0:
+	echo "1.0.0" >introspect.VERSION
+	VERSION="1.0.0"
 
-.PHONY: v2.0
-v2.0:
-	echo "v2.0" >introspect.VERSION
-	VERSION="v2.0"
+.PHONY: 2.0.0
+2.0.0:
+	echo "2.0.0" >introspect.VERSION
+	VERSION="2.0.0"
 
 # we are only pushing alpine
 .PHONY: docker-push

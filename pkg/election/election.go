@@ -135,10 +135,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			<head>
 				<link rel="stylesheet" href="css/bootstrap.css">
 				<style>
-				{{if eq .Version "v1.0" }}
+				{{if eq .Version "1.0.0" }}
 				body { background-color: #F0FFF0; }
 				{{end}}
-				{{if eq .Version "v2.0" }}
+				{{if eq .Version "2.0.0" }}
 				body { background-color: #F0F0FF; }
 				{{end}}
 				</style>
