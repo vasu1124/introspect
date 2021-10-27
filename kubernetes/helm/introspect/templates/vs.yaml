@@ -1,0 +1,28 @@
+{{- if .Values.istio.enabled -}}
+{{- $fullName := include "introspect.fullname" . -}}
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "introspect.labels" . | nindent 4 }}
+spec:
+  {{- with .Values.istio.hosts }}
+  hosts:
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
+  {{- with .Values.istio.gateways }}
+  gateways:
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
+  http:
+  - match:
+    - uri:
+        regex: /.*
+    route:
+    - destination:
+        port:
+          number: 9090
+        host: {{ $fullName }}
+{{- end }}

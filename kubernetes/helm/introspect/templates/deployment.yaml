@@ -1,0 +1,96 @@
+{{- $fullName := include "introspect.fullname" . -}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "introspect.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "introspect.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "introspect.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "introspect.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: OSENV_EXAMPLE
+            value: some_value
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          ports:
+            - name: introspect
+              containerPort: 9090
+            - name: introspect-s
+              containerPort: 9443
+            - name: debug
+              containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthzr
+              port: 9090
+            initialDelaySeconds: 16
+            periodSeconds: 20
+            timeoutSeconds: 1
+            failureThreshold: 2
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /etc/secret
+              name: secret-volume
+              readOnly: true
+            - mountPath: /etc/tls
+              name: tls-volume
+              readOnly: true
+            - mountPath: /etc/config
+              name: config-volume
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: {{ $fullName }}-mongodb
+      - name: tls-volume
+        secret:
+          secretName: {{ $fullName }}-tls
+      - name: config-volume
+        configMap:
+          name: {{ $fullName }}-config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
