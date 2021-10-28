@@ -4,6 +4,19 @@ on:
     branches:
     - master
     - release/*
+    paths:
+      - '**.go'
+      - 'cmd/**'
+      - 'pkg/**'
+      - 'tmpl/**'
+      - 'css/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '!pkg/operator/useless/bin/**'
+      - '!pkg/operator/useless/config/**'
+      - '!pkg/operator/useless/hack/**'
+      - '!pkg/operator/useless/Dockerfile'
+      - '!pkg/operator/useless/Makefile'
 
 jobs:
   build:
