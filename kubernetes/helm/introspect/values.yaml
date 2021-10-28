@@ -68,4 +68,9 @@ tolerations: []
 
 affinity: {}
 
-mongodb: "mongodb:27017"
+mongodb: 
+  connect: "mongodb:27017"
+  auth:
+    username: vasu1124-dbuser
+    password: some-important-password
+    database: guestbook
