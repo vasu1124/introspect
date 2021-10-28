@@ -6,7 +6,7 @@ import (
 
 var (
 	// Version of inspect
-	Version = "v0.0"
+	Version = "0.0.0"
 	// Commit of inspect
 	Commit = "dev"
 	// Branch of inspect
