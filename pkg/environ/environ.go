@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/vasu1124/introspect/pkg/network"
@@ -19,8 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var mu sync.Mutex
-var count int
+var count uint32
 
 func init() {
 	// Register the summary and the histogram with Prometheus's default registry.
@@ -38,9 +37,7 @@ func New() *Handler {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	count++
-	mu.Unlock()
+	atomic.AddUint32(&count, 1)
 
 	start := time.Now()
 	serveEnviron(w, r)
@@ -74,7 +71,7 @@ func serveEnviron(w http.ResponseWriter, r *http.Request) {
 		Process     map[string]string
 		OS          map[string]string
 		Server      map[string]string
-		Counter     int
+		Counter     uint32
 		Network     network.Data
 	}
 
