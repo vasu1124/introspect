@@ -15,5 +15,5 @@ func main() {
 
 	stop := signal.SignalHandler()
 	srv := server.NewServer()
-	srv.ListenAndServe(stop)
+	srv.Run(stop)
 }

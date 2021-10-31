@@ -36,7 +36,7 @@ func NewServer() *Server {
 	return srv
 }
 
-func (s *Server) ListenAndServe(stop <-chan int) {
+func (s *Server) Run(stop <-chan int) {
 	s.registerHandlers()
 	s.registerMiddlewares()
 
@@ -48,7 +48,7 @@ func (s *Server) ListenAndServe(stop <-chan int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	log.Println("Initiated shutdown of HTTP(S) server")
+	log.Println("Initiated graceful shutdown of HTTP(S) server")
 	time.Sleep(1 * time.Second)
 
 	if srv != nil {
@@ -127,18 +127,18 @@ func (s *Server) registerHandlers() {
 	log.Println("[server] registered /validate")
 	s.router.Handle("/healthz", healthz.New())
 	s.router.Handle("/healthzr", healthz.New())
-	log.Println("[introspect] registered /healthz|r")
+	log.Println("[server] registered /healthz|r")
 	s.router.Handle("/guestbook", guestbook.New())
-	log.Println("[introspect] registered /guestbook")
+	log.Println("[server] registered /guestbook")
 	s.router.Handle("/election", election.New())
-	log.Println("[introspect] registered /election")
+	log.Println("[server] registered /election")
 	o := operator.New()
 	if o != nil {
 		s.router.Handle("/operator", o)
 		s.router.HandleFunc("/operatorws", func(w http.ResponseWriter, r *http.Request) {
 			o.Melody.HandleRequest(w, r)
 		})
-		log.Println("[introspect] registered /operator")
+		log.Println("[server] registered /operator")
 	}
 
 }
