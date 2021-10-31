@@ -1,6 +1,7 @@
 package healthz
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -29,4 +30,5 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(h.status)
+	w.Write([]byte(fmt.Sprintf("Status: %d", h.status)))
 }
