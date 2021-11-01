@@ -18,7 +18,7 @@
     "type": "go",
     "request": "launch",
     "mode": "debug",
-    "program": "${workspaceRoot}/cmd/introspect",
+    "program": "${workspaceRoot}/cmd",
     "cwd": "${workspaceRoot}",
     "env": {},
     "args": [

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"html/template"
 	"log"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/vasu1124/introspect/pkg/config"
 	"github.com/vasu1124/introspect/pkg/cookie"
 	"github.com/vasu1124/introspect/pkg/dynconfig"
 	"github.com/vasu1124/introspect/pkg/election"
@@ -48,25 +50,25 @@ func (s *Server) Run(stop <-chan int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	log.Println("Initiated graceful shutdown of HTTP(S) server")
+	log.Println("[server] Initiated graceful shutdown of HTTP(S) server")
 	time.Sleep(1 * time.Second)
 
 	if srv != nil {
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Println("Graceful HTTP server shutdown failed", err)
+			log.Println("[server] Graceful HTTP server shutdown failed", err)
 		}
 	}
 
 	if srvTLS != nil {
 		if err := srvTLS.Shutdown(ctx); err != nil {
-			log.Println("Graceful HTTPS server shutdown failed", err)
+			log.Println("[server] Graceful HTTPS server shutdown failed", err)
 		}
 	}
 }
 
 func (s *Server) startServer() *http.Server {
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", *version.Port),
+		Addr:         fmt.Sprintf(":%d", config.Config.Port),
 		WriteTimeout: 30 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -74,8 +76,9 @@ func (s *Server) startServer() *http.Server {
 	}
 
 	go func() {
+		log.Println("[server] Serving HTTP  ", srv.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatal("HTTP server crashed", err)
+			log.Fatal("[server] HTTP server crashed", err)
 		}
 	}()
 
@@ -88,16 +91,18 @@ func (s *Server) startServerTLS() *http.Server {
 	}
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", *version.SecurePort),
+		Addr:         fmt.Sprintf(":%d", config.Config.SecurePort),
 		WriteTimeout: 30 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 		Handler:      s.router,
+		TLSConfig:    &tls.Config{},
 	}
 
 	go func() {
+		log.Println("[server] Serving HTTPS ", srv.Addr)
 		if err := srv.ListenAndServeTLS("etc/tls/server.crt", "etc/tls/server.key"); err != http.ErrServerClosed {
-			log.Fatal("HTTPS server crashed", err)
+			log.Fatal("[server] HTTPS server crashed", err)
 		}
 	}()
 

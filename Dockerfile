@@ -15,7 +15,7 @@ RUN go build \
     -X github.com/vasu1124/introspect/pkg/version.Commit=${COMMIT} \
     -X github.com/vasu1124/introspect/pkg/version.Branch=${BRANCH} \
     " \
-    -o introspect-linux ./cmd/introspect
+    -o introspect-linux ./cmd
 
 # final stage
 FROM alpine:3
@@ -44,4 +44,4 @@ CMD ["./introspect-linux"]
 # Start the "dlv debug" server on port 3000 of the container. (Note that the
 # application process will NOT start until the debugger is attached.)
 # EXPOSE 3000
-# CMD ["./dlv", "debug", "./cmd/introspect",  "--api-version=2", "--headless", "--listen=:3000", "--log"]
+# CMD ["./dlv", "debug", "./cmd",  "--api-version=2", "--headless", "--listen=:3000", "--log"]

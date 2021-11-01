@@ -63,11 +63,11 @@ ${GOPATH}/bin/cfssl:
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
 
 ${BINARY}-linux-${GOARCH}: ${SOURCES}
-	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd/introspect
+	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd
 	rm -f kubernetes/k14s/kbld.lock.yaml
 
 ${BINARY}-darwin-${GOARCH}: ${SOURCES}
-	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd/introspect
+	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd
 	rm -f kubernetes/k14s/kbld.lock.yaml
 
 .PHONY: build
