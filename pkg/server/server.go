@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"html/template"
 	"log"
@@ -19,8 +18,8 @@ import (
 	"github.com/vasu1124/introspect/pkg/environ"
 	"github.com/vasu1124/introspect/pkg/guestbook"
 	"github.com/vasu1124/introspect/pkg/healthz"
-	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/mandelbrot"
+	"github.com/vasu1124/introspect/pkg/middleware"
 	"github.com/vasu1124/introspect/pkg/operator"
 	"github.com/vasu1124/introspect/pkg/validate"
 	"github.com/vasu1124/introspect/pkg/version"
@@ -68,7 +67,7 @@ func (s *Server) Run(stop <-chan int) {
 
 func (s *Server) startServer() *http.Server {
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", config.Config.Port),
+		Addr:         fmt.Sprintf(":%d", config.Default.Port),
 		WriteTimeout: 30 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -91,12 +90,11 @@ func (s *Server) startServerTLS() *http.Server {
 	}
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", config.Config.SecurePort),
+		Addr:         fmt.Sprintf(":%d", config.Default.SecurePort),
 		WriteTimeout: 30 * time.Second,
 		ReadTimeout:  30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 		Handler:      s.router,
-		TLSConfig:    &tls.Config{},
 	}
 
 	go func() {
@@ -149,7 +147,7 @@ func (s *Server) registerHandlers() {
 }
 
 func (s *Server) registerMiddlewares() {
-	s.router.Use(logger.NewRequestLoggerHandler)
+	s.router.Use(middleware.NewRequestLoggerHandler)
 }
 
 func serveMenu(w http.ResponseWriter, r *http.Request) {

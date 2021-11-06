@@ -12,7 +12,7 @@ COMMIT  = local_output('git rev-parse HEAD')
 BRANCH  = local_output('git rev-parse --abbrev-ref HEAD')
 
 LDFLAGS = '-ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=' + VERSION + ' -X github.com/vasu1124/introspect/pkg/version.Commit=' + COMMIT + ' -X github.com/vasu1124/introspect/pkg/version.Branch=' + BRANCH + '"'
-compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ' + LDFLAGS + ' -o introspect-linux-amd64 ./cmd/introspect'
+compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ' + LDFLAGS + ' -o introspect-linux-amd64 ./cmd/'
 print(compile_cmd)
 
 local_resource(

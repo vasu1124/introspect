@@ -27,6 +27,6 @@ var serverCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serverCmd)
 
-	serverCmd.Flags().IntVarP(&config.Config.Port, "port", "p", config.Config.Port, "http port")
-	serverCmd.Flags().IntVarP(&config.Config.SecurePort, "secure-port", "s", config.Config.SecurePort, "https port")
+	serverCmd.Flags().IntVarP(&config.Default.Port, "port", "p", config.Default.Port, "http port")
+	serverCmd.Flags().IntVarP(&config.Default.SecurePort, "secure-port", "s", config.Default.SecurePort, "https port")
 }

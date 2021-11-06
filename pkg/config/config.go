@@ -1,13 +1,11 @@
 package config
 
-type config struct {
-	//Port to bind
-	Port int
-	//TLS Port to bind
+type Config struct {
+	Port       int
 	SecurePort int
 }
 
-var Config = &config{
+var Default = &Config{
 	Port:       9090,
 	SecurePort: 9443,
 }

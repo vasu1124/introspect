@@ -57,22 +57,18 @@ func initConfig() {
 	}
 
 	viper.SetEnvPrefix(envPrefix)
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
-
 }
 
 // Bind each cobra flag to its associated viper configuration (config file and environment variable)
 func bindFlags(cmd *cobra.Command, args []string) {
 	cmd.LocalFlags().VisitAll(func(f *pflag.Flag) {
-		// Environment variables can't have dashes in them, so bind them to their equivalent
-		// keys with underscores, e.g. --favorite-color to STING_FAVORITE_COLOR
-		envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
-		viper.BindEnv(f.Name, fmt.Sprintf("%s_%s", envPrefix, envVarSuffix))
 
 		// Apply the viper config value to the flag when the flag is not set and viper has a value
 		if !f.Changed && viper.IsSet(f.Name) {
