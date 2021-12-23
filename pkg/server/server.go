@@ -23,7 +23,6 @@ import (
 	"github.com/vasu1124/introspect/pkg/operator"
 	"github.com/vasu1124/introspect/pkg/validate"
 	"github.com/vasu1124/introspect/pkg/version"
-	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -50,7 +49,7 @@ func (s *Server) Run(stop <-chan int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	logger.Log.V(int(zap.WarnLevel)).Info("[server] Initiated graceful shutdown of HTTP(S) server")
+	logger.Log.Info("[server] Initiated graceful shutdown of HTTP(S) server")
 	time.Sleep(1 * time.Second)
 
 	if srv != nil {
