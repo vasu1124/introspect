@@ -21,7 +21,7 @@
     "program": "${workspaceRoot}/cmd",
     "cwd": "${workspaceRoot}",
     "env": {},
-    "args": [
+    "args": [ "--development", "--log-level=debug"
     ],
     "showLog": true
   }

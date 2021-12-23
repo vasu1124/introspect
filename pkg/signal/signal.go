@@ -1,10 +1,11 @@
 package signal
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 func SignalHandler() (stopChanel <-chan int) {
@@ -23,26 +24,26 @@ func SignalHandler() (stopChanel <-chan int) {
 			switch s {
 			// kill -SIGHUP
 			case syscall.SIGHUP:
-				fmt.Println("Signal hang up.")
+				logger.Log.Info("[signal] Signal hang up")
 				stop <- 1
 
 			// kill -SIGINT or Ctrl+c
 			case syscall.SIGINT:
-				fmt.Println("Signal interrupt.")
+				logger.Log.Info("[signal] Signal interrupt")
 				stop <- 2
 
 			// kill -SIGTERM
 			case syscall.SIGTERM:
-				fmt.Println("Signal terminate.")
+				logger.Log.Info("[signal] Signal terminate")
 				stop <- 3
 
 			// kill -SIGQUIT
 			case syscall.SIGQUIT:
-				fmt.Println("Signal quit.")
+				logger.Log.Info("[signal] Signal quit")
 				stop <- 4
 
 			default:
-				fmt.Println("Signal unknown.")
+				logger.Log.Info("[signal] Signal unknown")
 				stop <- 99
 			}
 		}

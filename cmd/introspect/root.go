@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/vasu1124/introspect/pkg/config"
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 const (
@@ -25,17 +27,23 @@ var rootCmd = &cobra.Command{
 	Use:   "introspect",
 	Short: "introspect your Kubernetes environment",
 	Long:  `introspect demonstrates a containerised application in Kubernetes`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+
 	cmd, _, err := rootCmd.Find(os.Args[1:])
 	// default cmd if no cmd is given
 	if err == nil && cmd.Use == rootCmd.Use && cmd.Flags().Parse(os.Args[1:]) != pflag.ErrHelp {
 		args := append([]string{serverCmd.Use}, os.Args[1:]...)
 		rootCmd.SetArgs(args)
 	}
+
+	logger.InitZap()
+
 	cobra.CheckErr(rootCmd.Execute())
 }
 
@@ -43,6 +51,8 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./"+defaultConfigFilename+".yaml)")
+	rootCmd.PersistentFlags().BoolVar(&config.Default.Development, "development", config.Default.Development, "Log development or production (default) mode")
+	rootCmd.PersistentFlags().StringVar(&config.Default.LogLevel, "log-level", config.Default.LogLevel, "Log level to configure the verbosity of logging [debug|info|warn|error|fatal|panic]")
 }
 
 // initConfig reads in config file and ENV variables if set.

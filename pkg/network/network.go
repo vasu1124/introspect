@@ -2,8 +2,9 @@ package network
 
 import (
 	"io/ioutil"
-	"log"
 	"net"
+
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 // Data .
@@ -19,13 +20,13 @@ func init() {
 
 	resolvConf, err := ioutil.ReadFile("/etc/resolv.conf")
 	if err != nil {
-		log.Println("[network] ReadFile: ", err)
+		logger.Log.Error(err, "[network] ReadFile")
 		return
 	}
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		log.Println("[network] Interfaces: ", err)
+		logger.Log.Error(err, "[network] Interfaces")
 		return
 	}
 

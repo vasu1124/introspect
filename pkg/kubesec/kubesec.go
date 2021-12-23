@@ -5,14 +5,14 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/vasu1124/introspect/pkg/logger"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 //Result represents a result returned by kubesec.io.
@@ -37,7 +37,7 @@ type Result struct {
 func GetKubesecPod(pod *v1.Pod) (*Result, error) {
 	yamlStr, err := yaml.Marshal(*pod)
 	if err != nil {
-		log.Println("[kubesec] failure to marshall pod", err)
+		logger.Log.Error(err, "[kubesec] failure to marshall pod")
 		return nil, err
 	}
 
@@ -52,7 +52,7 @@ func GetKubesecPodYAML(yamlStr []byte) (*Result, error) {
 	writer := multipart.NewWriter(multif)
 	part, err := writer.CreateFormFile("uploadfile", "object.yaml")
 	if err != nil {
-		log.Println("[kubesec] CreateFormFile failure", err)
+		logger.Log.Error(err, "[kubesec] CreateFormFile failure")
 		return nil, err
 	}
 
@@ -61,7 +61,7 @@ func GetKubesecPodYAML(yamlStr []byte) (*Result, error) {
 
 	req, err := http.NewRequest(http.MethodPost, kubesecService, multif)
 	if err != nil {
-		log.Println("[kubesec] POST  failure", err)
+		logger.Log.Error(err, "[kubesec] POST failure")
 		return nil, err
 	}
 	req.Header.Add("Content-Type", writer.FormDataContentType())
@@ -79,7 +79,7 @@ func GetKubesecPodYAML(yamlStr []byte) (*Result, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("[kubesec] client.Do failure", err)
+		logger.Log.Error(err, "[kubesec] client.Do failure")
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -87,12 +87,12 @@ func GetKubesecPodYAML(yamlStr []byte) (*Result, error) {
 	if resp.StatusCode == http.StatusOK {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Println("[kubesec] read body failure", err)
+			logger.Log.Error(err, "[kubesec] read body failure")
 			return nil, err
 		}
 		var k Result
 		if err := json.Unmarshal(body, &k); err != nil {
-			log.Println("[kubesec] Unmarshal body failure", err)
+			logger.Log.Error(err, "[kubesec] Unmarshal body failure")
 		}
 		return &k, nil
 		//fmt.Printf("response Body\n %v\n", k)

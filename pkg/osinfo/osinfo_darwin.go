@@ -1,12 +1,14 @@
+//go:build darwin
 // +build darwin
 
 package osinfo
 
 import (
-	"log"
 	"os/exec"
 	"strings"
 	"syscall"
+
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 /*
@@ -42,7 +44,7 @@ func uname(buf *utsname) (errno error) {
 func parseOS() {
 	out, err := exec.Command("/usr/bin/sw_vers").Output()
 	if err != nil {
-		log.Println(err)
+		logger.Log.Error(err, "[osinfo darwin] exec")
 	}
 
 	lines := strings.Split(string(out), "\n")

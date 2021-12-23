@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package osinfo
@@ -5,9 +6,10 @@ package osinfo
 import (
 	"bufio"
 	"errors"
-	"log"
 	"os"
 	"strings"
+
+	"github.com/vasu1124/introspect/pkg/logger"
 
 	"golang.org/x/sys/unix"
 )
@@ -72,11 +74,12 @@ func parseOS() (ok bool) {
 		}
 	}
 	if filename == "" {
-		log.Printf("No os-release file available!")
+		logger.Log.Info("No os-release file available!")
 		return false
 	}
 	lines, err := parseFile(filename)
 	if err != nil {
+		logger.Log.Error(err, "[osinfo linux] parseFile")
 		return false
 	}
 
@@ -93,6 +96,7 @@ func parseOS() (ok bool) {
 func parseFile(filename string) (lines []string, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
+		logger.Log.Error(err, "[osinfo linux] open file")
 		return nil, err
 	}
 	defer file.Close()

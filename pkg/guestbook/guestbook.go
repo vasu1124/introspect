@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"github.com/vasu1124/introspect/pkg/logger"
 	"gopkg.in/mgo.v2"
 )
 
@@ -33,7 +33,7 @@ func New() *Handler {
 	config.AddConfigPath("./etc/config") // call multiple times to add many search paths
 	err := config.ReadInConfig()         // Find and read the config file
 	if err != nil {                      // Handle errors reading the config file
-		log.Printf("[guestbook] Fatal error config file: %s \n", err)
+		logger.Log.Error(err, "[guestbook] Fatal error config file")
 	}
 
 	h.usernamefile, _ = filepath.Abs("etc/secret/username") //try relative
@@ -73,7 +73,7 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal("[guestbook] fsnotify error: ", err)
+		logger.Log.Error(err, "[guestbook] fsnotify error")
 	}
 	defer watcher.Close()
 
@@ -90,20 +90,20 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 			select {
 			case e := <-watcher.Events:
 				if e.Op&fsnotify.Write == fsnotify.Write { //standard change
-					log.Println("[guestbook] Config file changed:", e.Name)
+					logger.Log.Info("[guestbook] Config file changed", "file", e.Name)
 					h.readConfig(config)
 				}
 				if e.Op&fsnotify.Remove == fsnotify.Remove { //symlink remove change
-					log.Println("[guestbook] Config file removed:", e.Name)
+					logger.Log.Info("[guestbook] Config file removed", "file", e.Name)
 					watcher.Remove(e.Name)
 					watcher.Add(e.Name)
 					h.readConfig(config)
 				}
 			case err := <-watcher.Errors:
-				log.Println("[guestbook] Watcher error:", err)
+				logger.Log.Error(err, "[guestbook] Watcher error")
 			case <-ticker.C:
 				if h.session == nil {
-					log.Println("[guestbook] MongoDB session try connect ...")
+					logger.Log.Info("[guestbook] MongoDB session try connect ...")
 					h.readConfig(config)
 				}
 			}
@@ -116,24 +116,24 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 func (h *Handler) readConfig(config *viper.Viper) {
 	err := config.ReadInConfig()
 	if err != nil {
-		log.Printf("[guestbook] Fatal error config file: %v \n", err)
+		logger.Log.Error(err, "[guestbook] fatal error config file")
 		return
 	}
 	var dialInfo mgo.DialInfo
 	err = config.Unmarshal(&dialInfo)
 	if err != nil {
-		log.Printf("[guestbook] unable to decode into struct, %v", err)
+		logger.Log.Error(err, "[guestbook] unable to decode into struct")
 	}
 
 	username, err := ioutil.ReadFile(h.usernamefile)
 	if err != nil {
-		log.Printf("[guestbook] File error: %v\n", err)
+		logger.Log.Error(err, "[guestbook] file error")
 		return
 	}
 
 	password, err := ioutil.ReadFile(h.passwordfile)
 	if err != nil {
-		log.Printf("[guestbook] File error: %v\n", err)
+		logger.Log.Error(err, "[guestbook] file error")
 		return
 	}
 
@@ -142,10 +142,9 @@ func (h *Handler) readConfig(config *viper.Viper) {
 
 	h.session, err = mgo.DialWithInfo(&dialInfo)
 	if err != nil {
-		log.Printf("[guestbook] MongoDB dialInfo: %v\n", dialInfo)
-		log.Printf("[guestbook] MongoDB: %v\n", err)
+		logger.Log.Info("[guestbook] MongoDB", "dialInfo", dialInfo)
 	} else {
-		log.Printf("[guestbook] Connected to MongoDB dialInfo: %v\n", dialInfo)
+		logger.Log.Info("[guestbook] Connected to MongoDB dialInfo", "dialInfo", dialInfo)
 	}
 
 	// Optional. Switch the session to a monotonic behavior.
@@ -167,13 +166,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	t, err := template.ParseFiles("tmpl/guestbook.html")
 	if err != nil {
-		log.Print(err)
+		logger.Log.Error(err, "[guestbook] parsing template")
 		return
 	}
 
 	err = r.ParseForm()
 	if err != nil {
-		log.Print(err)
+		logger.Log.Error(err, "[guestbook] parsing form")
 	}
 
 	c := h.session.DB(h.database).C("guestbook")
@@ -182,19 +181,19 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
 		err = c.Insert(&Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
 		if err != nil {
-			log.Fatal("[guestbook] insert error:", err)
+			logger.Log.Error(err, "[guestbook] insert error")
 		}
 	}
 
 	var entries []Entry
 	err = c.Find(nil).All(&entries)
 	if err != nil {
-		log.Fatal("[guestbook] find error:", err)
+		logger.Log.Error(err, "[guestbook] find error")
 	}
 
 	err = t.Execute(w, entries)
 	if err != nil {
-		log.Println("[guestbook] executing template:", err)
+		logger.Log.Error(err, "[guestbook] executing template")
 		fmt.Fprint(w, "[guestbook] executing template: ", err)
 	}
 

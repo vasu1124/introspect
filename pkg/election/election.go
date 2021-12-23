@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,12 +42,12 @@ func New() *Handler {
 	// Create the client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
 	rc, err := config.GetConfig()
 	if err != nil {
-		log.Printf("[election] KubeConfig error: %v", err)
+		logger.Log.Error(err, "[election] KubeConfig error")
 		return &h
 	}
 	kubeClient, err := clientset.NewForConfig(rc)
 	if err != nil {
-		log.Printf("[election] ClientSet error: %v", err)
+		logger.Log.Error(err, "[election] ClientSet error")
 		return &h
 	}
 
@@ -61,29 +61,29 @@ func New() *Handler {
 
 	leaderElectionConfig, err := makeLeaderElectionConfig(kubeClient, recorder)
 	if err != nil {
-		log.Printf("[election] leaderElectionConfig error: %v", err)
+		logger.Log.Error(err, "[election] leaderElectionConfig error")
 	}
 
 	leaderElectionConfig.Callbacks = leaderelection.LeaderCallbacks{
 		OnStartedLeading: func(ctx context.Context) {
 			Fail = false
 			Leader = true
-			log.Println("[election] Got leadership.")
+			logger.Log.Info("[election] Got leadership")
 			<-ctx.Done()
 		},
 		OnStoppedLeading: func() {
 			Fail = false
 			Leader = false
-			log.Println("[election] Lost leadership.")
+			logger.Log.Info("[election] Lost leadership")
 		},
 		OnNewLeader: func(identity string) {
 			Fail = false
-			log.Printf("[election] Got informed: %s has leadership.\n", identity)
+			logger.Log.Info("[election] Got informed. Leadership is with", "leadership", identity)
 		},
 	}
 	h.leaderElector, err = leaderelection.NewLeaderElector(*leaderElectionConfig)
 	if err != nil {
-		log.Printf("[election] leaderElection error: %v", err)
+		logger.Log.Error(err, "[election] leaderElection error")
 	}
 	go h.leaderElector.Run(context.TODO())
 
@@ -123,7 +123,7 @@ func makeLeaderElectionConfig(client *clientset.Clientset, recorder record.Event
 
 func createRecorder(kubeClient *clientset.Clientset) record.EventRecorder {
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(log.Printf)
+	eventBroadcaster.StartLogging(logger.Printf)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: typedcorev1.New(kubeClient.CoreV1().RESTClient()).Events("")})
 	return eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "introspect-election"})
 }
@@ -163,8 +163,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			</html>
   `)
 	if err != nil {
-		log.Println("[election] parse template: ", err)
-		fmt.Fprint(w, "[election] parse template: ", err)
+		logger.Log.Error(err, "[election] error parsing template")
+		fmt.Fprint(w, "[election] error parsing template: ", err)
 		return
 	}
 
@@ -178,15 +178,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Println("[election] unable to get hostname: ", err)
+		logger.Log.Error(err, "[election] Unable to get hostname")
 		fmt.Fprint(w, "[election] unable to get hostname: ", err)
 	}
 	data := EnvData{version.Version, Leader, Fail, h.leaderElector, hostname}
 
 	err = t.Execute(w, data)
 	if err != nil {
-		log.Println("[election] executing template: ", err)
-		fmt.Fprint(w, "[election] executing template: ", err)
+		logger.Log.Error(err, "[election] error executing template")
+		fmt.Fprint(w, "[election] error executing template: ", err)
 	}
 
 }

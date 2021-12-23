@@ -2,9 +2,10 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 // RequestLogger .
@@ -30,9 +31,13 @@ func (r *RequestLogger) Log() {
 	// fmt.Fprintf(os.Stdout, "%s - [%s] \"%s %d %d\" %s %f\n",
 	// 	r.remoteAddr, timestamp, requestLine, r.status,
 	// 	r.responseBytes, r.userAgent, r.elapsedTime.Seconds())
-	log.Printf("[logger] %s - [%s] \"%s %d %d\" %f\n",
-		r.remoteAddr, timestamp, requestLine, r.status,
-		r.responseBytes, r.elapsedTime.Seconds())
+	logger.Log.Info("[middleware] request",
+		"remoteAddr", r.remoteAddr,
+		"timestamp", timestamp,
+		"requestLine", requestLine,
+		"status", r.status,
+		"responseBytes", r.responseBytes,
+		"elapsedSeconds", r.elapsedTime.Seconds())
 }
 
 func (r *RequestLogger) Write(p []byte) (int, error) {

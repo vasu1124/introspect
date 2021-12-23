@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"regexp"
 
+	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 	admission "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -39,23 +39,23 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
-	log.Println("[validate] rendering ui")
+	logger.Log.Info("[validate] rendering ui")
 
-	log.Printf("[validate] Regexp is %s", h.Regexp)
+	logger.Log.Info("[validate] Regexp", "RegExp", h.Regexp)
 	if r.Method == "POST" {
 		err := r.ParseForm()
 		if err != nil {
-			log.Print("[validate] parsing form", err)
+			logger.Log.Error(err, "[validate] error parsing form")
 		}
 		if r.Form["Regexp"] != nil {
 			h.Regexp = r.Form["Regexp"][0]
-			log.Printf("[validate] setting Regexp to %s", h.Regexp)
+			logger.Log.Info("[validate] setting Regexp", "RegExp", h.Regexp)
 		}
 	}
 
 	t, err := template.ParseFiles("tmpl/validate.html")
 	if err != nil {
-		log.Println("[validate] parse template:", err)
+		logger.Log.Error(err, "[validate] error parsing template")
 		fmt.Fprint(w, "[validate] parse template: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -70,18 +70,19 @@ func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		log.Println("[validate] executing template:", err)
+		logger.Log.Error(err, "[validate] error executing template")
 		fmt.Fprint(w, "[validate] executing template: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
 func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
-	log.Println("[validate] rendering webhook")
+	logger.Log.Info("[validate] rendering webhook")
 
 	ar := new(admission.AdmissionReview)
 	err := json.NewDecoder(r.Body).Decode(ar)
 	if err != nil {
+		logger.Log.Error(err, "[validate] error decoding")
 		handleError(w, nil, err)
 		return
 	}
@@ -92,6 +93,7 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 	}
 	pod := &corev1.Pod{}
 	if err := json.Unmarshal(ar.Request.Object.Raw, pod); err != nil {
+		logger.Log.Error(err, "[validate] error unmarshalling")
 		handleError(w, nil, err)
 		return
 	}
@@ -121,7 +123,7 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 func handleError(w http.ResponseWriter, ar *admission.AdmissionReview, err error) {
 	w.WriteHeader(http.StatusOK)
 	if err != nil {
-		log.Println("[validate] webhook error ", err.Error())
+		logger.Log.Error(err, "[validate] error webhook")
 	}
 
 	response := &admission.AdmissionResponse{

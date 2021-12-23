@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -18,11 +17,13 @@ import (
 	"github.com/vasu1124/introspect/pkg/environ"
 	"github.com/vasu1124/introspect/pkg/guestbook"
 	"github.com/vasu1124/introspect/pkg/healthz"
+	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/mandelbrot"
 	"github.com/vasu1124/introspect/pkg/middleware"
 	"github.com/vasu1124/introspect/pkg/operator"
 	"github.com/vasu1124/introspect/pkg/validate"
 	"github.com/vasu1124/introspect/pkg/version"
+	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -49,18 +50,18 @@ func (s *Server) Run(stop <-chan int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	log.Println("[server] Initiated graceful shutdown of HTTP(S) server")
+	logger.Log.V(int(zap.WarnLevel)).Info("[server] Initiated graceful shutdown of HTTP(S) server")
 	time.Sleep(1 * time.Second)
 
 	if srv != nil {
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Println("[server] Graceful HTTP server shutdown failed", err)
+			logger.Log.Error(err, "[server] Graceful HTTP server shutdown failed")
 		}
 	}
 
 	if srvTLS != nil {
 		if err := srvTLS.Shutdown(ctx); err != nil {
-			log.Println("[server] Graceful HTTPS server shutdown failed", err)
+			logger.Log.Error(err, "[server] Graceful HTTPS server shutdown failed")
 		}
 	}
 }
@@ -75,9 +76,9 @@ func (s *Server) startServer() *http.Server {
 	}
 
 	go func() {
-		log.Println("[server] Serving HTTP  ", srv.Addr)
+		logger.Log.Info("[server] Serving HTTP", "HTTP", srv.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatal("[server] HTTP server crashed", err)
+			logger.Log.Error(err, "[server] HTTP server crashed")
 		}
 	}()
 
@@ -98,9 +99,10 @@ func (s *Server) startServerTLS() *http.Server {
 	}
 
 	go func() {
-		log.Println("[server] Serving HTTPS ", srv.Addr)
+		logger.Log.Info("[server] Serving HTTPS ", "HTTPS", srv.Addr)
 		if err := srv.ListenAndServeTLS("etc/tls/server.crt", "etc/tls/server.key"); err != http.ErrServerClosed {
-			log.Fatal("[server] HTTPS server crashed", err)
+			logger.Log.Error(err, "[server] HTTPS server crashed")
+
 		}
 	}()
 
@@ -109,39 +111,39 @@ func (s *Server) startServerTLS() *http.Server {
 
 func (s *Server) registerHandlers() {
 	s.router.HandleFunc("/", serveMenu)
-	log.Println("[server] registered /")
+	logger.Log.Info("[server] registered /")
 	s.router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "tmpl/favicon.ico")
 	})
-	log.Println("[server] registered /favicon.ico")
+	logger.Log.Info("[server] registered /favicon.ico")
 	s.router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
-	log.Println("[server] registered /css")
+	logger.Log.Info("[server] registered /css")
 	s.router.Handle("/environ", environ.New())
-	log.Println("[server] registered /environ")
+	logger.Log.Info("[server] registered /environ")
 	s.router.Handle("/mandelbrot", mandelbrot.New())
-	log.Println("[server] registered /mandelbrot")
+	logger.Log.Info("[server] registered /mandelbrot")
 	s.router.Handle("/dynconfig", dynconfig.New())
-	log.Println("[server] registered /dynconfig")
+	logger.Log.Info("[server] registered /dynconfig")
 	s.router.Handle("/cookie", cookie.New())
-	log.Println("[server] registered /cookie")
+	logger.Log.Info("[server] registered /cookie")
 	s.router.Handle("/metrics", promhttp.Handler())
-	log.Println("[server] registered /metrics")
+	logger.Log.Info("[server] registered /metrics")
 	s.router.Handle("/validate", validate.New())
-	log.Println("[server] registered /validate")
+	logger.Log.Info("[server] registered /validate")
 	s.router.Handle("/healthz", healthz.New())
 	s.router.Handle("/healthzr", healthz.New())
-	log.Println("[server] registered /healthz|r")
+	logger.Log.Info("[server] registered /healthz|r")
 	s.router.Handle("/guestbook", guestbook.New())
-	log.Println("[server] registered /guestbook")
+	logger.Log.Info("[server] registered /guestbook")
 	s.router.Handle("/election", election.New())
-	log.Println("[server] registered /election")
+	logger.Log.Info("[server] registered /election")
 	o := operator.New()
 	if o != nil {
 		s.router.Handle("/operator", o)
 		s.router.HandleFunc("/operatorws", func(w http.ResponseWriter, r *http.Request) {
 			o.Melody.HandleRequest(w, r)
 		})
-		log.Println("[server] registered /operator")
+		logger.Log.Info("[server] registered /operator")
 	}
 
 }
@@ -153,12 +155,12 @@ func (s *Server) registerMiddlewares() {
 func serveMenu(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("tmpl/menu.html")
 	if err != nil {
-		log.Println("[server] template parse error: ", err)
+		logger.Log.Error(err, "[server] template parse error")
 		return
 	}
 	err = r.ParseForm()
 	if err != nil {
-		log.Println("[server] ParseForm error:", err)
+		logger.Log.Error(err, "[server] ParseForm error")
 	}
 
 	type EnvData struct {
@@ -168,7 +170,7 @@ func serveMenu(w http.ResponseWriter, r *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		log.Println("[server] executing template:", err)
+		logger.Log.Error(err, "[server] executing template")
 		fmt.Fprint(w, "[server] executing template: ", err)
 	}
 }

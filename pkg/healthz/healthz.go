@@ -2,8 +2,9 @@ package healthz
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 // Handler .
@@ -21,7 +22,7 @@ func New() *Handler {
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Print("[healthz|r] ParseForm error: ", err)
+		logger.Log.Error(err, "[healthz|r] ParseForm error")
 	}
 	if r.Form["die"] != nil {
 		h.status = http.StatusInternalServerError

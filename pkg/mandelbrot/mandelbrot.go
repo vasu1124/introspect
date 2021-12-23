@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"image/gif"
 	"image/png"
-	"log"
 	"math"
 	"math/cmplx"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 func init() {
@@ -43,7 +43,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	if err := r.ParseForm(); err != nil {
-		log.Print("[mandelbrot] ParseForm error: ", err)
+		logger.Log.Error(err, "[mandelbrot] ParseForm error")
 	}
 
 	var xmin, ymin, xmax, ymax float64 // = -2, -2, 2, 2
@@ -88,7 +88,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	duration := time.Now().Sub(start).Seconds() * 1e3
+	duration := time.Since(start).Seconds() * 1e3 //time.Now().Sub(start).Seconds() * 1e3
 
 	proto := strconv.Itoa(r.ProtoMajor)
 	proto = proto + "." + strconv.Itoa(r.ProtoMinor)

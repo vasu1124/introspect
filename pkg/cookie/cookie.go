@@ -2,10 +2,10 @@ package cookie
 
 import (
 	"html/template"
-	"log"
 	"net/http"
 	"time"
 
+	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 )
 
@@ -21,13 +21,13 @@ func New() *Handler {
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles("tmpl/cookie.html")
 	if err != nil {
-		log.Print(err)
+		logger.Log.Error(err, "[cookie] can't parse template")
 		return
 	}
 
 	err = r.ParseForm()
 	if err != nil {
-		log.Print(err)
+		logger.Log.Error(err, "[cookie] can't parse form")
 	}
 
 	if r.Form["cookie"] != nil && r.Form["value"] != nil && r.Form["expiry"] != nil &&
@@ -52,7 +52,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = t.Execute(w, data)
 	if err != nil {
-		log.Println("executing template:", err)
+		logger.Log.Error(err, "[cookie] can't exectute template")
 	}
 
 }

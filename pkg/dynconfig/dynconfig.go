@@ -3,12 +3,12 @@ package dynconfig
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"github.com/vasu1124/introspect/pkg/logger"
 )
 
 // Handler .
@@ -26,7 +26,7 @@ func New() *Handler {
 	config.AddConfigPath("./etc/config") // call multiple times to add many search paths
 	err := config.ReadInConfig()         // Find and read the config file
 	if err != nil {                      // Handle errors reading the config file
-		log.Printf("[dynconfig] Fatal error config file: %s \n", err)
+		logger.Log.Error(err, "[dynconfig] Fatal error config file")
 		return &h
 	}
 
@@ -55,7 +55,7 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal("[dynconfig] Fatal: ", err)
+		logger.Log.Error(err, "[dynconfig] setup fsnotify watcher")
 	}
 	defer watcher.Close()
 
@@ -67,17 +67,17 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 			select {
 			case e := <-watcher.Events:
 				if e.Op&fsnotify.Write == fsnotify.Write { //standard change
-					log.Println("[dynconfig] Config file changed: ", e.Name)
+					logger.Log.Info("[dynconfig] config file changed", "file", e.Name)
 					h.readConfig(config)
 				}
 				if e.Op&fsnotify.Remove == fsnotify.Remove { //symlink remove change
-					log.Println("[dynconfig] Config file removed: ", e.Name)
+					logger.Log.Info("[dynconfig] config file removed", "file", e.Name)
 					watcher.Remove(e.Name)
 					watcher.Add(e.Name)
 					h.readConfig(config)
 				}
 			case err := <-watcher.Errors:
-				log.Println("[dynconfig] Watcher error: ", err)
+				logger.Log.Error(err, "[dynconfig] Watcher error")
 			}
 		}
 	}()
@@ -88,12 +88,12 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 func (h *Handler) readConfig(config *viper.Viper) {
 	err := config.ReadInConfig()
 	if err != nil {
-		log.Printf("[dynconfig] Fatal error config file: %v", err)
+		logger.Log.Error(err, "[dynconfig] error config file")
 		return
 	}
 	err = config.Unmarshal(&h.example)
 	if err != nil {
-		log.Printf("[dynconfig] unable to decode into struct: %v", err)
+		logger.Log.Error(err, "[dynconfig] unable to unmarshal into struct")
 	}
 }
 
