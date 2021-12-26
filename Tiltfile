@@ -18,7 +18,8 @@ print(compile_cmd)
 local_resource(
   'introspect-compile',
   compile_cmd,
-  deps=['./cmd', './pkg', './vendor']
+  deps=['./cmd', './pkg', './vendor'],
+  labels=['introspect']
 )
 
 docker_build_with_restart(
@@ -38,7 +39,12 @@ docker_build_with_restart(
 )
 
 k8s_yaml(kustomize('./kubernetes/all-in-one'))
-k8s_resource('introspect', port_forwards=9090, resource_deps=['introspect-compile'])
+k8s_resource(
+  'introspect', 
+  port_forwards=[9090],  
+  resource_deps=['introspect-compile'], 
+  labels=['introspect']
+)
 
 k8s_resource(workload='introspect', objects=[
   'introspect-config:configmap',
@@ -48,9 +54,18 @@ k8s_resource(workload='introspect', objects=[
   'introspect-lease:role',
   'introspect-role:clusterrole',
   'introspect-lease-rolebinding:rolebinding',
-  'introspect-rolebinding:clusterrolebinding',
-])
+  'introspect-rolebinding:clusterrolebinding',],
+  labels=['introspect']
+)
 k8s_resource(workload='mongodb', objects=[
   'mongodb:persistentvolumeclaim',
-  'mongodb-secret:secret'
-])
+  'mongodb-secret:secret'],
+  labels=['introspect']
+)
+
+v1alpha1.extension_repo(name='tilt-extensions', url='https://github.com/tilt-dev/tilt-extensions')
+v1alpha1.extension(
+  name='ngrok', 
+  repo_name='tilt-extensions', 
+  repo_path='ngrok',
+)
