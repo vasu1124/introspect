@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -85,4 +88,14 @@ func (h *RequestLoggerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	rl.time = finishTime.UTC()
 	rl.elapsedTime = finishTime.Sub(startTime)
 	rl.Log()
+}
+
+func (r *RequestLogger) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := r.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("hijack not supported")
+	}
+	requestLine := fmt.Sprintf("%s %s %s", r.method, r.requestURI, r.proto)
+	logger.Log.Info("[middleware] hijack enabled", "requestLine", requestLine)
+	return h.Hijack()
 }
