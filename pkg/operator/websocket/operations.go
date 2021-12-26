@@ -3,8 +3,8 @@ package websocket
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
+	"github.com/vasu1124/introspect/pkg/logger"
 	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
 	melody "gopkg.in/olahol/melody.v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,29 +23,29 @@ func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 	m.HandleConnect(func(s *melody.Session) {
 		ul := &uselessmachinev1alpha1.UselessMachineList{}
 		if err := c.List(context.TODO(), ul, &client.ListOptions{}); err != nil {
-			fmt.Printf("can't list ueslessmachines: %v", err)
+			logger.Log.Error(err, "[operatorws] can't list ueslessmachines")
 			return
 		}
 		bb, err := json.Marshal(ul)
 		if err != nil {
-			fmt.Printf("can't marshal useless uselessmachinelist: %v", err)
+			logger.Log.Error(err, "[operatorws] can't marshal useless uselessmachinelist")
 			return
 		}
 		if err := s.Write(bb); err != nil {
-			fmt.Printf("can't send updates to websocket: %v", err)
+			logger.Log.Error(err, "[operatorws] can't send updates to websocket")
 			return
 		}
 	})
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
 		message := &Message{}
 		if err := json.Unmarshal(msg, message); err != nil {
-			fmt.Printf("can't get unmarshal message: %v", err)
+			logger.Log.Error(err, "[operatorws] can't get unmarshal message")
 			return
 		}
 		ctx := context.TODO()
 		useless := &uselessmachinev1alpha1.UselessMachine{}
 		if err := c.Get(ctx, client.ObjectKey{Name: message.Name, Namespace: message.Namespace}, useless); err != nil {
-			fmt.Printf("can't get uselessmachine: %v", err)
+			logger.Log.Error(err, "[operatorws] can't get uselessmachine")
 			return
 		}
 		if useless.Status.ActualState == nil ||
@@ -56,7 +56,7 @@ func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 			useless.Status.ActualState = &message.State
 			useless.Status.Message = &uiMessage
 			if err := c.Status().Update(ctx, useless); err != nil {
-				fmt.Printf("can't update uselessmachine: %v", err)
+				logger.Log.Error(err, "[operatorws] can't update uselessmachine")
 				return
 			}
 		}

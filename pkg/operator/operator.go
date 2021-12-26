@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/vasu1124/introspect/pkg/logger"
 	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
 	"github.com/vasu1124/introspect/pkg/operator/websocket"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -15,7 +16,6 @@ import (
 	melody "gopkg.in/olahol/melody.v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controller_runtime "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 // Handler .
@@ -48,7 +48,7 @@ func New() *Handler {
 		namespace = "default"
 	}
 
-	controller_runtime.SetLogger(zap.New(zap.UseDevMode(true)))
+	controller_runtime.SetLogger(logger.Log)
 
 	mgr, err := controller_runtime.NewManager(controller_runtime.GetConfigOrDie(), controller_runtime.Options{
 		Scheme:                  scheme,
