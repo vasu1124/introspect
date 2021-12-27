@@ -24,6 +24,7 @@ jobs:
     name: Build and Push with Docker buildx
     runs-on: ubuntu-latest
     env:
+      # multi-platform build is possible, disabled because no demos with arm currently
       # linux/arm64
       DOCKER_TARGET_PLATFORM: linux/amd64,linux/arm/v7 
 
@@ -83,7 +84,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
-        platforms: linux/amd64,linux/arm/v7
+        # platforms: linux/amd64,linux/arm/v7
         push: true
         tags: |
           vasu1124/introspect:1.0.0
@@ -115,7 +116,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
-        platforms: linux/amd64,linux/arm/v7
+        # platforms: linux/amd64,linux/arm/v7
         push: true
         tags: |
           vasu1124/introspect:2.0.0
