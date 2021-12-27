@@ -118,8 +118,8 @@ jobs:
         platforms: linux/amd64,linux/arm/v7
         push: true
         tags: |
-          vasu1124/introspect:1.0.0
-          ghcr.io/vasu1124/introspect:1.0.0
+          vasu1124/introspect:2.0.0
+          ghcr.io/vasu1124/introspect:2.0.0
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         build-args: |
