@@ -1,4 +1,4 @@
-DOCKERREPO:=vasu1124
+DOCKERREPO:=ghcr.io/vasu1124
 DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm/v7 #linux/arm64
 
 # nothing to edit beyond this point
@@ -99,7 +99,7 @@ deploy:
 	kubernetes/k14s/kapp-deploy.sh
 
 .PHONY: docker
-docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker docker/opensuse.docker
+docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker
 
 docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 	docker build -f docker/Dockerfile.scratch \
@@ -127,15 +127,6 @@ docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/ubuntu.docker
-
-docker/opensuse.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.opensuse
-	docker build -f docker/Dockerfile.opensuse \
-		--tag ${DOCKERREPO}/introspect-opensuse:${VERSION} \
-		--build-arg http_proxy=${http_proxy} \
-		--build-arg https_proxy=${https_proxy} \
-		--build-arg no_proxy=${no_proxy} \
-	 	.
-	touch docker/opensuse.docker
 
 .PHONY: 1.0.0
 1.0.0:

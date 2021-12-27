@@ -16,7 +16,7 @@ spec:
         visualize: "true"
     spec:
       containers:
-      - image: vasu1124/introspect:2.0.0
+      - image: ghcr.io/vasu1124/introspect:2.0.0
     #    imagePullPolicy: IfNotPresent
         imagePullPolicy: Always
         name: introspect

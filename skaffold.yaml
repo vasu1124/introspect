@@ -16,10 +16,10 @@ profiles:
 build:
   tagPolicy:
     envTemplate:
-      template: 'vasu1124/introspect:1.0.0'
+      template: 'ghcr.io/vasu1124/introspect:1.0.0'
 #    sha256: {}
   artifacts:
-  - image: vasu1124/introspect
+  - image: ghcr.io/vasu1124/introspect
     context: .
     docker:
       dockerfile: docker/Dockerfile

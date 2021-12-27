@@ -15,4 +15,4 @@ apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations
 destinations:
 - image: introspect
-  newImage: vasu1124/introspect
+  newImage: #@ data.values.OCI_REPO

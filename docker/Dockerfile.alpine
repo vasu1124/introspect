@@ -1,12 +1,13 @@
 FROM alpine:3
 LABEL maintainer="vasu1124@actvirtual.com" \
-      immutable.labels=true \
-      org.opencontainers.image.vendor="actvirtual" \
-      org.opencontainers.image.licenses="GPL-3.0" \
-      org.opencontainers.image.title="Introspect" \
-      org.opencontainers.image.source="https://github.com/vasu1124/introspect" \
-      com.actvirtual.quality="evaluation" \
-      com.actvirtual.product="DemoSuite" 
+    immutable.labels=true \
+    org.opencontainers.image.vendor="actvirtual" \
+    org.opencontainers.image.licenses="GPL-3.0" \
+    org.opencontainers.image.title="Introspect" \
+    org.opencontainers.image.source="https://github.com/vasu1124/introspect" \
+    org.opencontainers.image.description="DemoSuite for Kubernetes" \
+    com.actvirtual.quality="evaluation" \
+    com.actvirtual.product="DemoSuite" 
 
  
 RUN apk --no-cache add --update bash ca-certificates libc6-compat \

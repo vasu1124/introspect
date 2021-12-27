@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: vasu1124/introspect
+  repository: ghcr.io/vasu1124/introspect
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "1.0.0"

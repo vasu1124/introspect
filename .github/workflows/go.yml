@@ -23,8 +23,6 @@ jobs:
     name: Build with Docker buildx
     runs-on: ubuntu-latest
     env:
-      DOCKER_REGISTRY: docker.io      
-      DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/introspect
       # linux/arm64
       DOCKER_TARGET_PLATFORM: linux/amd64,linux/arm/v7 
 
@@ -70,6 +68,14 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
+  
+    - name: Login to GitHub Container Registry
+      if: success()
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Docker Buildx (build+push) 1.0.0
       if: success()
@@ -78,7 +84,9 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm/v7
         push: true
-        tags: vasu1124/introspect:1.0.0
+        tags: |
+          vasu1124/introspect:1.0.0
+          ghcr.io/vasu1124/introspect:1.0.0
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         build-args: |
@@ -98,7 +106,7 @@ jobs:
     - name: Inspect image
       if: success()
       run: |
-        docker buildx imagetools inspect ${DOCKER_IMAGE}:1.0.0
+        docker buildx imagetools inspect ghcr.io/vasu1124/introspect:1.0.0
 
 
     - name: Docker Buildx (build+push) 2.0.0
@@ -108,7 +116,9 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm/v7
         push: true
-        tags: vasu1124/introspect:2.0.0
+        tags: |
+          vasu1124/introspect:1.0.0
+          ghcr.io/vasu1124/introspect:1.0.0
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         build-args: |
@@ -128,4 +138,4 @@ jobs:
     - name: Inspect image
       if: success()
       run: |
-        docker buildx imagetools inspect ${DOCKER_IMAGE}:2.0.0
+        docker buildx imagetools inspect ghcr.io/vasu1124/introspect:2.0.0

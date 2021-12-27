@@ -4,7 +4,7 @@
 load('ext://restart_process', 'docker_build_with_restart')
 load('ext://local_output', 'local_output')
 
-default_registry('docker.io/vasu1124')
+default_registry('ghcr.io/vasu1124')
 allow_k8s_contexts('name-of-my-cluster')
 
 VERSION = local_output('cat introspect.VERSION')

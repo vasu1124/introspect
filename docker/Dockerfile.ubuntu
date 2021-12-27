@@ -1,15 +1,16 @@
-FROM ubuntu:16.04
+FROM ubuntu:22.04
 LABEL maintainer="vasu1124@actvirtual.com" \
-      immutable.labels=true \
-      org.opencontainers.image.vendor="actvirtual" \
-      org.opencontainers.image.licenses="GPL-3.0" \
-      org.opencontainers.image.title="Introspect" \
-      org.opencontainers.image.source="https://github.com/vasu1124/introspect" \
-      com.actvirtual.quality="evaluation" \
-      com.actvirtual.product="DemoSuite" 
+    immutable.labels=true \
+    org.opencontainers.image.vendor="actvirtual" \
+    org.opencontainers.image.licenses="GPL-3.0" \
+    org.opencontainers.image.title="Introspect" \
+    org.opencontainers.image.source="https://github.com/vasu1124/introspect" \
+    org.opencontainers.image.description="DemoSuite for Kubernetes" \
+    com.actvirtual.quality="evaluation" \
+    com.actvirtual.product="DemoSuite" 
 
 COPY /introspect-linux-amd64 /
 COPY /tmpl /tmpl
 COPY /css /css
-EXPOSE 9090
+EXPOSE 9090 9443
 CMD ["/introspect-linux-amd64"]

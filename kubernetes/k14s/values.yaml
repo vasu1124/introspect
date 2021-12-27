@@ -4,6 +4,7 @@
 VERSION: "1.0.0"
 COMMIT: "0000000000000000000000000000000000000000"
 BRANCH: "master"
+OCI_REPO: ghcr.io/vasu1124/introspect-priv
 
 #! configurables
 namespace: "demo"
