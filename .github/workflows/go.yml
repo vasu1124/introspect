@@ -20,7 +20,7 @@ on:
 
 jobs:
   build:
-    name: Build with Docker buildx
+    name: Build and Push with Docker buildx
     runs-on: ubuntu-latest
     env:
       # linux/arm64
