@@ -9,6 +9,7 @@ import (
 	"github.com/vasu1124/introspect/pkg/logger"
 	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
 	"github.com/vasu1124/introspect/pkg/operator/websocket"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/vasu1124/introspect/pkg/operator/useless/controllers"
@@ -25,22 +26,18 @@ type Handler struct {
 
 var (
 	scheme = runtime.NewScheme()
-	log    = controller_runtime.Log.WithName("operator")
 )
 
 func init() {
-	_ = clientgoscheme.AddToScheme(scheme)
-
-	_ = uselessmachinev1alpha1.AddToScheme(scheme)
-	// +kubebuilder:scaffold:scheme
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(uselessmachinev1alpha1.AddToScheme(scheme))
+	//+kubebuilder:scaffold:scheme
 }
 
 // New .
 func New() *Handler {
 	var h Handler
 
-	// TODO: use gin
-	// r := gin.Default()
 	h.Melody = melody.New()
 
 	namespace, exists := os.LookupEnv("NAMESPACE")
@@ -56,27 +53,27 @@ func New() *Handler {
 		LeaderElection:          true,
 		LeaderElectionNamespace: namespace,
 		LeaderElectionID:        "useless.introspect.actvirtual.com",
+		Logger:                  controller_runtime.Log.WithName("operator"),
 	})
 	if err != nil {
-		log.Error(err, "unable to start manager", "operator", "UselessMachine")
+		logger.Log.Error(err, "unable to start UselessMachine manager", "controller", "UselessMachine")
 		return nil
 	}
 
 	if err = (&controllers.UselessMachineReconciler{
 		Client:   mgr.GetClient(),
-		Log:      controller_runtime.Log.WithName("controller").WithName("UselessMachine"),
 		Scheme:   mgr.GetScheme(),
 		Notifier: websocket.NewNotifier(h.Melody, mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
-		log.Error(err, "unable to create controller", "operator", "UselessMachine")
+		logger.Log.Error(err, "[operator] unable to create controller", "controller", "UselessMachine")
 		return nil
 	}
 	// +kubebuilder:scaffold:builder
 
 	go func() {
-		log.Info("starting manager")
+		logger.Log.Info("[operator] starting manager")
 		if err := mgr.Start(controller_runtime.SetupSignalHandler()); err != nil {
-			log.Error(err, "problem running manager", "operator", "UselessMachine")
+			logger.Log.Error(err, "[operator] problem running manager", "controller", "UselessMachine")
 		}
 	}()
 
@@ -96,14 +93,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	homeTemplate, err := template.ParseFiles("tmpl/operator.html")
 	if err != nil {
 		fmt.Fprint(w, "[operator] parsing template: ", err)
-		log.Error(err, "[operator] parsing template")
+		logger.Log.Error(err, "[operator] parsing template")
 		return
 	}
 
 	err = homeTemplate.Execute(w, data)
 	if err != nil {
 		fmt.Fprint(w, "[operator] executing template: ", err)
-		log.Error(err, "[operator] executing template")
+		logger.Log.Error(err, "[operator] executing template")
 	}
 
 }

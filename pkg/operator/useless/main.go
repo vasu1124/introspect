@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	introspectv1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
+	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
 	"github.com/vasu1124/introspect/pkg/operator/useless/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -43,8 +43,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
-	utilruntime.Must(introspectv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(uselessmachinev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

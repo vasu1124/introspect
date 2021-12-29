@@ -34,7 +34,6 @@ import (
 // UselessMachineReconciler reconciles a UselessMachine object
 type UselessMachineReconciler struct {
 	client.Client
-	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Notifier *ws.Notifier
 }
@@ -44,8 +43,7 @@ type UselessMachineReconciler struct {
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines/finalizers,verbs=update
 func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller_runtime.Request) (controller_runtime.Result, error) {
-	//	ctx := context.Background()
-	log := r.Log.WithValues("uselessmachine", req.NamespacedName)
+	log, _ := logr.FromContext(ctx)
 
 	if r.Notifier != nil {
 		ul := &uselessmachinev1alpha1.UselessMachineList{}
@@ -61,7 +59,7 @@ func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller
 	// Fetch the Useless instance
 	instance := &uselessmachinev1alpha1.UselessMachine{}
 	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
-		log.V(4).Info("unable to fetch UselessMachine")
+		log.Info("[controller] unable to fetch UselessMachine")
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
@@ -73,16 +71,15 @@ func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller
 	desiredStatus := *r.desiredStatus(instance)
 	if !reflect.DeepEqual(instance.Status, desiredStatus) {
 		go func() {
-			log.V(1).Info("Updating UselessMachine", "Status", instance.Status.ActualState, "DesiredStatus", desiredStatus.ActualState)
+			log.Info("[controller] Updating UselessMachine", "Status", instance.Status.ActualState, "DesiredStatus", desiredStatus.ActualState)
 			// We pretend that the update take 4sec, otherwise demonstrating is futile
 			time.Sleep(4 * time.Second)
 			instance.Status = desiredStatus
 			if err := r.Status().Update(ctx, instance); err != nil {
-				log.V(3).Info("Unable to update UselessMachine status")
+				log.Info("[controller] Unable to update UselessMachine status")
 			}
 		}()
 		return controller_runtime.Result{}, nil
-
 	}
 
 	return controller_runtime.Result{}, nil

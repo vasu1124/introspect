@@ -23,7 +23,7 @@ local_resource(
 )
 
 docker_build_with_restart(
-  'vasu1124/introspect',
+  'ghcr.io/vasu1124/introspect',
   '.',
   entrypoint=['/introspect-linux-amd64'],
   dockerfile='docker/Dockerfile.alpine',
