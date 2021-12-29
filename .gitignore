@@ -33,12 +33,14 @@ Gopkg.lock
 *.prof
 introspect*amd64
 debug
+pkg/operator/useless/bin/
 
 #built TLS artefacts
 
 #logs and play
 telepresence*.log
 /.play
+kubernetes/k14s/kbld.lock.yaml
 
 # infrabox
 .infrabox
