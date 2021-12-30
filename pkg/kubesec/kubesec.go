@@ -46,7 +46,7 @@ func GetKubesecPod(pod *v1.Pod) (*Result, error) {
 
 //GetKubesecPodYAML ...
 func GetKubesecPodYAML(yamlStr []byte) (*Result, error) {
-	kubesecService := "https://kubesec.io/"
+	kubesecService := "https://v2.kubesec.io/scan"
 
 	multif := &bytes.Buffer{}
 	writer := multipart.NewWriter(multif)
@@ -70,9 +70,9 @@ func GetKubesecPodYAML(yamlStr []byte) (*Result, error) {
 	client := &http.Client{
 		Timeout: time.Second * 3,
 		Transport: &http.Transport{
-			//			Proxy: http.ProxyURL(proxyURL),
+			//Proxy: http.ProxyURL(proxyURL),
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
+				InsecureSkipVerify: false,
 			},
 		},
 	}
