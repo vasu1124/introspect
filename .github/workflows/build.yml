@@ -154,4 +154,4 @@ jobs:
     - name: Helm package & push chart to ghcr
       run: |
         helm package ./kubernetes/helm/introspect/ --app-version 1.0.0
-        helm push introspect.helm-0.1.0.tgz oci://ghcr.io/vasu1124/introspect
+        helm push introspect-helm-0.1.0.tgz oci://ghcr.io/vasu1124/introspect

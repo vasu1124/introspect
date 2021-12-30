@@ -41,7 +41,7 @@ service:
   type: ClusterIP
 
 istio:
-  enabled: true
+  enabled: false
   hosts:
   - introspect.example.com
   gateways:
