@@ -150,7 +150,7 @@ jobs:
         version: v3.7.2
     - name: Helm login to ghcr
       run: |
-        helm registry login --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+        echo ${{ secrets.GITHUB_TOKEN }} | helm registry login --username ${{ github.repository_owner }} --password-stdin ghcr.io
     - name: Helm package & push chart to ghcr
       run: |
         helm package ./kubernetes/helm/introspect/ --app-version 1.0.0
