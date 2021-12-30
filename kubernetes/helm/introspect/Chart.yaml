@@ -1,5 +1,5 @@
 apiVersion: v2
-name: introspect
+name: introspect.helm
 description: a personal Kubernetes introspection tool
 keywords:
   - introspect

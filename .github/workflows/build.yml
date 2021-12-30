@@ -142,3 +142,16 @@ jobs:
       if: success()
       run: |
         docker buildx imagetools inspect ghcr.io/vasu1124/introspect:2.0.0
+        
+    - name: Install Helm
+      if: success()
+      uses: azure/setup-helm@v1
+      with:
+        version: v3.7.2
+    - name: Helm login to ghcr
+      run: |
+        helm registry login --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+    - name: Helm package & push chart to ghcr
+      run: |
+        helm package ./kubernetes/helm/introspect/ --app-version 1.0.0
+        helm push introspect.helm-0.1.0.tgz oci://ghcr.io/vasu1124/introspect
