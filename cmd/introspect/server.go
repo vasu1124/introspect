@@ -15,7 +15,7 @@ var serverCmd = &cobra.Command{
 	Short:            "(default) run introspect server",
 	PersistentPreRun: bindFlags,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Log.Info("[introspect] Version", "Version", version.Version, "Commit", version.Commit, "Branch", version.Branch)
+		logger.Log.Info("[introspect] Version", "Version", version.Get().GitVersion, "Commit", version.Get().GitCommit, "TreeState", version.Get().GitTreeState, "BuildDate", version.Get().BuildDate)
 
 		stop := signal.SignalHandler()
 		srv := server.NewServer()

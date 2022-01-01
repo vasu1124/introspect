@@ -63,10 +63,11 @@ func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
 
 	type EnvData struct {
 		Version string
+		Flag    bool
 		Handler *Handler
 	}
 
-	data := EnvData{version.Version, h}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, h}
 
 	err = t.Execute(w, data)
 	if err != nil {

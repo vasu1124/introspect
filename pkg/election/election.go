@@ -135,10 +135,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			<head>
 				<link rel="stylesheet" href="css/bootstrap.css">
 				<style>
-				{{if eq .Version "1.0.0" }}
+				{{if .Flag }}
 				body { background-color: #F0FFF0; }
-				{{end}}
-				{{if eq .Version "2.0.0" }}
+				{{else}}
 				body { background-color: #F0F0FF; }
 				{{end}}
 				</style>
@@ -150,7 +149,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				{{if eq .Fail true }}
 					No election could be negotiated<br>
 				{{else}}
-					{{if eq .Leader true }}
+					{{if .Leader }}
 						I am an <b>active</b> Leader<br>
 					{{else}}
 						I am on <b>standby</b><br>
@@ -170,6 +169,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	type EnvData struct {
 		Version        string
+		Flag           bool
 		Leader         bool
 		Fail           bool
 		LeaderElection *leaderelection.LeaderElector
@@ -181,7 +181,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Error(err, "[election] Unable to get hostname")
 		fmt.Fprint(w, "[election] unable to get hostname: ", err)
 	}
-	data := EnvData{version.Version, Leader, Fail, h.leaderElector, hostname}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, Leader, Fail, h.leaderElector, hostname}
 
 	err = t.Execute(w, data)
 	if err != nil {

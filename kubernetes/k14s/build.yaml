@@ -9,7 +9,7 @@ sources:
   docker:
     build:
       #@yaml/text-templated-strings
-      rawOptions: ["--build-arg", "VERSION=(@= str(data.values.VERSION) @)", "--build-arg", "COMMIT=(@= str(data.values.COMMIT) @)", "--build-arg", "BRANCH=(@= str(data.values.BRANCH) @)"]
+      rawOptions: ["--build-arg", "gitVersion=(@= str(data.values.gitVersion) @)", "--build-arg", "gitCommit=(@= str(data.values.gitCommit) @)", "--build-arg", "gitTreeState=(@= str(data.values.gitTreeState) @)"]
 ---
 apiVersion: kbld.k14s.io/v1alpha1
 kind: ImageDestinations

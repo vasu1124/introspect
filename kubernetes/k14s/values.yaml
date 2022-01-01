@@ -1,9 +1,9 @@
 #@data/values
 ---
 #! build metadata
-VERSION: "1.0.0"
-COMMIT: "0000000000000000000000000000000000000000"
-BRANCH: "master"
+gitVersion: "0.0.0-dev"
+gitCommit: "0000000000000000000000000000000000000000"
+gitTreeState: "dirty"
 OCI_REPO: ghcr.io/vasu1124/introspect-priv
 
 #! configurables

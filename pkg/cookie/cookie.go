@@ -44,11 +44,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type EnvData struct {
-		Version string
-		Cookie  []*http.Cookie
+		Flag   bool
+		Cookie []*http.Cookie
 	}
 
-	data := EnvData{version.Version, r.Cookies()}
+	data := EnvData{version.GetPatchVersion()%2 == 0, r.Cookies()}
 
 	err = t.Execute(w, data)
 	if err != nil {

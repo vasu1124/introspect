@@ -1,7 +1,7 @@
 FROM golang:1.17-alpine as builder
-ARG VERSION=0.0.0
-ARG COMMIT=0000000000000000000000000000000000000000
-ARG BRANCH=master
+ARG gitVersion=0.0.0
+ARG gitCommit=0000000000000000000000000000000000000000
+ARG gitTreeState="dirty"
 
 WORKDIR /introspect
 # RUN GO111MODULE=off go get github.com/go-delve/delve/cmd/dlv
@@ -9,11 +9,14 @@ COPY go.* ./
 COPY cmd cmd
 COPY pkg pkg
 COPY vendor vendor
-RUN go build \
+COPY introspect.VERSION ./ 
+RUN buildDate=$(date -I'seconds'); \
+    go build \
     -ldflags "\
-    -X github.com/vasu1124/introspect/pkg/version.Version=${VERSION} \
-    -X github.com/vasu1124/introspect/pkg/version.Commit=${COMMIT} \
-    -X github.com/vasu1124/introspect/pkg/version.Branch=${BRANCH} \
+	-X github.com/vasu1124/introspect/pkg/version.gitVersion=${gitVersion} \
+ 	-X github.com/vasu1124/introspect/pkg/version.gitCommit=${gitCommit} \
+	-X github.com/vasu1124/introspect/pkg/version.gitTreeState=${gitTreeState} \
+	-X github.com/vasu1124/introspect/pkg/version.buildDate=${buildDate} \
     " \
     -o introspect-linux ./cmd
 

@@ -2,8 +2,8 @@
 dir="${0%/*}"
 cd $dir
 
-VERSION=1.0.0
-COMMIT=`git rev-parse HEAD`
-BRANCH=`git rev-parse --abbrev-ref HEAD`
+gitVersion="0.0.0-dev"
+gitCommit=$(git rev-parse --verify HEAD)
+gitTreeState=$([ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
 
-kapp deploy -a introspect -f <(ytt template -v VERSION=$VERSION -v COMMIT=$COMMIT -v BRANCH=$BRANCH -f . | kbld --lock-output kbld.lock.yaml -f -) --diff-changes
+kapp deploy -a introspect -f <(ytt template -v gitVersion=$gitVersion -v gitCommit=$gitCommit -v gitTreeState=$gitTreeState -f . | kbld --lock-output kbld.lock.yaml -f -) --diff-changes

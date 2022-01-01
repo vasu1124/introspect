@@ -3,10 +3,9 @@
   <head>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <style>
-      {{if eq .Version "1.0.0" }}
+      {{if .Flag }}
       body { background-color: #F0FFF0; }
-      {{end}}
-      {{if eq .Version "2.0.0" }}
+      {{else}}
       body { background-color: #F0F0FF; }
       {{end}}
     </style>

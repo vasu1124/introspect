@@ -64,6 +64,7 @@ func serveEnviron(w http.ResponseWriter, r *http.Request) {
 
 	type EnvData struct {
 		Version     string
+		Flag        bool
 		Environment map[string]string
 		Header      map[string][]string
 		Form        map[string][]string
@@ -101,9 +102,10 @@ func serveEnviron(w http.ResponseWriter, r *http.Request) {
 		processMap["GO Version"] = runtime.Version()
 		processMap["GO NumCPU"] = fmt.Sprintf("%d", runtime.NumCPU())
 		processMap["GO NumGoroutine"] = fmt.Sprintf("%d", runtime.NumGoroutine())
-		processMap["Introspect Version"] = version.Version
-		processMap["Introspect Branch"] = version.Branch
-		processMap["Introspect Commit"] = version.Commit
+		processMap["Introspect Version"] = version.Get().GitVersion
+		processMap["Introspect TreeState"] = version.Get().GitTreeState
+		processMap["Introspect Commit"] = version.Get().GitCommit
+		processMap["Introspect BuildDate"] = version.Get().BuildDate
 	}
 
 	serverMap := make(map[string]string)
@@ -113,7 +115,7 @@ func serveEnviron(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	data := EnvData{version.Version, envMap, r.Header, r.Form, requestMap, processMap, osinfo.OSrelease, serverMap, count, network.NetworkData}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, envMap, r.Header, r.Form, requestMap, processMap, osinfo.OSrelease, serverMap, count, network.NetworkData}
 
 	err = t.Execute(w, data)
 	if err != nil {

@@ -7,12 +7,20 @@ load('ext://local_output', 'local_output')
 default_registry('ghcr.io/vasu1124')
 allow_k8s_contexts('name-of-my-cluster')
 
-VERSION = local_output('cat introspect.VERSION')
-COMMIT  = local_output('git rev-parse HEAD')
-BRANCH  = local_output('git rev-parse --abbrev-ref HEAD')
+gitVersion   = local_output('cat introspect.VERSION')
+gitCommit    = local_output('git rev-parse --verify HEAD')
+gitTreeState = local_output('[ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty')
+buildDate    = local_output('date --rfc-3339=seconds | sed "s/ /T/"')
 
-LDFLAGS = '-ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=' + VERSION + ' -X github.com/vasu1124/introspect/pkg/version.Commit=' + COMMIT + ' -X github.com/vasu1124/introspect/pkg/version.Branch=' + BRANCH + '"'
+LDFLAGS = """ \
+-ldflags '\
+-X github.com/vasu1124/introspect/pkg/version.gitVersion=%s \
+-X github.com/vasu1124/introspect/pkg/version.gitCommit=%s \
+-X github.com/vasu1124/introspect/pkg/version.gitTreeState=%s \
+-X github.com/vasu1124/introspect/pkg/version.buildDate=%s' \
+""" % (gitVersion, gitCommit, gitTreeState, buildDate)
 compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ' + LDFLAGS + ' -o introspect-linux-amd64 ./cmd/'
+
 print(compile_cmd)
 
 local_resource(

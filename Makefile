@@ -1,15 +1,20 @@
-DOCKERREPO:=ghcr.io/vasu1124
+OCIREPO:=ghcr.io/vasu1124
 DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm/v7 #linux/arm64
 
 # nothing to edit beyond this point
 BINARY:=introspect
 GOARCH:=amd64
 
-VERSION=$(shell cat introspect.VERSION)
-COMMIT:=$(shell git rev-parse HEAD)
-BRANCH:=$(shell git rev-parse --abbrev-ref HEAD)
+gitVersion=$(shell cat introspect.VERSION)
+gitCommit:=$(shell git rev-parse --verify HEAD)
+gitTreeState=$(shell [ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
+buildDate:=$(shell date --rfc-3339=seconds | sed 's/ /T/')
 
-LDFLAGS=-ldflags "-X github.com/vasu1124/introspect/pkg/version.Version=${VERSION} -X github.com/vasu1124/introspect/pkg/version.Commit=${COMMIT} -X github.com/vasu1124/introspect/pkg/version.Branch=${BRANCH}"
+LDFLAGS=-ldflags \
+	"-X github.com/vasu1124/introspect/pkg/version.gitVersion=${gitVersion} \
+ 	 -X github.com/vasu1124/introspect/pkg/version.gitCommit=${gitCommit} \
+	 -X github.com/vasu1124/introspect/pkg/version.gitTreeState=${gitTreeState} \
+	 -X github.com/vasu1124/introspect/pkg/version.buildDate=${buildDate}"
 
 # Build the project
 ifeq ($(shell uname -s), Darwin)
@@ -73,26 +78,26 @@ ${BINARY}-darwin-${GOARCH}: ${SOURCES}
 .PHONY: build
 build: ${SOURCES}
 	docker build \
-		--tag ${DOCKERREPO}/introspect:${VERSION} \
-		--build-arg VERSION=${VERSION} \
-		--build-arg COMMIT=${COMMIT} \
-		--build-arg BRANCH=${BRANCH} \
+		--tag ${OCIREPO}/introspect:${gitVersion} \
+		--build-arg gitVersion=${gitVersion} \
+		--build-arg gitCommit=${gitCommit} \
+		--build-arg gitTreeState=${gitTreeState} \
 		--file Dockerfile \
 		.
-	docker manifest inspect ${DOCKERREPO}/introspect:${VERSION}
+	docker manifest inspect ${OCIREPO}/introspect:${gitVersion}
 
 .PHONY: buildx
 buildx: ${SOURCES}
 	docker buildx build \
 		--output "type=image,push=false" \
 		--platform ${DOCKER_TARGET_PLATFORM} \
-		--tag ${DOCKERREPO}/introspect:${VERSION} \
-		--build-arg VERSION=${VERSION} \
-		--build-arg COMMIT=${COMMIT} \
-		--build-arg BRANCH=${BRANCH} \
+		--tag ${OCIREPO}/introspect:${gitVersion} \
+		--build-arg gitVersion=${gitVersion} \
+		--build-arg gitCommit=${gitCommit} \
+		--build-arg gitTreeState=${gitTreeState} \
 		--file Dockerfile \
 		.
-	docker buildx imagetools inspect ${DOCKERREPO}/introspect:${VERSION}
+	docker buildx imagetools inspect ${OCIREPO}/introspect:${gitVersion}
 
 .PHONY: deploy
 deploy:
@@ -103,7 +108,7 @@ docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker
 
 docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 	docker build -f docker/Dockerfile.scratch \
-		--tag ${DOCKERREPO}/introspect-scratch:${VERSION} \
+		--tag ${OCIREPO}/introspect-scratch:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
@@ -112,7 +117,7 @@ docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 
 docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 	docker build -f docker/Dockerfile.alpine \
-		--tag ${DOCKERREPO}/introspect:${VERSION} \
+		--tag ${OCIREPO}/introspect:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
@@ -121,27 +126,17 @@ docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 
 docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 	docker build -f docker/Dockerfile.ubuntu \
-		--tag ${DOCKERREPO}/introspect-ubuntu:${VERSION} \
+		--tag ${OCIREPO}/introspect-ubuntu:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/ubuntu.docker
 
-.PHONY: 1.0.0
-1.0.0:
-	echo "1.0.0" >introspect.VERSION
-	VERSION="1.0.0"
-
-.PHONY: 2.0.0
-2.0.0:
-	echo "2.0.0" >introspect.VERSION
-	VERSION="2.0.0"
-
 # we are only pushing alpine
 .PHONY: docker-push
 docker-push: docker/alpine.docker
-	docker push ${DOCKERREPO}/introspect:${VERSION}
+	docker push ${OCIREPO}/introspect:${gitVersion}
 
 kubernetes/k8s-visualizer:
 #	original was git clone https://github.com/brendandburns/gcp-live-k8s-visualizer.git

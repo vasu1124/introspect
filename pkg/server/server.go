@@ -164,8 +164,9 @@ func serveMenu(w http.ResponseWriter, r *http.Request) {
 
 	type EnvData struct {
 		Version string
+		Flag    bool
 	}
-	data := EnvData{version.Version}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0}
 
 	err = t.Execute(w, data)
 	if err != nil {

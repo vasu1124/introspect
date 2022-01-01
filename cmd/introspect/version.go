@@ -16,9 +16,9 @@ var versionCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		if !short {
-			fmt.Printf("%s/%s/%s\n", version.Version, version.Commit, version.Branch)
+			fmt.Printf("%#v\n", version.Get())
 		} else {
-			fmt.Printf("%s\n", version.Version)
+			fmt.Printf("%v\n", version.Get())
 		}
 	},
 }
