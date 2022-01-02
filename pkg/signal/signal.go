@@ -8,7 +8,8 @@ import (
 	"github.com/vasu1124/introspect/pkg/logger"
 )
 
-func SignalHandler() (stopChanel <-chan int) {
+// Handler handles the Signals
+func Handler() (stopChanel <-chan int) {
 
 	stop := make(chan int)
 	signalChanel := make(chan os.Signal, 1)

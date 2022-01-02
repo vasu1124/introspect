@@ -17,7 +17,7 @@ var serverCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Log.Info("[introspect] Version", "Version", version.Get().GitVersion, "Commit", version.Get().GitCommit, "TreeState", version.Get().GitTreeState, "BuildDate", version.Get().BuildDate)
 
-		stop := signal.SignalHandler()
+		stop := signal.Handler()
 		srv := server.NewServer()
 		srv.Run(stop)
 	},
