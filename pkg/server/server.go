@@ -25,10 +25,12 @@ import (
 	"github.com/vasu1124/introspect/pkg/version"
 )
 
+// Server struct
 type Server struct {
 	router *mux.Router
 }
 
+// NewServer to get to a Server
 func NewServer() *Server {
 	srv := &Server{
 		router: mux.NewRouter(),
@@ -37,6 +39,7 @@ func NewServer() *Server {
 	return srv
 }
 
+// Run starts the Server
 func (s *Server) Run(stop <-chan int) {
 	s.registerHandlers()
 	s.registerMiddlewares()

@@ -1,5 +1,6 @@
 package config
 
+// Config struct
 type Config struct {
 	Port       int
 	SecurePort int
@@ -8,6 +9,7 @@ type Config struct {
 	Development bool
 }
 
+// Default configuration
 var Default = &Config{
 	Port:        9090,
 	SecurePort:  9443,

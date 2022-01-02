@@ -90,6 +90,7 @@ func (h *RequestLoggerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	rl.Log()
 }
 
+// Hijack is necessary for websocket
 func (r *RequestLogger) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	h, ok := r.ResponseWriter.(http.Hijacker)
 	if !ok {

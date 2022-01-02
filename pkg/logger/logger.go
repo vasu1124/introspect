@@ -12,12 +12,10 @@ import (
 	"k8s.io/klog/v2"
 )
 
+// Log is the main logger
 var Log logr.Logger
 
-func Printf(format string, args ...interface{}) {
-	Log.Info(fmt.Sprintf(format, args...))
-}
-
+// InitZap initializes the Zap based logging framework
 func InitZap() {
 	zapConfig := zap.NewProductionConfig()
 	if config.Default.Development {

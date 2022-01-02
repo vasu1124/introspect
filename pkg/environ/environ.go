@@ -41,7 +41,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	serveEnviron(w, r)
-	duration := time.Now().Sub(start).Seconds() * 1e3
+	duration := time.Since(start).Seconds() * 1e3 //time.Now().Sub(start).Seconds() * 1e3
 
 	proto := strconv.Itoa(r.ProtoMajor)
 	proto = proto + "." + strconv.Itoa(r.ProtoMinor)
@@ -123,11 +123,4 @@ func serveEnviron(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "[environ] executing template: ", err)
 	}
 
-}
-
-func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
-	w.WriteHeader(status)
-	if status == http.StatusNotFound {
-		fmt.Fprint(w, "404 page not found custom")
-	}
 }

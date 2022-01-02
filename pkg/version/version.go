@@ -27,10 +27,9 @@ func GetPatchVersion() int {
 	return 0
 }
 
-// GetInterface returns the overall codebase version. It's for detecting
+// Get returns the overall codebase version. It's for detecting
 // what code a binary was built from.
-// These variables typically come from -ldflags settings and in
-// their absence fallback to the settings in pkg/version/base.go
+// These variables typically come from -ldflags settings
 func Get() apimachineryversion.Info {
 	var (
 		version  = strings.Split(gitVersion, ".")
