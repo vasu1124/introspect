@@ -1,0 +1,40 @@
+apiVersion: landscaper.gardener.cloud/v1alpha1
+kind: Blueprint
+
+imports:
+- name: cluster
+  type: target
+  targetType: landscaper.gardener.cloud/kubernetes-cluster
+
+- name: namespace
+  type: data
+  schema:
+    type: string
+    
+deployExecutions:
+- name: introspect
+  type: GoTemplate
+  template: |
+    deployItems:
+    - name: introspect
+      type: landscaper.gardener.cloud/helm
+      target:
+        name: {{ .imports.cluster.metadata.name }}
+        namespace: {{ .imports.cluster.metadata.namespace }}
+      config:
+        apiVersion: helm.deployer.landscaper.gardener.cloud/v1alpha1
+        kind: ProviderConfiguration
+        chart:
+          {{ $helmresource := getResource .cd "name" "introspect-helm" }}
+          ref: {{ $helmresource.access.imageReference }}
+        updateStrategy: patch
+        name: introspect
+        namespace: {{ .imports.namespace }}
+        values:
+          istio:
+            enabled: false
+           {{ $imageresource := getResource .cd "name" "introspect-image" }}
+           {{ $oci := split ":" $imageresource.access.imageReference }}     
+          image:
+            repository: {{ $oci._0 }}
+            tag: {{ $oci._1 }}
