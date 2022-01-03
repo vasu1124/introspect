@@ -95,7 +95,7 @@ jobs:
         build-args: |
           gitVersion=1.0.0
           gitCommit=${{github.sha}}
-          gitTreeState="clean"
+          gitTreeState=clean
           RUN go build \
         file: ./Dockerfile
 
