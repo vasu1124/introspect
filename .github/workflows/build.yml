@@ -131,7 +131,7 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/bin
         latest=$(curl --silent https://api.github.com/repos/gardener/component-cli/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*-linux-amd64.gz\"))")
         echo "::fetching latest ocm-cli from $latest"
-        curl -L -O $GITHUB_WORKSPACE/bin/component-cli.gz $latest
+        curl -L -o $GITHUB_WORKSPACE/bin/component-cli.gz $latest
         gunzip $GITHUB_WORKSPACE/bin/component-cli.gz
         chmod u+x $GITHUB_WORKSPACE/bin/component-cli
     - name: create and push component
