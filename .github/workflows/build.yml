@@ -124,3 +124,16 @@ jobs:
       run: |
         helm package ./kubernetes/helm/introspect/ --app-version 1.0.0
         helm push introspect-helm-0.1.0.tgz oci://ghcr.io/vasu1124/introspect
+
+    - name: Install OCM
+      if: success()
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/bin
+        latest=$(curl --silent https://api.github.com/repos/gardener/component-cli/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*-linux-amd64.gz\"))")
+        echo "::fetching latest ocm-cli from $latest"
+        curl -L -O $GITHUB_WORKSPACE/bin/component-cli.gz $latest
+        gunzip $GITHUB_WORKSPACE/bin/component-cli.gz
+        chmod u+x $GITHUB_WORKSPACE/bin/component-cli
+    - name: create and push component
+      run: |
+        make ctfpush

@@ -1,0 +1,7 @@
+name: 'introspect'
+type: 'git'
+access:
+  type: git
+  repository: github.com/${ORG}/introspect
+version: ${gitVersion}
+---

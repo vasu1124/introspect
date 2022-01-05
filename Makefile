@@ -138,8 +138,23 @@ docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 docker-push: docker/alpine.docker
 	docker push ${OCIREPO}/introspect:${gitVersion}
 
+.PHONY: kubernetes/k8s-visualizer
 kubernetes/k8s-visualizer:
 #	original was git clone https://github.com/brendandburns/gcp-live-k8s-visualizer.git
 	git clone https://github.com/vasu1124/k8s-visualizer.git kubernetes/k8s-visualizer
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
+
+.PHONY: cd
+cd:
+	component-cli component-archive create --component-name github.com/vasu1124/introspect  --component-version ${gitVersion} ./ocm/.gen/component
+	component-cli component-archive resource add  ./ocm/.gen/component OCI=ghcr.io ORG=vasu1124 gitVersion=${gitVersion} ./ocm/resources.yaml
+	component-cli component-archive sources  add  ./ocm/.gen/component OCI=ghcr.io ORG=vasu1124 gitVersion=${gitVersion} ./ocm/sources.yaml
+
+.PHONY: ctf
+ctf: cd
+	component-cli ctf add ./ocm/.gen/ctf -f ./ocm/.gen/component
+
+.PHONY: ctfpush
+ctfpush: ctf
+	component-cli ctf push ./ocm/.gen/ctf --repo-ctx ghcr.io/vasu1124/ocm

@@ -8,7 +8,7 @@ spec:
     ref:
       repositoryContext:
         type: ociRegistry
-        baseUrl: ghcr.io/vasu1124/introspect
+        baseUrl: ghcr.io/vasu1124/ocm
       componentName: github.com/vasu1124/introspect
       version: 1.0.0
 

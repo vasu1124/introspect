@@ -30,6 +30,7 @@ deployExecutions:
         updateStrategy: patch
         name: introspect
         namespace: {{ .imports.namespace }}
+        createNamespace: true
         values:
           istio:
             enabled: false
