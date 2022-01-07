@@ -135,7 +135,7 @@ docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 
 # we are only pushing alpine
 .PHONY: docker-push
-docker-push: docker/alpine.docker
+docker-push: build
 	docker push ${OCIREPO}/introspect:${gitVersion}
 
 .PHONY: kubernetes/k8s-visualizer
@@ -144,6 +144,12 @@ kubernetes/k8s-visualizer:
 	git clone https://github.com/vasu1124/k8s-visualizer.git kubernetes/k8s-visualizer
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
+
+.PHONY: helm-push
+helm-push:
+	export HELM_EXPERIMENTAL_OCI=1
+	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} 
+	helm push introspect-helm-0.1.0.tgz oci://${OCIREPO}/introspect
 
 .PHONY: cd
 cd:
@@ -155,6 +161,6 @@ cd:
 ctf: cd
 	component-cli ctf add ./ocm/.gen/ctf -f ./ocm/.gen/component
 
-.PHONY: ctfpush
-ctfpush: ctf
+.PHONY: ctf-push
+ctf-push: ctf
 	component-cli ctf push ./ocm/.gen/ctf --repo-ctx ghcr.io/vasu1124/ocm
