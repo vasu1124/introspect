@@ -136,4 +136,4 @@ jobs:
         echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
     - name: create and push component
       run: |
-        make ctfpush
+        make ctf-push
