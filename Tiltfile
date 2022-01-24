@@ -5,7 +5,7 @@ load('ext://restart_process', 'docker_build_with_restart')
 load('ext://local_output', 'local_output')
 
 default_registry('ghcr.io/vasu1124')
-allow_k8s_contexts('name-of-my-cluster')
+allow_k8s_contexts('colima')
 
 gitVersion   = local_output('cat introspect.VERSION')
 gitCommit    = local_output('git rev-parse --verify HEAD')
