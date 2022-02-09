@@ -10,6 +10,7 @@ _obj
 _test
 vendor
 tilt_modules
+ocm/.gen
 
 # Architecture specific extensions/prefixes
 *.[568vq]

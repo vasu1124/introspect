@@ -31,7 +31,7 @@ tls: ${tlsfiles}
 
 .PHONY: clean
 clean:
-	-rm -f ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml
+	-rm -rf ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml ocm/.gen
 
 # kubebuilder: Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
@@ -145,22 +145,50 @@ kubernetes/k8s-visualizer:
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
 
-.PHONY: helm-push
-helm-push:
+MONGOCHARTVERSION:=11.0.0
+
+ocm/.gen/introspect/introspect-helm-0.1.0.tgz:
 	export HELM_EXPERIMENTAL_OCI=1
-	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} 
-	helm push introspect-helm-0.1.0.tgz oci://${OCIREPO}/introspect
+	mkdir -p ocm/.gen/introspect/
+	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
+	helm push ocm/.gen/introspect/introspect-helm-0.1.0.tgz oci://${OCIREPO}/helm
 
-.PHONY: cd
-cd:
-	component-cli component-archive create --component-name github.com/vasu1124/introspect  --component-version ${gitVersion} ./ocm/.gen/component
-	component-cli component-archive resource add  ./ocm/.gen/component OCI=ghcr.io ORG=vasu1124 gitVersion=${gitVersion} ./ocm/resources.yaml
-	component-cli component-archive sources  add  ./ocm/.gen/component OCI=ghcr.io ORG=vasu1124 gitVersion=${gitVersion} ./ocm/sources.yaml
+ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
+	export HELM_EXPERIMENTAL_OCI=1
+	mkdir -p ocm/.gen/mongodb/
+	helm repo add bitnami https://charts.bitnami.com/bitnami
+	helm pull bitnami/mongodb -d ocm/.gen/mongodb --version ${MONGOCHARTVERSION}
+	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCIREPO}/helm
 
-.PHONY: ctf
-ctf: cd
-	component-cli ctf add ./ocm/.gen/ctf -f ./ocm/.gen/component
+.PHONY: helm-push
+helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz
+
+ocm/.gen/introspect/component/component-descriptor.yaml: ocm/introspect/resources.yaml ocm/introspect/sources.yaml ocm/introspect/blueprint/blueprint.yaml
+	component-cli component-archive create --component-name github.com/vasu1124/introspect  --component-version ${gitVersion} ./ocm/.gen/introspect/component
+	component-cli component-archive resource add  ./ocm/.gen/introspect/component OCI=ghcr.io ORG=vasu1124 VERSION=${gitVersion} ./ocm/introspect/resources.yaml
+	component-cli component-archive sources  add  ./ocm/.gen/introspect/component OCI=ghcr.io ORG=vasu1124 VERSION=${gitVersion} ./ocm/introspect/sources.yaml
+
+ocm/.gen/mongodb/component/component-descriptor.yaml: ocm/mongodb/resources.yaml ocm/mongodb/sources.yaml ocm/mongodb/blueprint/blueprint.yaml
+	component-cli component-archive create --component-name bitnami.com/mongodb  --component-version ${MONGOCHARTVERSION} ./ocm/.gen/mongodb/component
+	component-cli component-archive resource add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} ./ocm/mongodb/resources.yaml
+	component-cli component-archive sources  add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} ./ocm/mongodb/sources.yaml
+
+ocm/.gen/app-introspect/component/component-descriptor.yaml: ocm/app-introspect/resources.yaml ocm/app-introspect/componentRefs.yaml ocm/app-introspect/blueprint/blueprint.yaml
+	component-cli component-archive create --component-name github.com/vasu1124/app-introspect --component-version ${gitVersion} ./ocm/.gen/app-introspect/component
+	component-cli component-archive resource add  ./ocm/.gen/app-introspect/component ./ocm/app-introspect/resources.yaml
+	component-cli component-archive component-references add ./ocm/.gen/app-introspect/component MONGODB_VERSION=${MONGOCHARTVERSION} INTROSPECT_VERSION=${gitVersion} ./ocm/app-introspect/componentRefs.yaml
+
+ocm/.gen/introspect/ctf: ocm/.gen/introspect/component/component-descriptor.yaml
+	component-cli ctf add ./ocm/.gen/introspect/ctf     -f ./ocm/.gen/introspect/component
+
+ocm/.gen/mongodb/ctf: ocm/.gen/mongodb/component/component-descriptor.yaml
+	component-cli ctf add ./ocm/.gen/mongodb/ctf        -f ./ocm/.gen/mongodb/component
+
+ocm/.gen/app-introspect/ctf: ocm/.gen/app-introspect/component/component-descriptor.yaml
+	component-cli ctf add ./ocm/.gen/app-introspect/ctf -f ./ocm/.gen/app-introspect/component
 
 .PHONY: ctf-push
-ctf-push: ctf
-	component-cli ctf push ./ocm/.gen/ctf --repo-ctx ghcr.io/vasu1124/ocm
+ctf-push: ocm/.gen/introspect/ctf ocm/.gen/mongodb/ctf ocm/.gen/app-introspect/ctf
+	component-cli ctf push ./ocm/.gen/introspect/ctf     --repo-ctx ghcr.io/vasu1124/ocm
+	component-cli ctf push ./ocm/.gen/mongodb/ctf        --repo-ctx ghcr.io/vasu1124/ocm
+	component-cli ctf push ./ocm/.gen/app-introspect/ctf --repo-ctx ghcr.io/vasu1124/ocm

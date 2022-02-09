@@ -21,6 +21,12 @@ spec:
     - name: cluster
       # the "#" forces the landscaper to use the target with the name in the same namespace
       target: "#default"
+    data:
+    - name: connection
+      dataRef: mongodb-connection
   
   importDataMappings:
     namespace: demo
+    username: some-dbuser
+    password: some-important-password
+    database: guestbook

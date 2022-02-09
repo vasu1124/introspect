@@ -2,10 +2,10 @@
 name: 'introspect-image'
 type: 'ociImage'
 relation: 'local'
-version: ${gitVersion}
+version: ${VERSION}
 access:
   type: ociRegistry
-  imageReference: ${OCI}/${ORG}/introspect:${gitVersion}
+  imageReference: ${OCI}/${ORG}/introspect:${VERSION}
 ---
 name: 'introspect-blueprint'
 type: landscaper.gardener.cloud/blueprint
@@ -22,5 +22,5 @@ relation: external
 version: 0.1.0
 access:
   type: ociRegistry
-  imageReference: ${OCI}/${ORG}/introspect/introspect-helm:0.1.0
+  imageReference: ${OCI}/${ORG}/helm/introspect-helm:0.1.0
 ---

@@ -1,0 +1,31 @@
+apiVersion: landscaper.gardener.cloud/v1alpha1
+kind: Installation
+metadata:
+  name: app-introspect
+  namespace: ls-system
+spec:
+  componentDescriptor:
+    ref:
+      repositoryContext:
+        type: ociRegistry
+        baseUrl: ghcr.io/vasu1124/ocm
+      componentName: github.com/vasu1124/app-introspect
+      version: 1.0.0
+
+  blueprint:
+    ref:
+      resourceName: application-blueprint
+
+  imports:
+    targets:
+    - name: cluster
+      # the "#" forces the landscaper to use the target with the name in the same namespace
+      target: "#default"
+
+  importDataMappings:
+    namespace: app-demo
+    rootPassword: some-secret-password
+    username: some-dbuser
+    password: some-important-password
+    database: guestbook
+

@@ -1,0 +1,35 @@
+apiVersion: landscaper.gardener.cloud/v1alpha1
+kind: Installation
+metadata:
+  name: mongodb
+  namespace: ls-system
+spec:
+  componentDescriptor:
+    ref:
+      repositoryContext:
+        type: ociRegistry
+        baseUrl: ghcr.io/vasu1124/ocm
+      componentName: bitnami.com/mongodb
+      version: 11.0.0
+
+  blueprint:
+    ref:
+      resourceName: mongodb-blueprint
+
+  imports:
+    targets:
+    - name: cluster
+      # the "#" forces the landscaper to use the target with the name in the same namespace
+      target: "#default"
+
+  importDataMappings:
+    namespace: mongodb
+    rootPassword: some-secret-password
+    username: some-dbuser
+    password: some-important-password
+    database: guestbook
+
+  exports:
+    data:
+    - name: connection
+      dataRef: "mongodb-connection"

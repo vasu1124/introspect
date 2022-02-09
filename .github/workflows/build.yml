@@ -120,12 +120,7 @@ jobs:
     - name: Helm login to ghcr
       run: |
         echo ${{ secrets.GITHUB_TOKEN }} | helm registry login --username ${{ github.repository_owner }} --password-stdin ghcr.io
-    - name: Helm package & push chart to ghcr
-      run: |
-        helm package ./kubernetes/helm/introspect/ --app-version 1.0.0
-        helm push introspect-helm-0.1.0.tgz oci://ghcr.io/vasu1124/introspect
-
-    - name: Install OCM
+    - name: Install OCM component-cli
       run: |
         mkdir -p $GITHUB_WORKSPACE/bin
         latest=$(curl --silent https://api.github.com/repos/gardener/component-cli/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*-linux-amd64.gz\"))")
@@ -134,6 +129,11 @@ jobs:
         gunzip $GITHUB_WORKSPACE/bin/component-cli.gz
         chmod u+x $GITHUB_WORKSPACE/bin/component-cli
         echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
-    - name: create and push component
+        $GITHUB_WORKSPACE/bin/component-cli version
+
+    - name: Helm package & push chart to ghcr
+      run: |
+        make helm-push
+    - name: create and publish OCM descriptors
       run: |
         make ctf-push

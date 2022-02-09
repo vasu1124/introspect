@@ -1,0 +1,91 @@
+apiVersion: landscaper.gardener.cloud/v1alpha1
+kind: Blueprint
+
+imports:
+- name: cluster
+  type: target
+  targetType: landscaper.gardener.cloud/kubernetes-cluster
+
+- name: namespace
+  type: data
+  schema:
+    type: string
+
+- name: rootPassword
+  type: data
+  schema:
+    type: string
+
+- name: password
+  type: data
+  schema:
+    type: string
+
+- name: username
+  type: data
+  schema:
+    type: string
+
+- name: database
+  type: data
+  schema:
+    type: string
+
+exports:
+- name: connection
+  type: data
+  schema:
+    type: string
+
+deployExecutions:
+- name: mongodb
+  type: GoTemplate
+  template: |
+    deployItems:
+    - name: mongodb
+      type: landscaper.gardener.cloud/helm
+      target:
+        name: {{ .imports.cluster.metadata.name }}
+        namespace: {{ .imports.cluster.metadata.namespace }}
+      config:
+        apiVersion: helm.deployer.landscaper.gardener.cloud/v1alpha1
+        kind: ProviderConfiguration
+        chart:
+          {{ $helmresource := getResource .cd "name" "mongodb-helm" }}
+          ref: {{ $helmresource.access.imageReference }}
+        updateStrategy: patch
+        name: mongodb
+        namespace: {{ .imports.namespace }}
+        createNamespace: true
+        values:
+          fullnameOverride: mongodb
+          auth:
+            rootPassword: {{ .imports.rootPassword }}
+            username: {{ .imports.username }}
+            password: {{ .imports.password }}
+            database: {{ .imports.database }}
+          persistence:
+            enabled: false
+          {{ $imageresource := getResource .cd "name" "mongodb-image" }}
+          {{ $oci := split ":" $imageresource.access.imageReference }} 
+          {{ $image := splitn "/" 2 $oci._0 }}
+          image:
+            registry: {{ $image._0 }}
+            repository: {{ $image._1 }}
+            tag: {{ $oci._1 }}
+        exports:
+          defaultTimeout: 5m
+          exports:
+          - key: port
+            jsonPath: .spec.ports[0].port
+            fromResource:
+              apiVersion: v1
+              kind: Service
+              name: mongodb
+              namespace: {{ .imports.namespace }}
+
+exportExecutions:
+- type: GoTemplate
+  template: |
+    exports:
+      connection: mongodb.{{ .values.dataobjects.namespace }}:{{ .values.deployitems.mongodb.port }}

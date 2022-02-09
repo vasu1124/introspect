@@ -1,0 +1,26 @@
+---
+name: 'mongodb-image'
+type: 'ociImage'
+relation: 'external'
+version: 4.4.12-debian-10-r7
+access:
+  type: ociRegistry
+  imageReference: docker.io/bitnami/mongodb:4.4.12-debian-10-r7
+---
+name: 'mongodb-blueprint'
+type: landscaper.gardener.cloud/blueprint
+relation: 'local'
+input:
+  type: dir
+  path: "./blueprint/"
+  compress: true
+  mediaType: application/vnd.gardener.landscaper.blueprint.v1+tar+gzip
+---
+name: 'mongodb-helm'
+type: helm
+relation: external
+version: ${VERSION}
+access:
+  type: ociRegistry
+  imageReference: ${OCI}/${ORG}/helm/mongodb:${VERSION}
+---
