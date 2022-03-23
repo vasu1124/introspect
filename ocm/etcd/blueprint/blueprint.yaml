@@ -1,0 +1,58 @@
+apiVersion: landscaper.gardener.cloud/v1alpha1
+kind: Blueprint
+
+imports:
+- name: cluster
+  type: target
+  targetType: landscaper.gardener.cloud/kubernetes-cluster
+
+- name: namespace
+  type: data
+  schema:
+    type: string
+
+- name: rootPassword
+  type: data
+  schema:
+    type: string
+
+- name: replicaCount
+  type: data
+  schema:
+    type: int
+
+deployExecutions:
+- name: etcd
+  type: GoTemplate
+  template: |
+    deployItems:
+    - name: etcd
+      type: landscaper.gardener.cloud/helm
+      target:
+        name: {{ .imports.cluster.metadata.name }}
+        namespace: {{ .imports.cluster.metadata.namespace }}
+      config:
+        apiVersion: helm.deployer.landscaper.gardener.cloud/v1alpha1
+        kind: ProviderConfiguration
+        chart:
+          {{ $helmresource := getResource .cd "name" "etcd-helm" }}
+          ref: {{ $helmresource.access.imageReference }}
+        updateStrategy: patch
+        name: etcd
+        namespace: {{ .imports.namespace }}
+        createNamespace: true
+        values:
+          fullnameOverride: etcd
+          replicaCount: {{ .imports.replicaCount }}
+          auth:
+            rbac:
+              rootPassword: {{ .imports.rootPassword }}
+          persistence:
+            enabled: false
+          {{ $imageresource := getResource .cd "name" "etcd-image" }}
+          {{ $oci := split ":" $imageresource.access.imageReference }} 
+          {{ $image := splitn "/" 2 $oci._0 }}
+          image:
+            registry: {{ $image._0 }}
+            repository: {{ $image._1 }}
+            tag: {{ $oci._1 }}

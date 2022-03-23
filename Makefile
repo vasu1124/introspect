@@ -145,15 +145,14 @@ kubernetes/k8s-visualizer:
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
 
-MONGOCHARTVERSION:=11.1.1
-MONGOTAG:=4.4.13
-
 ocm/.gen/introspect/introspect-helm-0.1.0.tgz:
 	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/introspect/
 	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
 	helm push ocm/.gen/introspect/introspect-helm-0.1.0.tgz oci://${OCIREPO}/helm
 
+MONGOCHARTVERSION:=11.1.1
+MONGOTAG:=4.4.13
 ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
 	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/mongodb/
@@ -161,8 +160,17 @@ ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
 	helm pull bitnami/mongodb -d ocm/.gen/mongodb --version ${MONGOCHARTVERSION}
 	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCIREPO}/helm
 
+ETCDCHARTVERSION:=6.13.7
+ETCDTAG:=3.5.2
+ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz:
+	export HELM_EXPERIMENTAL_OCI=1
+	mkdir -p ocm/.gen/etcd/
+	helm repo add bitnami https://charts.bitnami.com/bitnami
+	helm pull bitnami/etcd -d ocm/.gen/etcd --version ${ETCDCHARTVERSION}
+	helm push ocm/.gen/etc/etc-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
+
 .PHONY: helm-push
-helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz
+helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
 
 ocm/.gen/introspect/component/component-descriptor.yaml: ocm/introspect/resources.yaml ocm/introspect/sources.yaml ocm/introspect/blueprint/blueprint.yaml
 	component-cli component-archive create --component-name github.com/vasu1124/introspect  --component-version ${gitVersion} ./ocm/.gen/introspect/component
@@ -173,6 +181,11 @@ ocm/.gen/mongodb/component/component-descriptor.yaml: ocm/mongodb/resources.yaml
 	component-cli component-archive create --component-name bitnami.com/mongodb  --component-version ${MONGOCHARTVERSION} ./ocm/.gen/mongodb/component
 	component-cli component-archive resource add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} MONGOTAG=${MONGOTAG} ./ocm/mongodb/resources.yaml
 	component-cli component-archive sources  add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} MONGOTAG=${MONGOTAG} ./ocm/mongodb/sources.yaml
+
+ocm/.gen/etcd/component/component-descriptor.yaml: ocm/etcd/resources.yaml ocm/etcd/sources.yaml ocm/etcd/blueprint/blueprint.yaml
+	component-cli component-archive create --component-name bitnami.com/etcd  --component-version ${ETCDCHARTVERSION} ./ocm/.gen/etcd/component
+	component-cli component-archive resource add  ./ocm/.gen/etcd/component OCI=ghcr.io ORG=vasu1124 VERSION=${ETCDCHARTVERSION} ETCDTAG=${ETCDTAG} ./ocm/etcd/resources.yaml
+	component-cli component-archive sources  add  ./ocm/.gen/etcd/component OCI=ghcr.io ORG=vasu1124 VERSION=${ETCDCHARTVERSION} ETCDTAG=${ETCDTAG} ./ocm/etcd/sources.yaml
 
 ocm/.gen/app-introspect/component/component-descriptor.yaml: ocm/app-introspect/resources.yaml ocm/app-introspect/componentRefs.yaml ocm/app-introspect/blueprint/blueprint.yaml
 	component-cli component-archive create --component-name github.com/vasu1124/app-introspect --component-version ${gitVersion} ./ocm/.gen/app-introspect/component
@@ -185,11 +198,15 @@ ocm/.gen/introspect/ctf: ocm/.gen/introspect/component/component-descriptor.yaml
 ocm/.gen/mongodb/ctf: ocm/.gen/mongodb/component/component-descriptor.yaml
 	component-cli ctf add ./ocm/.gen/mongodb/ctf        -f ./ocm/.gen/mongodb/component
 
+ocm/.gen/etcd/ctf: ocm/.gen/etcd/component/component-descriptor.yaml
+	component-cli ctf add ./ocm/.gen/etcd/ctf        -f ./ocm/.gen/etcd/component
+
 ocm/.gen/app-introspect/ctf: ocm/.gen/app-introspect/component/component-descriptor.yaml
 	component-cli ctf add ./ocm/.gen/app-introspect/ctf -f ./ocm/.gen/app-introspect/component
 
 .PHONY: ctf-push
-ctf-push: ocm/.gen/introspect/ctf ocm/.gen/mongodb/ctf ocm/.gen/app-introspect/ctf
+ctf-push: ocm/.gen/introspect/ctf ocm/.gen/mongodb/ctf ocm/.gen/etcd/ctf ocm/.gen/app-introspect/ctf
 	component-cli ctf push ./ocm/.gen/introspect/ctf     --repo-ctx ghcr.io/vasu1124/ocm
 	component-cli ctf push ./ocm/.gen/mongodb/ctf        --repo-ctx ghcr.io/vasu1124/ocm
+	component-cli ctf push ./ocm/.gen/etcd/ctf           --repo-ctx ghcr.io/vasu1124/ocm
 	component-cli ctf push ./ocm/.gen/app-introspect/ctf --repo-ctx ghcr.io/vasu1124/ocm

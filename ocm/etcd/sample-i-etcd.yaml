@@ -1,7 +1,7 @@
 apiVersion: landscaper.gardener.cloud/v1alpha1
 kind: Installation
 metadata:
-  name: mongodb
+  name: etcd
   namespace: ls-system
 spec:
   componentDescriptor:
@@ -9,12 +9,12 @@ spec:
       repositoryContext:
         type: ociRegistry
         baseUrl: ghcr.io/vasu1124/ocm
-      componentName: bitnami.com/mongodb
-      version: 11.1.1
+      componentName: bitnami.com/etcd
+      version: 6.13.7
 
   blueprint:
     ref:
-      resourceName: mongodb-blueprint
+      resourceName: etcd-blueprint
 
   imports:
     targets:
@@ -23,13 +23,6 @@ spec:
       target: "#default"
 
   importDataMappings:
-    namespace: mongodb
+    namespace: etcd
     rootPassword: some-secret-password
-    username: some-dbuser
-    password: some-important-password
-    database: guestbook
-
-  exports:
-    data:
-    - name: connection
-      dataRef: "mongodb-connection"
+    replicaCount: 3
