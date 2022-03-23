@@ -20,10 +20,15 @@ data:
   #@yaml/text-templated-strings
   config.json: |+
     {
+      "DBtype": "mongodb",
       "Addrs": ["mongodb:(@= str(data.values.mongodb_port) @)"],
       "Database": "guestbook",
       "Timeout": 5000000000,
-      "FailFast": true
+      "FailFast": true,
+
+      "Endpoints":   ["etcd:2379"],
+      "DialTimeout": 5000000000
+
     }
   example.yaml: |+
     foo: bar

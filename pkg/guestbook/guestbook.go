@@ -1,6 +1,8 @@
 package guestbook
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -10,15 +12,17 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/globalsign/mgo"
 	"github.com/spf13/viper"
 	"github.com/vasu1124/introspect/pkg/logger"
-	"gopkg.in/mgo.v2"
+	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
 // Handler .
 type Handler struct {
-	session      *mgo.Session
-	database     string
+	dbtype       string
+	mgosession   *mgo.Collection
+	etcdsession  *etcdv3.Client
 	usernamefile string
 	passwordfile string
 }
@@ -52,8 +56,8 @@ func New() *Handler {
 	//Establish a watch on config, username & password files
 	go h.watchConfig(config)
 
-	// don't ever close the session. bad design. but good enough for demo
-	// defer h.session.Close()
+	// don't ever close the mgosession. bad design. but good enough for demo
+	// defer h.mgosession.Close()
 	return &h
 }
 
@@ -102,8 +106,8 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 			case err := <-watcher.Errors:
 				logger.Log.Error(err, "[guestbook] Watcher error")
 			case <-ticker.C:
-				if h.session == nil {
-					logger.Log.Info("[guestbook] MongoDB session try connect ...")
+				if h.mgosession == nil && h.etcdsession == nil {
+					logger.Log.Info("[guestbook] session try connect ...")
 					h.readConfig(config)
 				}
 			}
@@ -119,11 +123,6 @@ func (h *Handler) readConfig(config *viper.Viper) {
 		logger.Log.Error(err, "[guestbook] fatal error config file")
 		return
 	}
-	var dialInfo mgo.DialInfo
-	err = config.Unmarshal(&dialInfo)
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] unable to decode into struct")
-	}
 
 	username, err := ioutil.ReadFile(h.usernamefile)
 	if err != nil {
@@ -137,18 +136,51 @@ func (h *Handler) readConfig(config *viper.Viper) {
 		return
 	}
 
-	dialInfo.Username = string(username)
-	dialInfo.Password = string(password)
+	h.dbtype = config.Get("DBtype").(string)
 
-	h.session, err = mgo.DialWithInfo(&dialInfo)
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] Failed MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
-	} else {
-		logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
+	switch h.dbtype {
+	case "mongodb":
+		var dialInfo mgo.DialInfo
+		err = config.Unmarshal(&dialInfo)
+		if err != nil {
+			logger.Log.Error(err, "[guestbook] unable to decode into Mongodb DialInfo struct")
+			return
+		}
+
+		dialInfo.Username = string(username)
+		dialInfo.Password = string(password)
+
+		session, err := mgo.DialWithInfo(&dialInfo)
+		if err != nil {
+			logger.Log.Error(err, "[guestbook] Failed MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
+			return
+		} else {
+			logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
+		}
+		// Optional. Switch the session to a monotonic behavior.
+		// session.SetMode(mgo.Monotonic, true)
+		h.mgosession = session.DB("").C(dialInfo.Database)
+
+	case "etcd":
+		var etcdConfig etcdv3.Config
+		err = config.Unmarshal(&etcdConfig)
+		if err != nil {
+			logger.Log.Error(err, "[guestbook] unable to decode into Etcdv3 Config struct")
+			return
+		}
+
+		etcdConfig.Username = string(username)
+		etcdConfig.Password = string(password)
+
+		h.etcdsession, err = etcdv3.New(etcdConfig)
+		if err != nil {
+			logger.Log.Error(err, "[guestbook] Failed Etcdv3", "Endpoints", etcdConfig.Endpoints)
+		} else {
+			logger.Log.Info("[guestbook] Connected to Etcdv3", "Endpoints", etcdConfig.Endpoints)
+		}
+
 	}
 
-	// Optional. Switch the session to a monotonic behavior.
-	// h.session.SetMode(mgo.Monotonic, true)
 }
 
 // Entry .
@@ -159,36 +191,75 @@ type Entry struct {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h.session == nil {
-		fmt.Fprint(w, "[guestbook] No Mongo Database Connection")
+	if h.mgosession == nil && h.etcdsession == nil {
+		fmt.Fprint(w, "[guestbook] No Database Connection")
+		logger.Log.Info("[guestbook] No Database Connection")
 		return
 	}
 
 	t, err := template.ParseFiles("tmpl/guestbook.html")
 	if err != nil {
+		fmt.Fprint(w, "[guestbook] parsing template error")
 		logger.Log.Error(err, "[guestbook] parsing template")
 		return
 	}
 
 	err = r.ParseForm()
 	if err != nil {
+		fmt.Fprint(w, "[guestbook] parsing form error")
 		logger.Log.Error(err, "[guestbook] parsing form")
 	}
 
-	c := h.session.DB(h.database).C("guestbook")
-
-	if r.Form["name"] != nil && r.Form["comment"] != nil &&
-		r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
-		err = c.Insert(&Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] insert error")
-		}
-	}
-
 	var entries []Entry
-	err = c.Find(nil).All(&entries)
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] find error")
+
+	switch h.dbtype {
+	case "mongodb":
+
+		if r.Form["name"] != nil && r.Form["comment"] != nil &&
+			r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
+			err = h.mgosession.Insert(&Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
+			if err != nil {
+				logger.Log.Error(err, "[guestbook] insert error")
+			}
+		}
+
+		err = h.mgosession.Find(nil).All(&entries)
+		if err != nil {
+			logger.Log.Error(err, "[guestbook] find error")
+		}
+
+	case "etcd":
+		if r.Form["name"] != nil && r.Form["comment"] != nil &&
+			r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
+			entry := Entry{
+				Date:    time.Now(),
+				Name:    r.Form["name"][0],
+				Comment: r.Form["comment"][0],
+			}
+			ret, err := json.Marshal(entry)
+			if err != nil {
+				logger.Log.Error(err, "[guestbook] marshall error")
+				return
+			}
+			_, err = h.etcdsession.Put(context.Background(), entry.Name, string(ret))
+			if err != nil {
+				logger.Log.Error(err, "[guestbook] insert error")
+			}
+		}
+
+		resp, err := h.etcdsession.Get(context.Background(), "", etcdv3.WithPrefix())
+		if err != nil {
+			logger.Log.Error(err, "[guestbook] get error")
+		}
+
+		for _, ev := range resp.Kvs {
+			var entry Entry
+			err = json.Unmarshal(ev.Value, &entry)
+			if err != nil {
+				logger.Log.Error(err, "[guestbook] unmarshall error")
+			}
+			entries = append(entries, entry)
+		}
 	}
 
 	err = t.Execute(w, entries)

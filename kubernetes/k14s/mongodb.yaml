@@ -99,8 +99,8 @@ metadata:
   labels: #@ data.values.mongodb_labels
 type: Opaque
 data:
-  password: c29tZS1pbXBvcnRhbnQtcGFzc3dvcmQ=
-  username: dmFzdTExMjQ=
+  password: c29tZS1pbXBvcnRhbnQtcGFzc3dvcmQ=  # ggignore
+  username: dmFzdTExMjQtZGJ1c2Vy              # ggignore
 ---
 apiVersion: v1
 kind: Service
