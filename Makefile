@@ -145,7 +145,8 @@ kubernetes/k8s-visualizer:
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
 
-MONGOCHARTVERSION:=11.0.0
+MONGOCHARTVERSION:=11.1.1
+MONGOTAG:=4.4.13
 
 ocm/.gen/introspect/introspect-helm-0.1.0.tgz:
 	export HELM_EXPERIMENTAL_OCI=1
@@ -170,8 +171,8 @@ ocm/.gen/introspect/component/component-descriptor.yaml: ocm/introspect/resource
 
 ocm/.gen/mongodb/component/component-descriptor.yaml: ocm/mongodb/resources.yaml ocm/mongodb/sources.yaml ocm/mongodb/blueprint/blueprint.yaml
 	component-cli component-archive create --component-name bitnami.com/mongodb  --component-version ${MONGOCHARTVERSION} ./ocm/.gen/mongodb/component
-	component-cli component-archive resource add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} ./ocm/mongodb/resources.yaml
-	component-cli component-archive sources  add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} ./ocm/mongodb/sources.yaml
+	component-cli component-archive resource add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} MONGOTAG=${MONGOTAG} ./ocm/mongodb/resources.yaml
+	component-cli component-archive sources  add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} MONGOTAG=${MONGOTAG} ./ocm/mongodb/sources.yaml
 
 ocm/.gen/app-introspect/component/component-descriptor.yaml: ocm/app-introspect/resources.yaml ocm/app-introspect/componentRefs.yaml ocm/app-introspect/blueprint/blueprint.yaml
 	component-cli component-archive create --component-name github.com/vasu1124/app-introspect --component-version ${gitVersion} ./ocm/.gen/app-introspect/component

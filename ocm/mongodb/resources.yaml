@@ -2,10 +2,10 @@
 name: 'mongodb-image'
 type: 'ociImage'
 relation: 'external'
-version: 4.4.12-debian-10-r7
+version: ${MONGOTAG}
 access:
   type: ociRegistry
-  imageReference: docker.io/bitnami/mongodb:4.4.12-debian-10-r7
+  imageReference: docker.io/bitnami/mongodb:${MONGOTAG}
 ---
 name: 'mongodb-blueprint'
 type: landscaper.gardener.cloud/blueprint

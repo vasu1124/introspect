@@ -48,7 +48,7 @@ spec:
               name: mongodb-secret
         - name: MONGODB_DATABASE
           value: guestbook
-        image: bitnami/mongodb:latest
+        image: bitnami/mongodb:4.4.13
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
