@@ -12,6 +12,7 @@ resources:
 - service.yaml
 - introspect-tls.yaml
 - introspect-validatingwh.yaml
+- secret.yaml
 # - uselessmachine-1.yaml
 # - uselessmachine-2.yaml
 

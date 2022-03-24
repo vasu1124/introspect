@@ -210,3 +210,7 @@ ctf-push: ocm/.gen/introspect/ctf ocm/.gen/mongodb/ctf ocm/.gen/etcd/ctf ocm/.ge
 	component-cli ctf push ./ocm/.gen/mongodb/ctf        --repo-ctx ghcr.io/vasu1124/ocm
 	component-cli ctf push ./ocm/.gen/etcd/ctf           --repo-ctx ghcr.io/vasu1124/ocm
 	component-cli ctf push ./ocm/.gen/app-introspect/ctf --repo-ctx ghcr.io/vasu1124/ocm
+
+# openssl genpkey -out mysign.key -algorithm RSA
+# openssl rsa -in private.key -outform PEM -pubout -out mysign.pub
+# component-cli ca signature sign rsa ghcr.io/vasu1124/ocm github.com/vasu1124/app-introspect 1.0.0  --upload-base-url ghcr.io/vasu1124/ocmtest --recursive --signature-name mysign --private-key mysign.key

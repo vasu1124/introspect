@@ -61,7 +61,7 @@ deployExecutions:
             tag: {{ $oci._1 }}
           mongodb:
             connect: {{ .imports.connection }}
-            auth:
-              username: {{ .imports.username }}
-              password: {{ .imports.password }}
-              database: {{ .imports.database }}
+            database: {{ .imports.database }}
+          auth:
+            username: {{ .imports.username }}
+            password: {{ .imports.password }}

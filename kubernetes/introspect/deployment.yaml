@@ -67,7 +67,7 @@ spec:
       volumes:
       - name: secret-volume
         secret:
-          secretName: mongodb-secret
+          secretName: introspect-secret
       - name: tls-volume
         secret:
           secretName: introspect-tls

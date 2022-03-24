@@ -75,7 +75,7 @@ spec:
       volumes:
       - name: secret-volume
         secret:
-          secretName: {{ $fullName }}-mongodb
+          secretName: {{ $fullName }}-secret
       - name: tls-volume
         secret:
           secretName: {{ $fullName }}-tls
