@@ -5,10 +5,15 @@ metadata:
 data:
   config.json: |+
     {
+      "DBType": "mongodb",
+
       "Addrs": ["{{ .Values.mongodb.connect }}"],
       "Database": "{{ .Values.mongodb.auth.database }}",
       "Timeout": 5000000000,
-      "FailFast": true
+      "FailFast": true,
+
+      "Endpoints":   ["etcd:2379"],
+      "DialTimeout": 5000000000
     }
   example.yaml: |+
     foo: bar
