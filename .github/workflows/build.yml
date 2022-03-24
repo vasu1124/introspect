@@ -32,7 +32,7 @@ jobs:
     steps:
 
     - name: Check out cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ~/go/pkg/mod
@@ -43,7 +43,7 @@ jobs:
           ${{ runner.os }}-go-
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: 1.18
       id: go
@@ -60,7 +60,7 @@ jobs:
       id: buildx
 
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     
     - name: go mod vendor
       run: go mod vendor

@@ -167,7 +167,7 @@ ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz:
 	mkdir -p ocm/.gen/etcd/
 	helm repo add bitnami https://charts.bitnami.com/bitnami
 	helm pull bitnami/etcd -d ocm/.gen/etcd --version ${ETCDCHARTVERSION}
-	helm push ocm/.gen/etc/etc-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
+	helm push ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
 
 .PHONY: helm-push
 helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
