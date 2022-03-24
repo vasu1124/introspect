@@ -14,4 +14,4 @@ images:
   newTag: "1.0.0"
 - name: bitnami/mongodb:latest
   newName: bitnami/mongodb
-  newTag: "4.4.13"
+  newTag: "5.0.6"
