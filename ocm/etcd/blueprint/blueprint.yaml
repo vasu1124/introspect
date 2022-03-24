@@ -19,7 +19,7 @@ imports:
 - name: replicaCount
   type: data
   schema:
-    type: int
+    type: integer
 
 deployExecutions:
 - name: etcd
