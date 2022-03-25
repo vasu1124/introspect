@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/zapr v1.2.3
 	github.com/gorilla/mux v1.8.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.18.1
+	github.com/onsi/gomega v1.19.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
