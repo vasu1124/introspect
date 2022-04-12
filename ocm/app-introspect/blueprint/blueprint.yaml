@@ -11,22 +11,12 @@ imports:
   schema:
     type: string
 
-- name: rootPassword
-  type: data
-  schema:
-    type: string
-
 - name: password
   type: data
   schema:
     type: string
 
 - name: username
-  type: data
-  schema:
-    type: string
-
-- name: database
   type: data
   schema:
     type: string
@@ -47,10 +37,7 @@ subinstallationExecutions:
           target: cluster
       importDataMappings:
         namespace:    {{ .imports.namespace }}
-        username:     {{ .imports.username }}
-        password:     {{ .imports.password }}
-        rootPassword: {{ .imports.rootPassword }}
-        database:     {{ .imports.database }}
+        rootPassword: {{ .imports.password }}
       exports:
         data:
         - name: connection
@@ -72,4 +59,3 @@ subinstallationExecutions:
         namespace:    {{ .imports.namespace }}
         username:     {{ .imports.username }}
         password:     {{ .imports.password }}
-        database:     {{ .imports.database }}

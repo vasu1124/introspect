@@ -25,9 +25,6 @@ spec:
   importDataMappings:
     namespace: mongodb
     rootPassword: some-secret-password
-    username: some-dbuser
-    password: some-important-password
-    database: guestbook
 
   exports:
     data:

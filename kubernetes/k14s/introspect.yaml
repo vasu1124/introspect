@@ -22,7 +22,6 @@ data:
     {
       "DBtype": "mongodb",
       "Addrs": ["mongodb:(@= str(data.values.mongodb_port) @)"],
-      "Database": "guestbook",
       "Timeout": 5000000000,
       "FailFast": true,
 

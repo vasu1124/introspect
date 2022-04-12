@@ -27,6 +27,5 @@ spec:
   
   importDataMappings:
     namespace: demo
-    username: some-dbuser
+    username: root
     password: some-important-password
-    database: guestbook

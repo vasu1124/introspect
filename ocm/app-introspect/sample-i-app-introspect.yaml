@@ -25,7 +25,5 @@ spec:
   importDataMappings:
     namespace: app-demo
     rootPassword: some-secret-password
-    username: some-dbuser
-    password: some-important-password
-    database: guestbook
+    username: root
 

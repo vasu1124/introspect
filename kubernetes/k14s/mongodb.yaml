@@ -30,23 +30,11 @@ spec:
           value: "no"
         - name: MONGODB_ENABLE_DIRECTORY_PER_DB
           value: "no"
-        - name: MONGODB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: username
-              name: mongodb-secret
-        - name: MONGODB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mongodb-secret
         - name: MONGODB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               key: password
               name: mongodb-secret
-        - name: MONGODB_DATABASE
-          value: guestbook
         image: bitnami/mongodb:4.4.13
         imagePullPolicy: #@ data.values.imagePullPolicy
         livenessProbe:
@@ -99,8 +87,8 @@ metadata:
   labels: #@ data.values.mongodb_labels
 type: Opaque
 data:
-  password: c29tZS1pbXBvcnRhbnQtcGFzc3dvcmQ=  # ggignore
-  username: dmFzdTExMjQtZGJ1c2Vy              # ggignore
+  password: c29tZS1pbXBvcnRhbnQtcGFzc3dvcmQ=  #! ggignore
+  username: cm9vdA==                          #! ggignore
 ---
 apiVersion: v1
 kind: Service

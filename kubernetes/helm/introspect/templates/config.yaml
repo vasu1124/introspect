@@ -8,7 +8,6 @@ data:
       "DBType": "mongodb",
 
       "Addrs": ["{{ .Values.mongodb.connect }}"],
-      "Database": "{{ .Values.mongodb.database }}",
       "Timeout": 5000000000,
       "FailFast": true,
 

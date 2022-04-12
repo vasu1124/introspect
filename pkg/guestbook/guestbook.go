@@ -157,7 +157,7 @@ func (h *Handler) readConfig(config *viper.Viper) {
 			logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
 			// Optional. Switch the session to a monotonic behavior.
 			// session.SetMode(mgo.Monotonic, true)
-			h.mgosession = session.DB("").C(dialInfo.Database)
+			h.mgosession = session.DB("").C("guestbook")
 		}
 
 	case "etcd":

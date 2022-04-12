@@ -21,11 +21,6 @@ imports:
   schema:
     type: string
 
-- name: database
-  type: data
-  schema:
-    type: string
-
 - name: connection
   type: data
   schema:
@@ -61,7 +56,6 @@ deployExecutions:
             tag: {{ $oci._1 }}
           mongodb:
             connect: {{ .imports.connection }}
-            database: {{ .imports.database }}
           auth:
             username: {{ .imports.username }}
             password: {{ .imports.password }}

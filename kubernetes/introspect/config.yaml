@@ -7,7 +7,6 @@ data:
     {
       "DBtype": "mongodb",
       "Addrs": ["mongodb:27017"],
-      "Database": "guestbook",
       "Timeout": 5000000000,
       "FailFast": true,
 

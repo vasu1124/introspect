@@ -16,21 +16,6 @@ imports:
   schema:
     type: string
 
-- name: password
-  type: data
-  schema:
-    type: string
-
-- name: username
-  type: data
-  schema:
-    type: string
-
-- name: database
-  type: data
-  schema:
-    type: string
-
 exports:
 - name: connection
   type: data
@@ -61,12 +46,6 @@ deployExecutions:
           fullnameOverride: mongodb
           auth:
             rootPassword: {{ .imports.rootPassword }}
-            usernames: 
-            - {{ .imports.username }}
-            passwords: 
-            - {{ .imports.password }}
-            databases: 
-            - {{ .imports.database }}
           persistence:
             enabled: false
           {{ $imageresource := getResource .cd "name" "mongodb-image" }}

@@ -70,7 +70,6 @@ affinity: {}
 
 mongodb: 
   connect: "mongodb:27017"
-  database: guestbook
 auth:
-  username: vasu1124-dbuser
+  username: root
   password: some-important-password
