@@ -61,9 +61,12 @@ deployExecutions:
           fullnameOverride: mongodb
           auth:
             rootPassword: {{ .imports.rootPassword }}
-            username: {{ .imports.username }}
-            password: {{ .imports.password }}
-            database: {{ .imports.database }}
+            usernames: 
+            - {{ .imports.username }}
+            passwords: 
+            - {{ .imports.password }}
+            databases: 
+            - {{ .imports.database }}
           persistence:
             enabled: false
           {{ $imageresource := getResource .cd "name" "mongodb-image" }}

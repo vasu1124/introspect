@@ -151,7 +151,7 @@ ocm/.gen/introspect/introspect-helm-0.1.0.tgz:
 	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
 	helm push ocm/.gen/introspect/introspect-helm-0.1.0.tgz oci://${OCIREPO}/helm
 
-MONGOCHARTVERSION:=11.1.1
+MONGOCHARTVERSION:=11.1.5
 MONGOTAG:=4.4.13
 ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
 	export HELM_EXPERIMENTAL_OCI=1

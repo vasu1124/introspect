@@ -10,7 +10,7 @@ spec:
         type: ociRegistry
         baseUrl: ghcr.io/vasu1124/ocm
       componentName: bitnami.com/mongodb
-      version: 11.1.1
+      version: 11.1.5
 
   blueprint:
     ref:
