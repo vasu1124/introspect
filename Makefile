@@ -152,7 +152,7 @@ ocm/.gen/introspect/introspect-helm-0.1.0.tgz:
 	helm push ocm/.gen/introspect/introspect-helm-0.1.0.tgz oci://${OCIREPO}/helm
 
 MONGOCHARTVERSION:=11.1.5
-MONGOTAG:=4.4.13
+MONGOTAG:=4.4.14
 ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
 	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/mongodb/
