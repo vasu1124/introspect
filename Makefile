@@ -7,6 +7,7 @@ GOARCH:=amd64
 
 gitVersion=$(shell cat introspect.VERSION)
 gitCommit:=$(shell git rev-parse --verify HEAD)
+gitRefs:=$(shell git symbolic-ref HEAD)
 gitTreeState=$(shell [ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
 buildDate:=$(shell date --rfc-3339=seconds | sed 's/ /T/')
 
@@ -175,7 +176,7 @@ helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongod
 ocm/.gen/introspect/component/component-descriptor.yaml: ocm/introspect/resources.yaml ocm/introspect/sources.yaml ocm/introspect/blueprint/blueprint.yaml
 	component-cli component-archive create --component-name github.com/vasu1124/introspect  --component-version ${gitVersion} ./ocm/.gen/introspect/component
 	component-cli component-archive resource add  ./ocm/.gen/introspect/component OCI=ghcr.io ORG=vasu1124 VERSION=${gitVersion} ./ocm/introspect/resources.yaml
-	component-cli component-archive sources  add  ./ocm/.gen/introspect/component OCI=ghcr.io ORG=vasu1124 VERSION=${gitVersion} ./ocm/introspect/sources.yaml
+	component-cli component-archive sources  add  ./ocm/.gen/introspect/component OCI=ghcr.io ORG=vasu1124 VERSION=${gitVersion} REF=${gitRefs} COMMIT=${gitCommit} ./ocm/introspect/sources.yaml
 
 ocm/.gen/mongodb/component/component-descriptor.yaml: ocm/mongodb/resources.yaml ocm/mongodb/sources.yaml ocm/mongodb/blueprint/blueprint.yaml
 	component-cli component-archive create --component-name bitnami.com/mongodb  --component-version ${MONGOCHARTVERSION} ./ocm/.gen/mongodb/component
