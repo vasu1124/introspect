@@ -11,6 +11,7 @@ _test
 vendor
 tilt_modules
 ocm/.gen
+.vscode/*.log
 
 # Architecture specific extensions/prefixes
 *.[568vq]

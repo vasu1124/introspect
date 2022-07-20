@@ -8,7 +8,6 @@ WORKDIR /introspect
 COPY go.* ./
 COPY cmd cmd
 COPY pkg pkg
-COPY vendor vendor
 COPY introspect.VERSION ./ 
 RUN buildDate=$(date -I'seconds'); \
     go build \

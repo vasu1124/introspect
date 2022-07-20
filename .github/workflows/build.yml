@@ -37,7 +37,7 @@ jobs:
       with:
         path: |
           ~/go/pkg/mod
-          ~/vendor
+          ~/.cache/go-build
           /tmp/.buildx-cache
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
@@ -62,9 +62,6 @@ jobs:
 
     - name: Check out code
       uses: actions/checkout@v3
-    
-    - name: go mod vendor
-      run: go mod vendor
 
     - name: Login to DockerHub
       if: success()
