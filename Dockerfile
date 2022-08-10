@@ -20,7 +20,7 @@ RUN buildDate=$(date -I'seconds'); \
     -o introspect-linux ./cmd
 
 # final stage
-FROM alpine:3
+FROM alpine:20220715
 LABEL maintainer="vasu1124@actvirtual.com" \
     immutable.labels=true \
     org.opencontainers.image.vendor="actvirtual" \
