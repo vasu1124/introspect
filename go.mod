@@ -17,7 +17,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.uber.org/zap v1.21.0
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
+	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8
 	gopkg.in/olahol/melody.v1 v1.0.0-20170518105555-d52139073376
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.24.3
