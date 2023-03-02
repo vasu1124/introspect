@@ -112,9 +112,7 @@ jobs:
         
     - name: Install Helm
       if: success()
-      uses: azure/setup-helm@v1
-      with:
-        version: v3.7.2
+      uses: azure/setup-helm@v3
     - name: Helm login to ghcr
       run: |
         echo ${{ secrets.GITHUB_TOKEN }} | helm registry login --username ${{ github.repository_owner }} --password-stdin ghcr.io
