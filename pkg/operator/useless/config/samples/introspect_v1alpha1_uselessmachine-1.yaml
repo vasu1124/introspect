@@ -7,6 +7,6 @@ metadata:
     app.kubernetes.io/part-of: useless
     app.kuberentes.io/managed-by: kustomize
     app.kubernetes.io/created-by: useless
-  name: machine-1
+  name: uselessmachine-1
 spec:
   desiredState: "On"

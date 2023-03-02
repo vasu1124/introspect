@@ -5,8 +5,8 @@ resources:
 # runtime. Be sure to update RoleBinding and ClusterRoleBinding
 # subjects if changing service account names.
 # - service_account.yaml
-- uselessmachine-editor-role.yaml
-- uselessmachine-viewer-role.yaml
+- uselessmachine_editor_role.yaml
+- uselessmachine_viewer_role.yaml
 - role_binding.yaml
 - leader_election_role.yaml
 - leader_election_role_binding.yaml

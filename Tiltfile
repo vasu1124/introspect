@@ -59,10 +59,12 @@ k8s_resource(workload='introspect', objects=[
   'introspect-tls:secret',
   'introspect-validationwebook:validatingwebhookconfiguration',
   'uselessmachines.introspect.actvirtual.com:customresourcedefinition',
-  'introspect-lease:role',
-  'introspect-role:clusterrole',
-  'introspect-lease-rolebinding:rolebinding',
-  'introspect-rolebinding:clusterrolebinding',],
+  'introspect-election-role:Role',
+  'introspect-election-rolebinding:RoleBinding',
+  'uselessmachine-editor-role:clusterrole',
+  'uselessmachine-viewer-role:clusterrole',
+  'introspect-rolebinding:clusterrolebinding',
+  'introspect-secret:secret',],
   labels=['introspect']
 )
 k8s_resource(workload='mongodb', objects=[
@@ -70,13 +72,14 @@ k8s_resource(workload='mongodb', objects=[
   'mongodb-secret:secret'],
   labels=['introspect']
 )
-k8s_resource(workload='etcd', objects=[
-  'etcd:secret'],
-  labels=['introspect']
-)
-v1alpha1.extension_repo(name='tilt-extensions', url='https://github.com/tilt-dev/tilt-extensions')
-v1alpha1.extension(
-  name='ngrok', 
-  repo_name='tilt-extensions', 
-  repo_path='ngrok',
-)
+#k8s_resource(workload='etcd', objects=[
+#  'etcd:secret'],
+#  labels=['introspect']
+#)
+
+#v1alpha1.extension_repo(name='tilt-extensions', url='https://github.com/tilt-dev/tilt-extensions')
+#v1alpha1.extension(
+#  name='ngrok', 
+#  repo_name='tilt-extensions', 
+#  repo_path='ngrok',
+#)
