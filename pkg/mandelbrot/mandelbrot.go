@@ -22,7 +22,7 @@ func init() {
 	prometheus.MustRegister(requestDuration)
 }
 
-//Handler .
+// Handler .
 type Handler struct{}
 
 // New .

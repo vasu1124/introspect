@@ -15,7 +15,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-//Result represents a result returned by kubesec.io.
+// Result represents a result returned by kubesec.io.
 type Result struct {
 	Error   string `json:"error"`
 	Score   int    `json:"score"`
@@ -33,7 +33,7 @@ type Result struct {
 	} `json:"scoring"`
 }
 
-//GetKubesecPod ...
+// GetKubesecPod ...
 func GetKubesecPod(pod *v1.Pod) (*Result, error) {
 	yamlStr, err := yaml.Marshal(*pod)
 	if err != nil {
@@ -44,7 +44,7 @@ func GetKubesecPod(pod *v1.Pod) (*Result, error) {
 	return GetKubesecPodYAML(yamlStr)
 }
 
-//GetKubesecPodYAML ...
+// GetKubesecPodYAML ...
 func GetKubesecPodYAML(yamlStr []byte) (*Result, error) {
 	kubesecService := "https://v2.kubesec.io/scan"
 

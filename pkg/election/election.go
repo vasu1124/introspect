@@ -21,15 +21,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-//Leader ... am I a Leader?
-//TODO: secure with mutex
+// Leader ... am I a Leader?
+// TODO: secure with mutex
 var Leader = false
 
-//Fail ... did the electionprocess fail?
-//TODO: secure with mutex
+// Fail ... did the electionprocess fail?
+// TODO: secure with mutex
 var Fail = true
 
-//Handler .
+// Handler .
 type Handler struct {
 	leaderElector *leaderelection.LeaderElector
 }
