@@ -154,21 +154,23 @@ ocm/.gen/introspect/introspect-helm-0.1.0.tgz:
 
 MONGOCHARTVERSION:=12.1.19
 MONGOTAG:=4.4.14
-ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
+ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz: helm-bitnami-repo
 	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/mongodb/
-	helm repo add bitnami https://charts.bitnami.com/bitnami
 	helm pull bitnami/mongodb -d ocm/.gen/mongodb --version ${MONGOCHARTVERSION}
 	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCIREPO}/helm
 
-ETCDCHARTVERSION:=6.13.7
-ETCDTAG:=3.5.2
-ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz:
+ETCDCHARTVERSION:=8.7.6
+ETCDTAG:=3.5.7
+ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz: helm-bitnami-repo
 	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/etcd/
-	helm repo add bitnami https://charts.bitnami.com/bitnami
 	helm pull bitnami/etcd -d ocm/.gen/etcd --version ${ETCDCHARTVERSION}
 	helm push ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
+
+.PHONY: helm-bitnami-repo
+helm-bitnami-repo:
+	helm repo add bitnami https://charts.bitnami.com/bitnami
 
 .PHONY: helm-push
 helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
