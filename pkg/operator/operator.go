@@ -80,8 +80,8 @@ func New() *Handler {
 	return &h
 }
 
-//ServeHTTP .
-//This is an UI to the state of the Operator
+// ServeHTTP .
+// This is an UI to the state of the Operator
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	type EnvData struct {

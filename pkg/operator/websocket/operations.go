@@ -12,7 +12,7 @@ import (
 
 var uiMessage = "State updated by UI"
 
-//Notifier struct
+// Notifier struct
 type Notifier struct {
 	websocket *melody.Melody
 	client    client.Client
