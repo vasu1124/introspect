@@ -153,6 +153,7 @@ func (h *Handler) readConfig(config *viper.Viper) {
 		session, err := mgo.DialWithInfo(&dialInfo)
 		if err != nil {
 			logger.Log.Error(err, "[guestbook] Failed MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
+			h.mgosession = nil
 		} else {
 			logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
 			// Optional. Switch the session to a monotonic behavior.
@@ -174,6 +175,7 @@ func (h *Handler) readConfig(config *viper.Viper) {
 		h.etcdsession, err = etcdv3.New(etcdConfig)
 		if err != nil {
 			logger.Log.Error(err, "[guestbook] Failed Etcdv3", "Endpoints", etcdConfig.Endpoints)
+			h.etcdsession = nil
 		} else {
 			logger.Log.Info("[guestbook] Connected to Etcdv3", "Endpoints", etcdConfig.Endpoints)
 		}
