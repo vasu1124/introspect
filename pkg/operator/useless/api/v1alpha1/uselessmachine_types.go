@@ -20,6 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+//go:generate controller-gen object paths=$GOFILE
+
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // UselessMachineSpec defines the desired state of a UselessMachine
@@ -36,7 +38,7 @@ type UselessMachineStatus struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// UselessMachine is the Schema for the uselesses API
+// UselessMachine is the Schema for the useless API
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -60,11 +62,11 @@ type UselessMachineList struct {
 	Items           []UselessMachine `json:"items"`
 }
 
-//UselessMachineState describes the state
+// UselessMachineState describes the state
 // +kubebuilder:validation:Enum=On;Off
 type UselessMachineState string
 
-//UselessMachineState Enum
+// UselessMachineState Enum
 const (
 	UselessMachineStateOn  UselessMachineState = "On"
 	UselessMachineStateOff UselessMachineState = "Off"

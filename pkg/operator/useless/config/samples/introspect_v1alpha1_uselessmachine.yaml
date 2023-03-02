@@ -3,10 +3,10 @@ kind: UselessMachine
 metadata:
   labels:
     app.kubernetes.io/name: uselessmachine
-    app.kubernetes.io/instance: uselessmachine-1
+    app.kubernetes.io/instance: uselessmachine-sample
     app.kubernetes.io/part-of: useless
     app.kuberentes.io/managed-by: kustomize
     app.kubernetes.io/created-by: useless
-  name: machine-1
+  name: uselessmachine-sample
 spec:
-  desiredState: "On"
+  # TODO(user): Add fields here

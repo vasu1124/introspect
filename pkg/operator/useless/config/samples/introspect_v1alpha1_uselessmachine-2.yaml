@@ -1,8 +1,0 @@
-apiVersion: introspect.actvirtual.com/v1alpha1
-kind: UselessMachine
-metadata:
-  labels:
-    app.kubernetes.io/instance: introspect
-  name: machine-2
-spec:
-  desiredState: "Off"

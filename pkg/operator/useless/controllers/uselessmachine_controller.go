@@ -23,11 +23,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
-	controller_runtime "sigs.k8s.io/controller-runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
-
 	ws "github.com/vasu1124/introspect/pkg/operator/websocket"
 )
 
@@ -38,21 +37,22 @@ type UselessMachineReconciler struct {
 	Notifier *ws.Notifier
 }
 
-// Reconcile reads that state of the cluster for a UselessMachine object and makes changes based on the state read and what is in the Useless.Spec
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=introspect.actvirtual.com,resources=uselessmachines/finalizers,verbs=update
-func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller_runtime.Request) (controller_runtime.Result, error) {
+func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log, _ := logr.FromContext(ctx)
 
 	if r.Notifier != nil {
 		ul := &uselessmachinev1alpha1.UselessMachineList{}
 		if err := r.Client.List(ctx, ul, &client.ListOptions{}); err != nil {
-			return controller_runtime.Result{}, err
+			return ctrl.Result{}, err
 		}
 
 		if err := r.Notifier.BroadcastUpdates(ul); err != nil {
-			return controller_runtime.Result{}, err
+			return ctrl.Result{}, err
 		}
 	}
 
@@ -65,7 +65,7 @@ func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller
 		// on deleted requests.
 		// Object not found, return. Created objects are automatically garbage collected.
 		// For additional cleanup logic use finalizers.
-		return controller_runtime.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	desiredStatus := *r.desiredStatus(instance)
@@ -79,15 +79,15 @@ func (r *UselessMachineReconciler) Reconcile(ctx context.Context, req controller
 				log.Info("[controller] Unable to update UselessMachine status")
 			}
 		}()
-		return controller_runtime.Result{}, nil
+		return ctrl.Result{}, nil
 	}
 
-	return controller_runtime.Result{}, nil
+	return ctrl.Result{}, nil
 }
 
-// SetupWithManager .
-func (r *UselessMachineReconciler) SetupWithManager(mgr controller_runtime.Manager) error {
-	return controller_runtime.NewControllerManagedBy(mgr).
+// SetupWithManager sets up the controller with the Manager.
+func (r *UselessMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&uselessmachinev1alpha1.UselessMachine{}).
 		Complete(r)
 }

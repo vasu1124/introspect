@@ -34,7 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: UselessMachine is the Schema for the uselesses API
+        description: UselessMachine is the Schema for the useless API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation

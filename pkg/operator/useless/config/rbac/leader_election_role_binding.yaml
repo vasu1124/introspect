@@ -1,11 +1,18 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: introspect-lease-rolebinding
+  labels:
+    app.kubernetes.io/name: rolebinding
+    app.kubernetes.io/instance: leader-election-rolebinding
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: useless
+    app.kubernetes.io/part-of: useless
+    app.kubernetes.io/managed-by: kustomize
+  name: introspect-election-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: introspect-lease
+  name: introspect-election-role
 subjects:
 - kind: ServiceAccount
   name: default
