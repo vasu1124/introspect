@@ -12,9 +12,9 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/olahol/melody"
 	"github.com/vasu1124/introspect/pkg/operator/useless/controllers"
 	"github.com/vasu1124/introspect/pkg/version"
-	melody "gopkg.in/olahol/melody.v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controller_runtime "sigs.k8s.io/controller-runtime"
 )

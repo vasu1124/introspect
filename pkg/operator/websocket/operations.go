@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/olahol/melody"
 	"github.com/vasu1124/introspect/pkg/logger"
 	uselessmachinev1alpha1 "github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
-	melody "gopkg.in/olahol/melody.v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
