@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine as builder
+FROM golang:1.19-alpine as builder
 ARG gitVersion=0.0.0
 ARG gitCommit=0000000000000000000000000000000000000000
 ARG gitTreeState="dirty"
