@@ -1,9 +1,0 @@
-name: 'mongodb'
-type: 'git'
-access:
-  type: github
-  repoUrl: https://github.com/bitnami/charts
-  ref: "refs/heads/main"
-  commit: "fa8694f8aff028b3c635474e5b6fd64c58b05f0f"
-version: ${VERSION}
----

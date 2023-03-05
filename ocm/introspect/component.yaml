@@ -1,0 +1,37 @@
+components:
+- name: github.com/vasu1124/introspect
+  version: ${VERSION}
+  provider: 
+    name: actvirtual.com
+  resources:
+  - name: 'introspect-image'
+    type: 'ociImage'
+#    relation: external
+    version: ${VERSION}
+    access:
+      type: ociArtifact
+      imageReference: ${OCI}/${ORG}/introspect:${VERSION}
+  - name: 'introspect-blueprint'
+    type: landscaper.gardener.cloud/blueprint
+#    relation: local
+    input:
+      type: dir
+      path: "./blueprint/"
+      compress: true
+      mediaType: application/vnd.gardener.landscaper.blueprint.v1+tar+gzip
+  - name: 'introspect-helm'
+    type: helm
+#    relation: external
+    version: 0.1.0
+    access:
+      type: ociArtifact
+      imageReference: ${OCI}/${ORG}/helm/introspect-helm:0.1.0
+  sources:
+  - name: 'introspect'
+    type: 'git'
+    version: ${VERSION}
+    access:
+      type: gitHub
+      repoUrl: github.com/${ORG}/introspect
+      ref: ${REF}
+      commit: ${COMMIT}

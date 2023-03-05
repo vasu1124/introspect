@@ -1,8 +1,0 @@
----
-name: introspect
-componentName: github.com/vasu1124/introspect
-version: ${INTROSPECT_VERSION}
----
-name: mongodb
-componentName: bitnami.com/mongodb
-version: ${MONGODB_VERSION}

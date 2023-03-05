@@ -1,9 +1,0 @@
-name: 'introspect'
-type: 'git'
-access:
-  type: github
-  repoUrl: github.com/${ORG}/introspect
-  ref: ${REF}
-  commit: ${COMMIT}
-version: ${VERSION}
----

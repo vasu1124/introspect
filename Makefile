@@ -33,6 +33,7 @@ tls: ${tlsfiles}
 .PHONY: clean
 clean:
 	-rm -rf ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml ocm/.gen
+	-mkdir -p ocm/.gen
 
 # kubebuilder: Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
@@ -175,44 +176,26 @@ helm-bitnami-repo:
 .PHONY: helm-push
 helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
 
-ocm/.gen/introspect/component/component-descriptor.yaml: ocm/introspect/resources.yaml ocm/introspect/sources.yaml ocm/introspect/blueprint/blueprint.yaml
-	component-cli component-archive create --component-name github.com/vasu1124/introspect  --component-version ${gitVersion} ./ocm/.gen/introspect/component
-	component-cli component-archive resource add  ./ocm/.gen/introspect/component OCI=ghcr.io ORG=vasu1124 VERSION=${gitVersion} ./ocm/introspect/resources.yaml
-	component-cli component-archive sources  add  ./ocm/.gen/introspect/component OCI=ghcr.io ORG=vasu1124 VERSION=${gitVersion} REF=${gitRefs} COMMIT=${gitCommit} ./ocm/introspect/sources.yaml
-
-ocm/.gen/mongodb/component/component-descriptor.yaml: ocm/mongodb/resources.yaml ocm/mongodb/sources.yaml ocm/mongodb/blueprint/blueprint.yaml
-	component-cli component-archive create --component-name bitnami.com/mongodb  --component-version ${MONGOCHARTVERSION} ./ocm/.gen/mongodb/component
-	component-cli component-archive resource add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} MONGOTAG=${MONGOTAG} ./ocm/mongodb/resources.yaml
-	component-cli component-archive sources  add  ./ocm/.gen/mongodb/component OCI=ghcr.io ORG=vasu1124 VERSION=${MONGOCHARTVERSION} MONGOTAG=${MONGOTAG} ./ocm/mongodb/sources.yaml
-
-ocm/.gen/etcd/component/component-descriptor.yaml: ocm/etcd/resources.yaml ocm/etcd/sources.yaml ocm/etcd/blueprint/blueprint.yaml
-	component-cli component-archive create --component-name bitnami.com/etcd  --component-version ${ETCDCHARTVERSION} ./ocm/.gen/etcd/component
-	component-cli component-archive resource add  ./ocm/.gen/etcd/component OCI=ghcr.io ORG=vasu1124 VERSION=${ETCDCHARTVERSION} ETCDTAG=${ETCDTAG} ./ocm/etcd/resources.yaml
-	component-cli component-archive sources  add  ./ocm/.gen/etcd/component OCI=ghcr.io ORG=vasu1124 VERSION=${ETCDCHARTVERSION} ETCDTAG=${ETCDTAG} ./ocm/etcd/sources.yaml
-
-ocm/.gen/app-introspect/component/component-descriptor.yaml: ocm/app-introspect/resources.yaml ocm/app-introspect/componentRefs.yaml ocm/app-introspect/blueprint/blueprint.yaml
-	component-cli component-archive create --component-name github.com/vasu1124/app-introspect --component-version ${gitVersion} ./ocm/.gen/app-introspect/component
-	component-cli component-archive resource add  ./ocm/.gen/app-introspect/component ./ocm/app-introspect/resources.yaml
-	component-cli component-archive component-references add ./ocm/.gen/app-introspect/component MONGODB_VERSION=${MONGOCHARTVERSION} INTROSPECT_VERSION=${gitVersion} ./ocm/app-introspect/componentRefs.yaml
-
-ocm/.gen/introspect/ctf: ocm/.gen/introspect/component/component-descriptor.yaml
-	component-cli ctf add ./ocm/.gen/introspect/ctf     -f ./ocm/.gen/introspect/component
-
-ocm/.gen/mongodb/ctf: ocm/.gen/mongodb/component/component-descriptor.yaml
-	component-cli ctf add ./ocm/.gen/mongodb/ctf        -f ./ocm/.gen/mongodb/component
-
-ocm/.gen/etcd/ctf: ocm/.gen/etcd/component/component-descriptor.yaml
-	component-cli ctf add ./ocm/.gen/etcd/ctf        -f ./ocm/.gen/etcd/component
-
-ocm/.gen/app-introspect/ctf: ocm/.gen/app-introspect/component/component-descriptor.yaml
-	component-cli ctf add ./ocm/.gen/app-introspect/ctf -f ./ocm/.gen/app-introspect/component
+.PHONY: ocm
+ocm: ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml
+	ocm cv add -cf -F ./ocm/.gen ./ocm/introspect/component.yaml  \
+		OCI=ghcr.io ORG=vasu1124 \
+		VERSION=${gitVersion} REF=${gitRefs} COMMIT=${gitCommit} 
+	ocm cv add  -F ./ocm/.gen ./ocm/mongodb/component.yaml        \
+		OCI=ghcr.io ORG=vasu1124 \
+		VERSION=${MONGOCHARTVERSION} TAG=${MONGOTAG} COMMIT=093d55f1ec11138857ec1b3aa32f7e4d19a32c1d
+	ocm cv add  -F ./ocm/.gen ./ocm/etcd/component.yaml           \
+		OCI=ghcr.io ORG=vasu1124 \
+		VERSION=${ETCDCHARTVERSION}  TAG=${ETCDTAG}  COMMIT=d8f63d45e8754c0d330e9075f8db22d0b5cdd7ba
+	ocm cv add  -F ./ocm/.gen ./ocm/app-introspect/component.yaml \
+		OCI=ghcr.io ORG=vasu1124 \
+		VERSION=${gitVersion} MONGODB_VERSION=${MONGOCHARTVERSION} ETCD_VERSION=${ETCDTAG} INTROSPECT_VERSION=${gitVersion} 
 
 .PHONY: ctf-push
-ctf-push: ocm/.gen/introspect/ctf ocm/.gen/mongodb/ctf ocm/.gen/etcd/ctf ocm/.gen/app-introspect/ctf
-	component-cli ctf push ./ocm/.gen/introspect/ctf     --repo-ctx ghcr.io/vasu1124/ocm
-	component-cli ctf push ./ocm/.gen/mongodb/ctf        --repo-ctx ghcr.io/vasu1124/ocm
-	component-cli ctf push ./ocm/.gen/etcd/ctf           --repo-ctx ghcr.io/vasu1124/ocm
-	component-cli ctf push ./ocm/.gen/app-introspect/ctf --repo-ctx ghcr.io/vasu1124/ocm
+ctf-push: ocm
+	ocm transfer ctf ./ocm/.gen ghcr.io/vasu1124/ocm --overwrite
+
+
 
 # openssl genpkey -out mysign.key -algorithm RSA
 # openssl rsa -in private.key -outform PEM -pubout -out mysign.pub
