@@ -121,10 +121,20 @@ jobs:
     - name: Helm package & push chart to ghcr
       run: |
         make helm-push
-    - name: installl OCM
-      uses: open-component-model/ocm-setup-action@main
-      with:
-        version: v0.2.0-rc.1
+#    - name: installl OCM cli
+#      uses: open-component-model/ocm-setup-action@main
+#      with:
+#        version: v0.2.0-rc.1
+    - name: Install OCM cli
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/bin
+        latest=$(curl --silent https://api.github.com/repos/open-component-model/ocm/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*_Linux_x86_64.tar.gz\"))")
+        echo "::fetching latest ocm-cli from $latest"
+        curl -L -o $GITHUB_WORKSPACE/bin/ocm-cli.tgz $latest
+        tar xvzf $GITHUB_WORKSPACE/bin/ocm-cli.tgz
+        chmod u+x $GITHUB_WORKSPACE/bin/ocm
+        echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+        $GITHUB_WORKSPACE/bin/ocm version
     - name: create and publish OCM descriptors
       run: |
         make ctf-push
