@@ -59,6 +59,25 @@ jobs:
       with:
         version: latest
       id: buildx
+    - name: Set up Helm
+      if: success()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: azure/setup-helm@v3
+#    - name: Set up OCM
+#      uses: open-component-model/ocm-setup-action@main
+#      with:
+#        version: v0.2.0-rc.1
+    - name: Set up OCM
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/bin
+        latest=$(curl --silent https://api.github.com/repos/open-component-model/ocm/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*_Linux_x86_64.tar.gz\"))")
+        echo "::fetching latest ocm-cli from $latest"
+        curl -L -o ocm-cli.tgz $latest
+        tar --overwrite -xvzf ocm-cli.tgz -C $GITHUB_WORKSPACE/bin
+        chmod u+x $GITHUB_WORKSPACE/bin/ocm
+        echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+        $GITHUB_WORKSPACE/bin/ocm version
 
     - name: Check out code
       uses: actions/checkout@v3
@@ -109,32 +128,14 @@ jobs:
       if: success()
       run: |
         docker buildx imagetools inspect ghcr.io/vasu1124/introspect:1.0.0
-        
-    - name: Install Helm
-      if: success()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      uses: azure/setup-helm@v3
+
     - name: Helm login to ghcr
       run: |
         echo ${{ secrets.GITHUB_TOKEN }} | helm registry login --username ${{ github.repository_owner }} --password-stdin ghcr.io
     - name: Helm package & push chart to ghcr
       run: |
         make helm-push
-#    - name: installl OCM cli
-#      uses: open-component-model/ocm-setup-action@main
-#      with:
-#        version: v0.2.0-rc.1
-    - name: Install OCM cli
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/bin
-        latest=$(curl --silent https://api.github.com/repos/open-component-model/ocm/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*_Linux_x86_64.tar.gz\"))")
-        echo "::fetching latest ocm-cli from $latest"
-        curl -L -o $GITHUB_WORKSPACE/bin/ocm-cli.tgz $latest
-        tar xvzf $GITHUB_WORKSPACE/bin/ocm-cli.tgz
-        chmod u+x $GITHUB_WORKSPACE/bin/ocm
-        echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
-        $GITHUB_WORKSPACE/bin/ocm version
+
     - name: create and publish OCM descriptors
       run: |
         make ctf-push
