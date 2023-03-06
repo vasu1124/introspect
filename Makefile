@@ -33,7 +33,6 @@ tls: ${tlsfiles}
 .PHONY: clean
 clean:
 	-rm -rf ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml ocm/.gen
-	-mkdir -p ocm/.gen
 
 # kubebuilder: Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
@@ -86,7 +85,7 @@ build: ${SOURCES}
 		--build-arg gitTreeState=${gitTreeState} \
 		--file Dockerfile \
 		.
-	docker manifest inspect ${OCIREPO}/introspect:${gitVersion}
+#	docker manifest inspect ${OCIREPO}/introspect:${gitVersion}
 
 .PHONY: buildx
 buildx: ${SOURCES}
@@ -177,23 +176,24 @@ helm-bitnami-repo:
 helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
 
 .PHONY: ocm
-ocm: ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml
-	ocm cv add -cf -F ./ocm/.gen ./ocm/introspect/component.yaml  \
+ocm: ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
+	-mkdir -p ocm/.gen
+	ocm cv add -cf -F ./ocm/.gen/ctf ./ocm/introspect/component.yaml  \
 		OCI=ghcr.io ORG=vasu1124 \
 		VERSION=${gitVersion} REF=${gitRefs} COMMIT=${gitCommit} 
-	ocm cv add  -F ./ocm/.gen ./ocm/mongodb/component.yaml        \
+	ocm cv add     -F ./ocm/.gen/ctf ./ocm/mongodb/component.yaml        \
 		OCI=ghcr.io ORG=vasu1124 \
 		VERSION=${MONGOCHARTVERSION} TAG=${MONGOTAG} COMMIT=093d55f1ec11138857ec1b3aa32f7e4d19a32c1d
-	ocm cv add  -F ./ocm/.gen ./ocm/etcd/component.yaml           \
+	ocm cv add     -F ./ocm/.gen/ctf ./ocm/etcd/component.yaml           \
 		OCI=ghcr.io ORG=vasu1124 \
 		VERSION=${ETCDCHARTVERSION}  TAG=${ETCDTAG}  COMMIT=d8f63d45e8754c0d330e9075f8db22d0b5cdd7ba
-	ocm cv add  -F ./ocm/.gen ./ocm/app-introspect/component.yaml \
+	ocm cv add     -F ./ocm/.gen/ctf ./ocm/app-introspect/component.yaml \
 		OCI=ghcr.io ORG=vasu1124 \
 		VERSION=${gitVersion} MONGODB_VERSION=${MONGOCHARTVERSION} ETCD_VERSION=${ETCDTAG} INTROSPECT_VERSION=${gitVersion} 
 
 .PHONY: ctf-push
 ctf-push: ocm
-	ocm transfer ctf ./ocm/.gen ghcr.io/vasu1124/ocm --overwrite
+	ocm transfer ctf ./ocm/.gen/ctf ghcr.io/vasu1124/ocm --overwrite
 
 
 

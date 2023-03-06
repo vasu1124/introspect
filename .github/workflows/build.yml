@@ -118,20 +118,13 @@ jobs:
     - name: Helm login to ghcr
       run: |
         echo ${{ secrets.GITHUB_TOKEN }} | helm registry login --username ${{ github.repository_owner }} --password-stdin ghcr.io
-    - name: Install OCM component-cli
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/bin
-        latest=$(curl --silent https://api.github.com/repos/gardener/component-cli/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*-linux-amd64.gz\"))")
-        echo "::fetching latest ocm-cli from $latest"
-        curl -L -o $GITHUB_WORKSPACE/bin/component-cli.gz $latest
-        gunzip $GITHUB_WORKSPACE/bin/component-cli.gz
-        chmod u+x $GITHUB_WORKSPACE/bin/component-cli
-        echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
-        $GITHUB_WORKSPACE/bin/component-cli version
-
     - name: Helm package & push chart to ghcr
       run: |
         make helm-push
+    - name: installl OCM
+      uses: open-component-model/ocm-setup-action@main
+      with:
+        version: v0.2.0-rc.1
     - name: create and publish OCM descriptors
       run: |
         make ctf-push
