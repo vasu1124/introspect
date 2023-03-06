@@ -76,8 +76,9 @@ jobs:
         cp ocm $GITHUB_WORKSPACE/bin
         chmod a+x $GITHUB_WORKSPACE/bin/ocm
         echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
-        echo "::installed latest ocm-cli to $GITHUB_WORKSPACE/bin/ocm"
-        ocm version
+        echo "::installed latest ocm-cli to $GITHUB_WORKSPACE/bin/"
+        echo "::path $PATH"
+        $GITHUB_WORKSPACE/bin/ocm version
 
     - name: Check out code
       uses: actions/checkout@v3
@@ -138,4 +139,5 @@ jobs:
 
     - name: create and publish OCM descriptors
       run: |
+        echo "::path $PATH"
         make ctf-push
