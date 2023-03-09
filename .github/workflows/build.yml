@@ -62,24 +62,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       uses: azure/setup-helm@v3
-#    - name: Set up OCM
-#      uses: open-component-model/ocm-setup-action@main
-#      with:
-#        version: v0.2.0-rc.1
     - name: Set up OCM
-      run: |
-        # mkdir -p $GITHUB_WORKSPACE/bin
-        mkdir -p /usr/local/bin
-        latest=$(curl --silent https://api.github.com/repos/open-component-model/ocm/releases/latest | jq -r ".assets[].browser_download_url | select(test(\".*_Linux_x86_64.tar.gz\"))")
-        echo "::fetching latest ocm-cli from $latest"
-        curl -L -o ocm-cli.tgz $latest
-        tar --overwrite -xvzf ocm-cli.tgz
-        cp ocm /usr/local/bin
-        chmod a+x /usr/local/bin/ocm
-        #echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
-        echo "::installed latest ocm-cli to /usr/local/bin/"
-        echo "::path $PATH"
-        ocm version
+      uses: vasu1124/ocm-setup-action@main
+      with:
+        version: v0.2.0-rc.1
 
     - name: Check out code
       uses: actions/checkout@v3
