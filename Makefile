@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2018 vasu1124
+#
+# SPDX-License-Identifier: Apache-2.0
+
 OCIREPO:=ghcr.io/vasu1124
 DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm/v7 #linux/arm64
 

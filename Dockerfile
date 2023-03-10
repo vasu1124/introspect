@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2018 vasu1124
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 FROM golang:1.19-alpine as builder
 ARG gitVersion=0.0.0
 ARG gitCommit=0000000000000000000000000000000000000000

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2018 vasu1124
+#
+# SPDX-License-Identifier: CC0-1.0
+
 name: Analyze
 on:
   workflow_dispatch:
@@ -21,6 +25,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+
+    # REUSE Compliance Check
+    - name: REUSE Compliance Check
+      uses: fsfe/reuse-action@v1
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

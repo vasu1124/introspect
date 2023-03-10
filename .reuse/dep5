@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: introspect
+Upstream-Contact: vasu1124 <vasu1124@actvirtual.com>
+Source: https://github.com/vasu1124/introspect
+
+Files: **
+Copyright: 2018 vasu1124 <vasu1124@actvirtual.com>
+License: GPL-3.0-or-later

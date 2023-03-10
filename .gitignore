@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2018 vasu1124
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
@@ -38,6 +42,8 @@ debug
 pkg/operator/useless/bin/
 
 #built TLS artefacts
+my.key
+my.pub
 
 #logs and play
 telepresence*.log
