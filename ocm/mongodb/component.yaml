@@ -6,14 +6,12 @@ components:
   resources:
   - name: 'mongodb-image'
     type: 'ociImage'
-#    relation: external
     version: ${TAG}
     access:
       type: ociArtifact
       imageReference: docker.io/bitnami/mongodb:${TAG}
   - name: 'mongodb-blueprint'
     type: landscaper.gardener.cloud/blueprint
-#    relation: local
     input:
       type: dir
       path: "./blueprint/"
@@ -21,11 +19,10 @@ components:
       mediaType: application/vnd.gardener.landscaper.blueprint.v1+tar+gzip
   - name: 'mongodb-helm'
     type: helm
-#    relation: external
     version: ${VERSION}
-    access:
-      type: ociArtifact
-      imageReference: ${OCI}/${ORG}/helm/mongodb:${VERSION}
+    input:
+      type: helm
+      path: ../.gen/mongodb/mongodb-${VERSION}.tgz
   sources:
   - name: 'mongodb'
     type: 'git'

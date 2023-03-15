@@ -6,14 +6,12 @@ components:
   resources:
   - name: 'etcd-image'
     type: 'ociImage'
-    relation: 'external'
     version: ${TAG}
     access:
       type: ociArtifact
       imageReference: docker.io/bitnami/etcd:${TAG}
   - name: 'etcd-blueprint'
     type: landscaper.gardener.cloud/blueprint
-    relation: 'local'
     input:
       type: dir
       path: "./blueprint/"
@@ -21,11 +19,10 @@ components:
       mediaType: application/vnd.gardener.landscaper.blueprint.v1+tar+gzip
   - name: 'etcd-helm'
     type: helm
-    relation: external
     version: ${VERSION}
-    access:
-      type: ociArtifact
-      imageReference: ${OCI}/${ORG}/helm/etcd:${VERSION}
+    input:
+      type: helm
+      path: ../.gen/etcd/etcd-${VERSION}.tgz
   sources:
   - name: 'etcd'
     type: 'git'

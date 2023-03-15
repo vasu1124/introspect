@@ -150,34 +150,32 @@ kubernetes/k8s-visualizer:
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
 
-ocm/.gen/introspect/introspect-helm-0.1.0.tgz:
+ocm/.gen/introspect/introspect-helm-1.0.0.tgz:
 	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/introspect/
 	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
-	helm push ocm/.gen/introspect/introspect-helm-0.1.0.tgz oci://${OCIREPO}/helm
+#	helm push ocm/.gen/introspect/introspect-helm-1.0.0.tgz oci://${OCIREPO}/helm
 
 MONGOCHARTVERSION:=12.1.19
 MONGOTAG:=4.4.14
 ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz: helm-bitnami-repo
-	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/mongodb/
 	helm pull bitnami/mongodb -d ocm/.gen/mongodb --version ${MONGOCHARTVERSION}
-	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCIREPO}/helm
+#	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCIREPO}/helm
 
 ETCDCHARTVERSION:=8.7.6
 ETCDTAG:=3.5.7
 ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz: helm-bitnami-repo
-	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/etcd/
 	helm pull bitnami/etcd -d ocm/.gen/etcd --version ${ETCDCHARTVERSION}
-	helm push ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
+#	helm push ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
 
 .PHONY: helm-bitnami-repo
 helm-bitnami-repo:
 	helm repo add bitnami https://charts.bitnami.com/bitnami
 
 .PHONY: helm-push
-helm-push: ocm/.gen/introspect/introspect-helm-0.1.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
+helm-push: ocm/.gen/introspect/introspect-helm-1.0.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
 
 .PHONY: ocm
 ocm: ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
