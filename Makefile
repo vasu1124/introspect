@@ -151,28 +151,23 @@ kubernetes/k8s-visualizer:
 	echo open browser with http://localhost:8001/static/
 
 ocm/.gen/introspect/introspect-helm-1.0.0.tgz:
-	export HELM_EXPERIMENTAL_OCI=1
 	mkdir -p ocm/.gen/introspect/
 	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
 #	helm push ocm/.gen/introspect/introspect-helm-1.0.0.tgz oci://${OCIREPO}/helm
 
 MONGOCHARTVERSION:=12.1.19
 MONGOTAG:=4.4.14
-ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz: helm-bitnami-repo
+ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
 	mkdir -p ocm/.gen/mongodb/
-	helm pull bitnami/mongodb -d ocm/.gen/mongodb --version ${MONGOCHARTVERSION}
+	helm pull mongodb -d ocm/.gen/mongodb --version ${MONGOCHARTVERSION} --repo https://charts.bitnami.com/bitnami
 #	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCIREPO}/helm
 
 ETCDCHARTVERSION:=8.7.6
 ETCDTAG:=3.5.7
-ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz: helm-bitnami-repo
+ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz:
 	mkdir -p ocm/.gen/etcd/
-	helm pull bitnami/etcd -d ocm/.gen/etcd --version ${ETCDCHARTVERSION}
+	helm pull etcd -d ocm/.gen/etcd --version ${ETCDCHARTVERSION} --repo https://charts.bitnami.com/bitnami
 #	helm push ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
-
-.PHONY: helm-bitnami-repo
-helm-bitnami-repo:
-	helm repo add bitnami https://charts.bitnami.com/bitnami
 
 .PHONY: helm-push
 helm-push: ocm/.gen/introspect/introspect-helm-1.0.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz

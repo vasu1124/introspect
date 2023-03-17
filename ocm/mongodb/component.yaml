@@ -6,7 +6,7 @@ components:
   resources:
   - name: 'mongodb-image'
     type: 'ociImage'
-    version: ${TAG}
+    version: ${VERSION}
     access:
       type: ociArtifact
       imageReference: docker.io/bitnami/mongodb:${TAG}
@@ -23,6 +23,7 @@ components:
     input:
       type: helm
       path: ../.gen/mongodb/mongodb-${VERSION}.tgz
+#      referenceName: bitnami/mongodb-helm:${VERSION}
   sources:
   - name: 'mongodb'
     type: 'git'

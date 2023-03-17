@@ -6,7 +6,7 @@ components:
   resources:
   - name: 'etcd-image'
     type: 'ociImage'
-    version: ${TAG}
+    version: ${VERSION}
     access:
       type: ociArtifact
       imageReference: docker.io/bitnami/etcd:${TAG}

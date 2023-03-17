@@ -69,7 +69,7 @@ jobs:
     - name: Set up OCM
       uses: vasu1124/ocm-setup-action@main
       with:
-        version: v0.2.0-rc.1
+        version: v0.3.0-rc.1
 
     - name: Check out code
       uses: actions/checkout@v3
