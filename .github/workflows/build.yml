@@ -28,11 +28,10 @@ jobs:
   build:
     name: Build and Push with Docker buildx
     runs-on: ubuntu-latest
-    env:
+  # env:
       # multi-platform build is possible, disabled because no demos with arm currently
       # linux/arm64
-      # DOCKER_TARGET_PLATFORM: linux/amd64,linux/arm/v7 
-      HELM_EXPERIMENTAL_OCI: 1
+      # DOCKER_TARGET_PLATFORM: linux/amd64,linux/arm/v7
 
     steps:
 
@@ -69,7 +68,7 @@ jobs:
     - name: Set up OCM
       uses: vasu1124/ocm-setup-action@main
       with:
-        version: v0.3.0-rc.1
+        version: 0.3.0-rc.1
 
     - name: Check out code
       uses: actions/checkout@v3
