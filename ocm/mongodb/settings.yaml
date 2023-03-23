@@ -1,0 +1,3 @@
+COMPONENT_NAME_PREFIX: bitnami.com
+PROVIDER: bitnami.com
+NAME: mongodb

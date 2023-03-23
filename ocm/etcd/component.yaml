@@ -1,32 +1,33 @@
 components:
-- name: bitnami.com/etcd
-  version: ${VERSION}
+- name: ${COMPONENT_NAME_PREFIX}/${NAME}
+  version: ${ETCD_VERSION}
   provider: 
-    name: bitnami.com
+    name: ${PROVIDER}
   resources:
-  - name: 'etcd-image'
-    type: 'ociImage'
-    version: ${VERSION}
+  - name: ${NAME}-image
+    type: ociImage
+    version: ${ETCD_VERSION}
     access:
       type: ociArtifact
-      imageReference: docker.io/bitnami/etcd:${TAG}
-  - name: 'etcd-blueprint'
+      imageReference: docker.io/bitnami/etcd:${ETCD_VERSION}
+  - name: ${NAME}-blueprint
     type: landscaper.gardener.cloud/blueprint
     input:
       type: dir
       path: "./blueprint/"
       compress: true
       mediaType: application/vnd.gardener.landscaper.blueprint.v1+tar+gzip
-  - name: 'etcd-helm'
+  - name: ${NAME}-helm
     type: helm
-    version: ${VERSION}
+#    version: ${ETCD_CHART}
     input:
       type: helm
-      path: ../.gen/etcd/etcd-${VERSION}.tgz
+      path: ../.gen/etcd/etcd-${ETCD_CHART}.tgz
+#      repository: ${NAME}-helm:${ETCD_CHART}
   sources:
-  - name: 'etcd'
-    type: 'git'
+  - name: ${NAME}
+    type: git
     access:
       type: gitHub
       repoUrl: https://github.com/bitnami/charts
-      commit: ${COMMIT}
+      commit: ${ETCD_COMMIT}

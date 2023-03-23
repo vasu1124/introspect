@@ -1,34 +1,35 @@
 components:
-- name: github.com/vasu1124/introspect
-  version: ${VERSION}
+- name: ${COMPONENT_NAME_PREFIX}/${NAME}
+  version: ${INTROSPECT_VERSION}
   provider: 
-    name: actvirtual.com
+    name: ${PROVIDER}
   resources:
-  - name: 'introspect-image'
-    type: 'ociImage'
-    version: ${VERSION}
-    access:
-      type: ociArtifact
-      imageReference: ${OCI}/${ORG}/introspect:${VERSION}
-  - name: 'introspect-blueprint'
+  - name: ${NAME}-image
+    type: ociImage
+    version: ${INTROSPECT_VERSION}
+    input:
+      type: docker
+      path: ${OCI}/${ORG}/${NAME}:${INTROSPECT_VERSION}
+#      repository: ${NAME}-image
+  - name: ${NAME}-blueprint
     type: landscaper.gardener.cloud/blueprint
     input:
       type: dir
       path: "./blueprint/"
       compress: true
       mediaType: application/vnd.gardener.landscaper.blueprint.v1+tar+gzip
-  - name: 'introspect-helm'
+  - name: ${NAME}-helm
     type: helm
-    version: ${VERSION}
+    version: ${INTROSPECT_VERSION}
     input:
       type: helm
-      path: ../.gen/introspect/introspect-helm-${VERSION}.tgz
+      path: ../.gen/${NAME}/${NAME}-helm-${INTROSPECT_VERSION}.tgz
   sources:
-  - name: 'introspect'
-    type: 'git'
-    version: ${VERSION}
+  - name: ${NAME}
+    type: git
+    version: ${INTROSPECT_VERSION}
     access:
       type: gitHub
-      repoUrl: github.com/${ORG}/introspect
-      ref: ${REF}
-      commit: ${COMMIT}
+      repoUrl: ${COMPONENT_NAME_PREFIX}/${NAME}
+      ref: ${INTROSPECT_REF}
+      commit: ${INTROSPECT_COMMIT}

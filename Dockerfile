@@ -12,7 +12,7 @@ WORKDIR /introspect
 COPY go.* ./
 COPY cmd cmd
 COPY pkg pkg
-COPY introspect.VERSION ./ 
+COPY .env ./ 
 RUN buildDate=$(date -I'seconds'); \
     go build \
     -ldflags "\

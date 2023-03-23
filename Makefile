@@ -2,14 +2,15 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-OCIREPO:=ghcr.io/vasu1124
-DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm/v7 #linux/arm64
+include .env
+export
 
-# nothing to edit beyond this point
+DOCKER_TARGET_PLATFORM:=linux/amd64 #,linux/arm/v7 #linux/arm64
+
 BINARY:=introspect
 GOARCH:=amd64
 
-gitVersion=$(shell cat introspect.VERSION)
+gitVersion:=${INTROSPECT_VERSION}
 gitCommit:=$(shell git rev-parse --verify HEAD)
 gitRefs:=$(shell git symbolic-ref HEAD)
 gitTreeState=$(shell [ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
@@ -83,26 +84,27 @@ ${BINARY}-darwin-${GOARCH}: ${SOURCES}
 .PHONY: build
 build: ${SOURCES}
 	docker build \
-		--tag ${OCIREPO}/introspect:${gitVersion} \
+		--tag ${OCI}/${ORG}/introspect:${gitVersion} \
 		--build-arg gitVersion=${gitVersion} \
 		--build-arg gitCommit=${gitCommit} \
 		--build-arg gitTreeState=${gitTreeState} \
 		--file Dockerfile \
 		.
-#	docker manifest inspect ${OCIREPO}/introspect:${gitVersion}
+	docker buildx imagetools inspect ${OCI}/${ORG}/introspect:${gitVersion}
+#	docker manifest inspect ${OCI}/${ORG}/introspect:${gitVersion}
 
 .PHONY: buildx
 buildx: ${SOURCES}
 	docker buildx build \
 		--output "type=image,push=false" \
 		--platform ${DOCKER_TARGET_PLATFORM} \
-		--tag ${OCIREPO}/introspect:${gitVersion} \
+		--tag ${OCI}/${ORG}/introspect:${gitVersion} \
 		--build-arg gitVersion=${gitVersion} \
 		--build-arg gitCommit=${gitCommit} \
 		--build-arg gitTreeState=${gitTreeState} \
 		--file Dockerfile \
 		.
-	docker buildx imagetools inspect ${OCIREPO}/introspect:${gitVersion}
+	docker buildx imagetools inspect ${OCI}/${ORG}/introspect:${gitVersion}
 
 .PHONY: deploy
 deploy:
@@ -113,7 +115,7 @@ docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker
 
 docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 	docker build -f docker/Dockerfile.scratch \
-		--tag ${OCIREPO}/introspect-scratch:${gitVersion} \
+		--tag ${OCI}/${ORG}/introspect-scratch:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
@@ -122,7 +124,7 @@ docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 
 docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 	docker build -f docker/Dockerfile.alpine \
-		--tag ${OCIREPO}/introspect:${gitVersion} \
+		--tag ${OCI}/${ORG}/introspect:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
@@ -131,17 +133,16 @@ docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 
 docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
 	docker build -f docker/Dockerfile.ubuntu \
-		--tag ${OCIREPO}/introspect-ubuntu:${gitVersion} \
+		--tag ${OCI}/${ORG}/introspect-ubuntu:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
 		--build-arg https_proxy=${https_proxy} \
 		--build-arg no_proxy=${no_proxy} \
 	 	.
 	touch docker/ubuntu.docker
 
-# we are only pushing alpine
 .PHONY: docker-push
-docker-push: build
-	docker push ${OCIREPO}/introspect:${gitVersion}
+docker-push:
+	docker push ${OCI}/${ORG}/introspect:${gitVersion}
 
 .PHONY: kubernetes/k8s-visualizer
 kubernetes/k8s-visualizer:
@@ -150,49 +151,52 @@ kubernetes/k8s-visualizer:
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
 
-ocm/.gen/introspect/introspect-helm-1.0.0.tgz:
+ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz:
 	mkdir -p ocm/.gen/introspect/
-	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
-#	helm push ocm/.gen/introspect/introspect-helm-1.0.0.tgz oci://${OCIREPO}/helm
+	helm package ./kubernetes/helm/introspect/ --app-version ${INTROSPECT_VERSION} -d ocm/.gen/introspect
+#	helm push ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz oci://${OCI}/${ORG}/helm
 
-MONGOCHARTVERSION:=12.1.19
-MONGOTAG:=4.4.14
-ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz:
+ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz:
 	mkdir -p ocm/.gen/mongodb/
-	helm pull mongodb -d ocm/.gen/mongodb --version ${MONGOCHARTVERSION} --repo https://charts.bitnami.com/bitnami
-#	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCIREPO}/helm
+	helm pull mongodb -d ocm/.gen/mongodb --version ${MONGODB_CHART} --repo https://charts.bitnami.com/bitnami
+#	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCI}/${ORG}/helm
 
-ETCDCHARTVERSION:=8.7.6
-ETCDTAG:=3.5.7
-ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz:
+ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz:
 	mkdir -p ocm/.gen/etcd/
-	helm pull etcd -d ocm/.gen/etcd --version ${ETCDCHARTVERSION} --repo https://charts.bitnami.com/bitnami
-#	helm push ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz oci://${OCIREPO}/helm
+	helm pull etcd -d ocm/.gen/etcd --version ${ETCD_CHART} --repo https://charts.bitnami.com/bitnami
+#	helm push ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz oci://${OCI}/${ORG}/helm
 
-.PHONY: helm-push
-helm-push: ocm/.gen/introspect/introspect-helm-1.0.0.tgz ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz ocm/.gen/etcd/etcd-${ETCDCHARTVERSION}.tgz
+.PHONY: helm
+helm: ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz
+
+.PHONY: ./ocm/.gen/dynamic.yaml
+.ONESHELL:
+./ocm/.gen/dynamic.yaml:
+	-mkdir -p ocm/.gen
+	cat <<- EOF >$@
+		$$(cat .env | tr "=" ":")
+		INTROSPECT_REF: ${gitRefs}
+		INTROSPECT_COMMIT: ${gitCommit} 
+	EOF
 
 .PHONY: ocm
-ocm: ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
-	-mkdir -p ocm/.gen
+ocm: helm ./ocm/.gen/dynamic.yaml ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
 	ocm cv add -cf -F ./ocm/.gen/ctf ./ocm/introspect/component.yaml  \
-		OCI=ghcr.io ORG=vasu1124 \
-		VERSION=${gitVersion} REF=${gitRefs} COMMIT=${gitCommit} 
-	ocm cv add     -F ./ocm/.gen/ctf ./ocm/mongodb/component.yaml        \
-		OCI=ghcr.io ORG=vasu1124 \
-		VERSION=${MONGOCHARTVERSION} TAG=${MONGOTAG} COMMIT=093d55f1ec11138857ec1b3aa32f7e4d19a32c1d
-	ocm cv add     -F ./ocm/.gen/ctf ./ocm/etcd/component.yaml           \
-		OCI=ghcr.io ORG=vasu1124 \
-		VERSION=${ETCDCHARTVERSION}  TAG=${ETCDTAG}  COMMIT=d8f63d45e8754c0d330e9075f8db22d0b5cdd7ba
+		--settings ./ocm/introspect/settings.yaml \
+		--settings ./ocm/.gen/dynamic.yaml
+	ocm cv add     -F ./ocm/.gen/ctf ./ocm/mongodb/component.yaml     \
+		--settings ./ocm/mongodb/settings.yaml \
+		--settings ./ocm/.gen/dynamic.yaml 
+	ocm cv add     -F ./ocm/.gen/ctf ./ocm/etcd/component.yaml        \
+		--settings ./ocm/etcd/settings.yaml \
+		--settings ./ocm/.gen/dynamic.yaml 
 	ocm cv add     -F ./ocm/.gen/ctf ./ocm/app-introspect/component.yaml \
-		OCI=ghcr.io ORG=vasu1124 \
-		VERSION=${gitVersion} MONGODB_VERSION=${MONGOCHARTVERSION} ETCD_VERSION=${ETCDTAG} INTROSPECT_VERSION=${gitVersion} 
+		--settings ./ocm/app-introspect/settings.yaml \
+		--settings ./ocm/.gen/dynamic.yaml 
 
 .PHONY: ctf-push
 ctf-push: ocm
-	ocm transfer ctf ./ocm/.gen/ctf ghcr.io/vasu1124/ocm --overwrite
-
-
+	ocm transfer ctf ./ocm/.gen/ctf ${OCI}/${ORG}/ocm --overwrite
 
 # openssl genpkey -out mysign.key -algorithm RSA
 # openssl rsa -in private.key -outform PEM -pubout -out mysign.pub

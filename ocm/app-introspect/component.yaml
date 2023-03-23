@@ -1,8 +1,8 @@
 components:
-- name: github.com/vasu1124/app-introspect
-  version: ${VERSION}
+- name: ${COMPONENT_NAME_PREFIX}/${NAME}
+  version: ${APP_VERSION}
   provider: 
-    name: actvirtual.com
+    name: ${PROVIDER}
   componentReferences:
   - name: introspect
     componentName: github.com/vasu1124/introspect
@@ -14,7 +14,7 @@ components:
 #    componentName: bitnami.com/etcd
 #    version: ${ETCD_VERSION}
   resources:
-  - name: 'application-blueprint'
+  - name: ${NAME}-blueprint
     type: landscaper.gardener.cloud/blueprint
     input:
       type: dir
