@@ -174,12 +174,12 @@ helm: ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz ocm/.gen/mon
 ./ocm/.gen/dynamic.yaml:
 	-mkdir -p ocm/.gen
 	cat <<- EOF >$@
-		$$(cat .env | tr "=" ":")
+		$$(cat .env | sed -e "s/\(\w*\)=/\1: /g")
 		INTROSPECT_REF: ${gitRefs}
 		INTROSPECT_COMMIT: ${gitCommit} 
 	EOF
 	cat ./ocm/.gen/dynamic.yaml
-	
+
 .PHONY: ocm
 ocm: helm ./ocm/.gen/dynamic.yaml ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
 	ocm cv add -cf -F ./ocm/.gen/ctf ./ocm/introspect/component.yaml  \
