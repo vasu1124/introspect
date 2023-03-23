@@ -178,7 +178,8 @@ helm: ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz ocm/.gen/mon
 		INTROSPECT_REF: ${gitRefs}
 		INTROSPECT_COMMIT: ${gitCommit} 
 	EOF
-
+	cat ./ocm/.gen/dynamic.yaml
+	
 .PHONY: ocm
 ocm: helm ./ocm/.gen/dynamic.yaml ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
 	ocm cv add -cf -F ./ocm/.gen/ctf ./ocm/introspect/component.yaml  \
