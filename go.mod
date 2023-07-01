@@ -9,7 +9,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
 	github.com/gorilla/mux v1.8.0
-	github.com/olahol/melody v1.1.1
+	github.com/olahol/melody v1.1.4
 	github.com/onsi/ginkgo/v2 v2.9.0
 	github.com/onsi/gomega v1.27.2
 	github.com/prometheus/client_golang v1.14.0
