@@ -48,8 +48,8 @@ func New() *Handler {
 	controller_runtime.SetLogger(logger.Log)
 
 	mgr, err := controller_runtime.NewManager(controller_runtime.GetConfigOrDie(), controller_runtime.Options{
-		Scheme:                  scheme,
-		MetricsBindAddress:      "0", //turn off,
+		Scheme: scheme,
+		// MetricsBindAddress:      "0", //turn off,
 		LeaderElection:          true,
 		LeaderElectionNamespace: namespace,
 		LeaderElectionID:        "useless.introspect.actvirtual.com",
