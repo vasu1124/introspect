@@ -71,7 +71,7 @@ jobs:
         version: 0.3.0-rc.1
 
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - run: |
         cat .env >> $GITHUB_ENV
 
