@@ -37,7 +37,7 @@ Gopkg.lock
 *.exe
 *.test
 *.prof
-introspect*amd64
+introspect-*
 debug
 pkg/operator/useless/bin/
 

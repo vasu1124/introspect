@@ -9,8 +9,8 @@ LABEL maintainer="vasu1124@actvirtual.com" \
     com.actvirtual.quality="evaluation" \
     com.actvirtual.product="DemoSuite" 
 
-COPY /introspect-linux-amd64 /
+COPY /introspect-linux /
 COPY /tmpl /tmpl
 COPY /css /css
 EXPOSE 9090 9443
-CMD ["/introspect-linux-amd64"]
+CMD ["/introspect-linux"]

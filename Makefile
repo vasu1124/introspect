@@ -5,10 +5,10 @@
 include .env
 export
 
-DOCKER_TARGET_PLATFORM:=linux/amd64 #,linux/arm/v7 #linux/arm64
+DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm64 #,linux/arm/v7
 
 BINARY:=introspect
-GOARCH:=amd64
+GOARCH:=$(shell go env GOARCH)
 
 gitVersion:=${INTROSPECT_VERSION}
 gitCommit:=$(shell git rev-parse --verify HEAD)
@@ -24,9 +24,9 @@ LDFLAGS=-ldflags \
 
 # Build the project
 ifeq ($(shell uname -s), Darwin)
-    all=${BINARY}-darwin-${GOARCH} ${BINARY}-linux-${GOARCH} docker/alpine.docker
+    all=${BINARY}-darwin ${BINARY}-linux docker/alpine.docker
 else
-    all=${BINARY}-linux-${GOARCH} docker/alpine.docker
+    all=${BINARY}-linux docker/alpine.docker
 endif
 all: ${all}
 
@@ -73,12 +73,12 @@ ${GOPATH}/bin/cfssl:
 # SOURCES := $(shell find . -type f -name '*.go')
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
 
-${BINARY}-linux-${GOARCH}: ${SOURCES}
-	CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} ./cmd
+${BINARY}-linux: ${SOURCES}
+	CGO_ENABLED=0 GOOS=linux go build ${LDFLAGS} -o ${BINARY}-linux ./cmd
 	rm -f kubernetes/k14s/kbld.lock.yaml
 
-${BINARY}-darwin-${GOARCH}: ${SOURCES}
-	CGO_ENABLED=0 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} ./cmd
+${BINARY}-darwin: ${SOURCES}
+	CGO_ENABLED=0 GOOS=darwin go build ${LDFLAGS} -o ${BINARY}-darwin ./cmd
 	rm -f kubernetes/k14s/kbld.lock.yaml
 
 .PHONY: build
@@ -113,7 +113,7 @@ deploy:
 .PHONY: docker
 docker: docker/scratch.docker docker/alpine.docker docker/ubuntu.docker
 
-docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
+docker/scratch.docker: ${BINARY}-linux docker/Dockerfile.scratch
 	docker build -f docker/Dockerfile.scratch \
 		--tag ${OCI}/${ORG}/introspect-scratch:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
@@ -122,7 +122,7 @@ docker/scratch.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.scratch
 		.
 	touch docker/scratch.docker
 
-docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
+docker/alpine.docker: ${BINARY}-linux docker/Dockerfile.alpine
 	docker build -f docker/Dockerfile.alpine \
 		--tag ${OCI}/${ORG}/introspect:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
@@ -131,7 +131,7 @@ docker/alpine.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.alpine
 	 	.
 	touch docker/alpine.docker
 
-docker/ubuntu.docker: ${BINARY}-linux-${GOARCH} docker/Dockerfile.ubuntu
+docker/ubuntu.docker: ${BINARY}-linux docker/Dockerfile.ubuntu
 	docker build -f docker/Dockerfile.ubuntu \
 		--tag ${OCI}/${ORG}/introspect-ubuntu:${gitVersion} \
 		--build-arg http_proxy=${http_proxy} \
