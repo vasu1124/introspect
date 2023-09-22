@@ -66,9 +66,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       uses: azure/setup-helm@v3
     - name: Set up OCM
-      uses: vasu1124/ocm-setup-action@main
+      uses: open-component-model/ocm-setup-action@main
       with:
-        version: 0.3.0-rc.1
+        version: 0.4.0
 
     - name: Check out code
       uses: actions/checkout@v4
