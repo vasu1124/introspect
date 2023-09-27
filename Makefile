@@ -5,12 +5,13 @@
 include .env
 export
 
+KUBECONFIG:=$(shell echo "$${KUBECONFIG:-~/.kube/config}")
+
 DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm64 #,linux/arm/v7
 
 BINARY:=introspect
-GOARCH:=$(shell go env GOARCH)
 
-gitVersion:=${INTROSPECT_VERSION}
+gitVersion:=1.0.0
 gitCommit:=$(shell git rev-parse --verify HEAD)
 gitRefs:=$(shell git symbolic-ref HEAD)
 gitTreeState=$(shell [ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
@@ -37,7 +38,7 @@ tls: ${tlsfiles}
 
 .PHONY: clean
 clean:
-	-rm -rf ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml ocm/.gen
+	-rm -rf ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml ocm/.gen version.env
 
 # kubebuilder: Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
@@ -73,13 +74,17 @@ ${GOPATH}/bin/cfssl:
 # SOURCES := $(shell find . -type f -name '*.go')
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
 
-${BINARY}-linux: ${SOURCES}
-	CGO_ENABLED=0 GOOS=linux go build ${LDFLAGS} -o ${BINARY}-linux ./cmd
-	rm -f kubernetes/k14s/kbld.lock.yaml
+${BINARY}-linux: ${SOURCES} version.env
+	CGO_ENABLED=0 GOOS=linux go build ${LDFLAGS} -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o ${BINARY}-linux ./cmd
 
-${BINARY}-darwin: ${SOURCES}
+${BINARY}-darwin: ${SOURCES} version.env
+ifeq ($(shell uname -s), Darwin)
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build ${LDFLAGS} -o ${BINARY}-darwin-amd64 ./cmd
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build ${LDFLAGS} -o ${BINARY}-darwin-arm64 ./cmd
+	lipo -create -output ${BINARY}-darwin ${BINARY}-darwin-amd64 ${BINARY}-darwin-arm64
+else
 	CGO_ENABLED=0 GOOS=darwin go build ${LDFLAGS} -o ${BINARY}-darwin ./cmd
-	rm -f kubernetes/k14s/kbld.lock.yaml
+endif
 
 .PHONY: build
 build: ${SOURCES}
@@ -144,6 +149,20 @@ docker/ubuntu.docker: ${BINARY}-linux docker/Dockerfile.ubuntu
 docker-push:
 	docker push ${OCI}/${ORG}/introspect:${gitVersion}
 
+version.env: .env
+	cat <<- EOF >$@
+		$$(cat .env)
+		gitVersion=${gitVersion}
+		gitCommit=${gitCommit}
+		gitRefs=${gitRefs}
+		gitTreeState=${gitTreeState}
+		buildDate=${buildDate}
+		INTROSPECT_VERSION=${gitVersion}
+		INTROSPECT_REF: ${gitRefs}
+		INTROSPECT_COMMIT: ${gitCommit}
+		APP_VERSION=${gitVersion}
+	EOF
+
 .PHONY: kubernetes/k8s-visualizer
 kubernetes/k8s-visualizer:
 #	original was git clone https://github.com/brendandburns/gcp-live-k8s-visualizer.git
@@ -151,10 +170,10 @@ kubernetes/k8s-visualizer:
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
 
-ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz:
+ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz:
 	mkdir -p ocm/.gen/introspect/
-	helm package ./kubernetes/helm/introspect/ --app-version ${INTROSPECT_VERSION} -d ocm/.gen/introspect
-#	helm push ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz oci://${OCI}/${ORG}/helm
+	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
+#	helm push ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz oci://${OCI}/${ORG}/helm
 
 ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz:
 	mkdir -p ocm/.gen/mongodb/
@@ -167,16 +186,14 @@ ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz:
 #	helm push ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz oci://${OCI}/${ORG}/helm
 
 .PHONY: helm
-helm: ocm/.gen/introspect/introspect-helm-${INTROSPECT_VERSION}.tgz ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz
+helm: ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz
 
-.PHONY: ./ocm/.gen/dynamic.yaml
+#.PHONY: ./ocm/.gen/dynamic.yaml
 .ONESHELL:
-./ocm/.gen/dynamic.yaml:
+./ocm/.gen/dynamic.yaml: version.env
 	-mkdir -p ocm/.gen
 	cat <<- EOF >$@
-		$$(cat .env | sed -e "s/\(\w*\)=/\1: /g")
-		INTROSPECT_REF: ${gitRefs}
-		INTROSPECT_COMMIT: ${gitCommit} 
+		$$(cat version.env | sed -e "s/\(\w*\)=/\1: /g")
 	EOF
 	cat ./ocm/.gen/dynamic.yaml
 
@@ -202,3 +219,16 @@ ctf-push: ocm
 # openssl genpkey -out mysign.key -algorithm RSA
 # openssl rsa -in private.key -outform PEM -pubout -out mysign.pub
 # component-cli ca signature sign rsa ghcr.io/vasu1124/ocm github.com/vasu1124/app-introspect 1.0.0  --upload-base-url ghcr.io/vasu1124/ocmtest --recursive --signature-name mysign --private-key mysign.key
+
+################################################################################
+# K8s Cluster
+
+.PHONY: kind-up
+kind-up:
+	kind create cluster --config kind.yaml --wait 5m --kubeconfig $(KUBECONFIG)
+	sed -i 's/127.0.0.1:6443/gateway.docker.internal:6443/g' $(KUBECONFIG)
+
+.PHONY: kind-down
+kind-down:
+	kind delete cluster 
+

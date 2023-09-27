@@ -1,12 +1,14 @@
-apiVersion: skaffold/v2alpha2
+apiVersion: skaffold/v4beta6
 kind: Config
+metadata:
+  name: introspect
 profiles:
 - name: kind
   build:
     local:
       push: false
   activation:
-  - kubeContext: "kubernetes-admin@kind"
+  - kubeContext: "kind-kind"
 - name: docker-desktop
   build:
     local:
@@ -14,17 +16,37 @@ profiles:
   activation:
   - kubeContext: "docker-desktop"
 build:
+  artifacts:
+    - image: ghcr.io/vasu1124/introspect
+      hooks:
+        before:
+          - command: ["make", "introspect-linux"]
+      runtimeType: go
+      context: .
+      docker:
+        dockerfile: docker/Dockerfile.alpine
+        cacheFrom:
+        - ghcr.io/vasu1124/introspect
+      sync:
+        manual:
+          - src: 'introspect-linux'
+            dest: '/'
+          - src: 'tmpl/**'
+            dest: '/'
+          - src: 'css/**'
+            dest: '/'
   tagPolicy:
     envTemplate:
-      template: 'ghcr.io/vasu1124/introspect:1.0.0'
-#    sha256: {}
-  artifacts:
-  - image: ghcr.io/vasu1124/introspect
-    context: .
-    docker:
-      dockerfile: docker/Dockerfile
-      buildArgs:
-        VERSION_TO_BUILD: '1.0.0'
-deploy:
+      template: '{{.gitVersion}}'
+manifests:
   kustomize:
-    path: kubernetes/all-in-one
+    paths:
+      - kubernetes/all-in-one
+deploy:
+  kubectl: {}
+portForward:
+- resourceType: service
+  resourceName: introspect
+  namespace: default
+  port: 9090
+  localPort: 9090

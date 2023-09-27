@@ -7,22 +7,9 @@ load('ext://local_output', 'local_output')
 default_registry('ghcr.io/vasu1124')
 allow_k8s_contexts(['colima', 'Default'])
 
-gitVersion   = "0.0.0-dev"
-gitCommit    = local_output('git rev-parse --verify HEAD')
-gitTreeState = local_output('[ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty')
-buildDate    = local_output('date --rfc-3339=seconds | sed "s/ /T/"')
-GOARCH       = local_output('go env GOARCH')
+compile_cmd = 'make introspect-linux'
 
-LDFLAGS = """ \
--ldflags '\
--X github.com/vasu1124/introspect/pkg/version.gitVersion=%s \
--X github.com/vasu1124/introspect/pkg/version.gitCommit=%s \
--X github.com/vasu1124/introspect/pkg/version.gitTreeState=%s \
--X github.com/vasu1124/introspect/pkg/version.buildDate=%s' \
-""" % (gitVersion, gitCommit, gitTreeState, buildDate)
-compile_cmd = 'CGO_ENABLED=0 GOOS=linux go build ' + LDFLAGS + ' -o introspect-linux ./cmd/'
-
-print(compile_cmd)
+# print(compile_cmd)
 
 local_resource(
   'introspect-compile',
