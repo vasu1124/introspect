@@ -71,7 +71,7 @@ jobs:
       if: success()
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      uses: azure/setup-helm@v3
+      uses: azure/setup-helm@v4
     - name: Set up OCM
       uses: open-component-model/ocm-setup-action@main
       with:
