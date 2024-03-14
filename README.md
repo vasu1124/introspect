@@ -1,4 +1,5 @@
 # `introspect`
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/vasu1124/introspect/badge)](https://securityscorecards.dev/viewer/?uri=github.com/vasu1124/introspect)
 
 ![Build](https://github.com/vasu1124/introspect/workflows/Build/badge.svg) [![GitHub issues](https://img.shields.io/github/issues/vasu1124/introspect.svg)](https://img.shields.io/github/issues/vasu1124/introspect/issues)
 

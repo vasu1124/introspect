@@ -24,6 +24,9 @@ on:
       - '!pkg/operator/useless/Dockerfile'
       - '!pkg/operator/useless/Makefile'
 
+# Declare default permissions as read only.
+permissions: read-all
+
 jobs:
   build:
     name: Build and Push with Docker buildx

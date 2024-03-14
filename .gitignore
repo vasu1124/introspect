@@ -33,6 +33,7 @@ _testmain.go
 *.docker
 Gopkg.lock
 version.env
+.direnv
 
 # built binaries
 *.exe

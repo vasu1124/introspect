@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2018 vasu1124
+#
+# SPDX-License-Identifier: CC0-1.0
+
+name: Reuse
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  reuse:
+    name: reuse
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # REUSE Compliance Check
+    - name: REUSE Compliance Check
+      uses: fsfe/reuse-action@v2
