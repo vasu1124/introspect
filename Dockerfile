@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-FROM golang:1.21-alpine as builder
+FROM golang:1.22-alpine as builder
 ARG gitVersion=0.0.0-dev
 ARG gitCommit=0000000000000000000000000000000000000000
 ARG gitTreeState="dirty"

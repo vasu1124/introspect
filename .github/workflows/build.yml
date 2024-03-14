@@ -37,9 +37,13 @@ jobs:
       # DOCKER_TARGET_PLATFORM: linux/amd64,linux/arm/v7
 
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@v2
+      with:
+        egress-policy: audit
 
     - name: Check out cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/go/pkg/mod
