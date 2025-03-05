@@ -1,6 +1,8 @@
 module github.com/vasu1124/introspect
 
-go 1.21
+go 1.23.0
+
+toolchain go1.24.1
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0
@@ -18,7 +20,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	go.etcd.io/etcd/client/v3 v3.5.12
 	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.18.0
+	golang.org/x/sys v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
