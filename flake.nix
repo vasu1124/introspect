@@ -33,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0
         {
           default = pkgs.mkShell {
             buildInputs = with pkgs; [ 
-              go_1_23   # golang
+              go_1_24   # golang
               gopls     # go language server
               gotools   # go imports
               go-tools  # static checks
