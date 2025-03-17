@@ -31,4 +31,4 @@ jobs:
 
     # REUSE Compliance Check
     - name: REUSE Compliance Check
-      uses: fsfe/reuse-action@v3
+      uses: fsfe/reuse-action@v5
