@@ -14,7 +14,7 @@ require (
 	github.com/onsi/gomega v1.36.2
 	github.com/prometheus/client_golang v1.21.1
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.20.0
 	go.etcd.io/etcd/client/v3 v3.5.19
 	go.uber.org/zap v1.27.0
