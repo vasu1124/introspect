@@ -1,0 +1,76 @@
+/* Responsive Design for Mobile Devices */
+
+/* Mobile-first responsive breakpoints */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding: 10px;
+    max-width: 100%;
+  }
+  
+  /* Stack navigation items vertically */
+  nav ul {
+    flex-direction: column;
+  }
+  
+  nav li {
+    width: 100%;
+    text-align: left;
+  }
+  
+  /* Adjust theme toggle for mobile */
+  .theme-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+  }
+  
+  /* Make cards stack on mobile */
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  /* Responsive tables */
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  /* Touch-friendly buttons */
+  button, input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Tablet breakpoint */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    max-width: 90%;
+  }
+  
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Responsive images and media */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Flexible layouts */
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.flex-item {
+  flex: 1 1 300px;
+}
