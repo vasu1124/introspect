@@ -38,7 +38,7 @@ jobs:
 
     steps:
     - name: Harden Runner
-      uses: step-security/harden-runner@v2
+      uses: step-security/harden-runner@v2.13.2
       with:
         egress-policy: audit
 
@@ -75,10 +75,10 @@ jobs:
     - name: Set up OCM
       uses: open-component-model/ocm-setup-action@main
       with:
-        version: 0.4.0
+        version: 0.33.0
 
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - run: |
         cat .env >> $GITHUB_ENV
 
