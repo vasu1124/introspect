@@ -182,7 +182,7 @@ ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz:
 
 ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz:
 	mkdir -p ocm/.gen/etcd/
-	helm pull etcd -d ocm/.gen/etcd --version ${ETCD_CHART} --repo https://charts.bitnami.com/bitnami
+	helm pull etcd -d ocm/.gen/etcd --version ${ETCD_CHART} --repo https://groundhog2k.github.io/helm-charts
 #	helm push ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz oci://${OCI}/${ORG}/helm
 
 .PHONY: helm

@@ -10,9 +10,9 @@ components:
   - name: mongodb
     componentName: bitnami.com/mongodb
     version: ${MONGODB_VERSION}
-#  - name: etcd
-#    componentName: bitnami.com/etcd
-#    version: ${ETCD_VERSION}
+  - name: etcd
+    componentName: etcd.io/etcd
+    version: ${ETCD_VERSION}
   resources:
   - name: ${NAME}-blueprint
     type: landscaper.gardener.cloud/blueprint

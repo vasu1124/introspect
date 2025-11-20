@@ -27,8 +27,6 @@ spec:
             weight: 1
       containers:
       - env:
-        - name: BITNAMI_DEBUG
-          value: "false"
         - name: MY_POD_IP
           valueFrom:
             fieldRef:
@@ -46,29 +44,12 @@ spec:
               fieldPath: metadata.namespace
         - name: ETCDCTL_API
           value: "3"
-        - name: ETCD_ON_K8S
-          value: "yes"
-        - name: ETCD_START_FROM_SNAPSHOT
-          value: "no"
-        - name: ETCD_DISASTER_RECOVERY
-          value: "no"
         - name: ETCD_NAME
           value: $(MY_POD_NAME)
         - name: ETCD_DATA_DIR
-          value: /bitnami/etcd/data
-        - name: ETCD_LOG_LEVEL
-          value: info
-        - name: ALLOW_NONE_AUTHENTICATION
-          value: "no"
-        - name: ETCD_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: etcd-root-password
-              name: etcd
-        - name: ETCD_AUTH_TOKEN
-          value: simple
+          value: /var/lib/etcd
         - name: ETCD_ADVERTISE_CLIENT_URLS
-          value: http://$(MY_POD_NAME).etcd-headless.$(MY_NAMESPACE).svc.cluster.local:2379,http://etcd.$(MY_NAMESPACE).svc.cluster.local:2379
+          value: http://$(MY_POD_NAME).etcd-headless.$(MY_NAMESPACE).svc.cluster.local:2379
         - name: ETCD_LISTEN_CLIENT_URLS
           value: http://0.0.0.0:2379
         - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
@@ -81,19 +62,17 @@ spec:
           value: new
         - name: ETCD_INITIAL_CLUSTER
           value: etcd-0=http://etcd-0.etcd-headless.$(MY_NAMESPACE).svc.cluster.local:2380,etcd-1=http://etcd-1.etcd-headless.$(MY_NAMESPACE).svc.cluster.local:2380,etcd-2=http://etcd-2.etcd-headless.$(MY_NAMESPACE).svc.cluster.local:2380
-        - name: ETCD_CLUSTER_DOMAIN
-          value: etcd-headless.$(MY_NAMESPACE).svc.cluster.local
-        image: docker.io/bitnami/etcd:3.5.2
+        image: quay.io/coreos/etcd:v3.6.6
         imagePullPolicy: IfNotPresent
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /opt/bitnami/scripts/etcd/prestop.sh
+        command:
+        - /usr/local/bin/etcd
         livenessProbe:
           exec:
             command:
-            - /opt/bitnami/scripts/etcd/healthcheck.sh
+            - /usr/local/bin/etcdctl
+            - --endpoints=http://localhost:2379
+            - endpoint
+            - health
           failureThreshold: 5
           initialDelaySeconds: 60
           periodSeconds: 30
@@ -110,20 +89,23 @@ spec:
         readinessProbe:
           exec:
             command:
-            - /opt/bitnami/scripts/etcd/healthcheck.sh
+            - /usr/local/bin/etcdctl
+            - --endpoints=http://localhost:2379
+            - endpoint
+            - health
           failureThreshold: 5
           initialDelaySeconds: 60
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 5
         securityContext:
-          runAsNonRoot: true
-          runAsUser: 1001
+          runAsNonRoot: false
+          runAsUser: 0
         volumeMounts:
-        - mountPath: /bitnami/etcd
+        - mountPath: /var/lib/etcd
           name: data
       securityContext:
-        fsGroup: 1001
+        fsGroup: 0
       volumes:
       - emptyDir: {}
         name: data

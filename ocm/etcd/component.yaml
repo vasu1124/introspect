@@ -9,7 +9,7 @@ components:
     version: ${ETCD_VERSION}
     access:
       type: ociArtifact
-      imageReference: docker.io/bitnami/etcd:${ETCD_VERSION}
+      imageReference: quay.io/coreos/etcd:${ETCD_VERSION}
   - name: ${NAME}-blueprint
     type: landscaper.gardener.cloud/blueprint
     input:
@@ -29,5 +29,5 @@ components:
     type: git
     access:
       type: gitHub
-      repoUrl: https://github.com/bitnami/charts
+      repoUrl: https://github.com/groundhog2k/helm-charts
       commit: ${ETCD_COMMIT}

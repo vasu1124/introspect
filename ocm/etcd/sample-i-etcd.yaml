@@ -9,8 +9,8 @@ spec:
       repositoryContext:
         type: ociRegistry
         baseUrl: ghcr.io/vasu1124/ocm
-      componentName: bitnami.com/etcd
-      version: 6.13.7
+      componentName: etcd.io/etcd
+      version: v3.6.6
 
   blueprint:
     ref:
