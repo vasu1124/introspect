@@ -1,97 +1,253 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <style>
-      {{if .Flag }}
-      body { background-color: #F0FFF0; }
-      {{else}}
-      body { background-color: #F0F0FF; }
-      {{end}}
-    </style>
-  </head>
-  <div class="container">
-  <body>
-  <h1>Introspection-{{.Version}}: Hits {{.Counter}}</h1>
+{{define "title"}}Introspect - Environment{{end}}
 
-  <h3>Server</h3>
-  <table class="table table-striped">
-    {{range $key, $value := .Server}}
-    <tr>
-      <td>{{$key}}</td><td>{{$value}}</td>
-    </tr>{{end}}
-  </table>
+{{define "content"}}
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+        Environment Introspection
+      </h1>
+      <p class="text-gray-400 mt-2">Runtime environment and HTTP request details</p>
+    </div>
+    <div class="flex items-center space-x-2 px-4 py-2 glass rounded-xl">
+      <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+      <span class="text-sm text-gray-300">Hits: <span class="font-bold text-white">{{.Counter}}</span></span>
+    </div>
+  </div>
 
-  <h3>OS</h3>
-  <table class="table table-striped">
-    {{range $key, $value := .OS}}
-    <tr>
-      <td>{{$key}}</td><td>{{$value}}</td>
-    </tr>{{end}}
-  </table>
+  <!-- Server Information -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01">
+        </path>
+      </svg>
+      Server
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .Server}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm font-medium text-gray-400 w-1/3">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{$value}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-  <h3>Process</h3>
-  <table class="table table-striped">
-    {{range $key, $value := .Process}}
-    <tr>
-      <td>{{$key}}</td><td>{{$value}}</td>
-    </tr>{{end}}
-  </table>
+  <!-- OS Information -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+        </path>
+      </svg>
+      Operating System
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .OS}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm font-medium text-gray-400 w-1/3">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{$value}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-  <h3>Network</h3>
-  <table class="table table-striped">
-    <tr>
-      <th>#</th><th>iface</th><th>MAC</th><th>ip</th><th>Mcast ip</th><th>MTU</th>
-    </tr>
-    {{range $key, $value := .Network.Interfaces}}
-    <tr>
-      <td>{{$key}}</td>
-      <td>{{$value.Name}}</td>
-      <td>{{$value.HardwareAddr}}</td>
-      <td>
-        <ul>{{range $addr := $value.Addrs}}
-          <li>{{$addr.String}}</li>{{end}}
-        </ul>
-      </td>
-      <td>
-        <ul>{{range $addr := $value.MulticastAddrs}}
-          <li>{{$addr.String}}</li>{{end}}
-        </ul>
-      </td>
-      <td>{{$value.MTU}}</td>
-    </tr>{{end}}
-  </table>
+  <!-- Process Information -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+      Process
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .Process}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm font-medium text-gray-400 w-1/3">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{$value}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-  <h3>HTTP Request</h3>
-  <table class="table table-striped">
-    {{range $key, $value := .Request}}
-    <tr>
-      <td>{{$key}}</td><td>{{range $value}}{{.}} {{end}}</td>
-    </tr>{{end}}
-  </table>
+  <!-- Network Information -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
+        </path>
+      </svg>
+      Network Interfaces
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-gray-700/50">
+            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">#</th>
+            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Interface</th>
+            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">MAC</th>
+            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">IP Addresses</th>
+            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Multicast</th>
+            <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">MTU</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .Network.Interfaces}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm text-gray-300">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{$value.Name}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{$value.HardwareAddr}}</td>
+            <td class="py-3 px-4 text-sm">
+              <ul class="space-y-1">
+                {{range $addr := $value.Addrs}}
+                <li class="text-gray-200 font-mono text-xs">{{$addr.String}}</li>
+                {{end}}
+              </ul>
+            </td>
+            <td class="py-3 px-4 text-sm">
+              <ul class="space-y-1">
+                {{range $addr := $value.MulticastAddrs}}
+                <li class="text-gray-200 font-mono text-xs">{{$addr.String}}</li>
+                {{end}}
+              </ul>
+            </td>
+            <td class="py-3 px-4 text-sm text-gray-200">{{$value.MTU}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-  <h3>HTTP Header</h3>
-  <table class="table table-striped">
-    {{range $key, $value := .Header}}
-    <tr>
-      <td>{{$key}}</td><td>{{range $value}}{{.}}{{end}}</td>
-    </tr>{{end}}
-  </table>
+  <!-- HTTP Request -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      HTTP Request
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .Request}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm font-medium text-gray-400 w-1/3">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{range $value}}{{.}} {{end}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-  <h3>HTTP Form</h3>
-  <table class="table table-striped">
-    {{range $key, $value := .Form}}
-    <tr>
-      <td>{{$key}}</td><td>{{range $value}}{{.}}{{end}}</td>
-    </tr>{{end}}
-  </table>
-  
-  <h3>Environment Variables</h3>
-  <table class="table table-striped">
-    {{range $key, $value := .Environment}}
-    <tr>
-      <td>{{$key}}</td><td>{{$value}}</td>
-    </tr>{{end}}
-  </table>
-  </body>
-</html>
+  <!-- HTTP Headers -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+        </path>
+      </svg>
+      HTTP Headers
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .Header}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm font-medium text-gray-400 w-1/3">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{range $value}}{{.}}{{end}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HTTP Form -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+        </path>
+      </svg>
+      HTTP Form Data
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .Form}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm font-medium text-gray-400 w-1/3">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono">{{range $value}}{{.}}{{end}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Environment Variables -->
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+        </path>
+      </svg>
+      Environment Variables
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <tbody class="divide-y divide-gray-700/50">
+          {{range $key, $value := .Environment}}
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="py-3 px-4 text-sm font-medium text-gray-400 w-1/3">{{$key}}</td>
+            <td class="py-3 px-4 text-sm text-gray-200 font-mono break-all">{{$value}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Info Box -->
+  <div class="glass rounded-2xl p-6 border-l-4 border-blue-500">
+    <div class="flex items-start">
+      <svg class="w-6 h-6 text-blue-400 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <h3 class="text-lg font-semibold text-white mb-2">About Environment Introspection</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          This page provides a deep dive into the runtime environment. It displays server details, operating system
+          information, process statistics, network interfaces, and comprehensive HTTP request data including headers and
+          environment variables. It's useful for debugging and understanding the container context.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{template "layout.html" .}}

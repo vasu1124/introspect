@@ -19,7 +19,7 @@ func New() *Handler {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("tmpl/cookie.html")
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/cookie.html")
 	if err != nil {
 		logger.Log.Error(err, "[cookie] can't parse template")
 		return
@@ -44,11 +44,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type EnvData struct {
-		Flag   bool
-		Cookie []*http.Cookie
+		Version string
+		Flag    bool
+		Cookie  []*http.Cookie
 	}
 
-	data := EnvData{version.GetPatchVersion()%2 == 0, r.Cookies()}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, r.Cookies()}
 
 	err = t.Execute(w, data)
 	if err != nil {

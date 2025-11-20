@@ -1,0 +1,303 @@
+{{define "title"}}Introspect - Mandelbrot Fractal{{end}}
+
+{{define "head"}}
+<style>
+    .fractal-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .fractal-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 1rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+{{end}}
+
+{{define "content"}}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Mandelbrot Fractal Viewer
+        </h1>
+        <p class="text-gray-400 mt-2">Explore the infinite beauty of the Mandelbrot set</p>
+    </div>
+
+    <!-- Controls Card -->
+    <div class="glass rounded-2xl p-6">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <svg class="w-6 h-6 mr-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                </path>
+            </svg>
+            Fractal Parameters
+        </h2>
+
+        <form id="fractalForm" class="space-y-6">
+            <!-- View Type Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-3">View Type</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label
+                        class="relative flex items-center p-4 glass rounded-xl cursor-pointer hover:bg-white/10 transition-all">
+                        <input type="radio" name="viewType" value="static" checked
+                            class="w-4 h-4 text-purple-500 focus:ring-purple-500 focus:ring-2">
+                        <div class="ml-3">
+                            <div class="text-white font-medium">Static Image</div>
+                            <div class="text-gray-400 text-sm">Single PNG image</div>
+                        </div>
+                    </label>
+                    <label
+                        class="relative flex items-center p-4 glass rounded-xl cursor-pointer hover:bg-white/10 transition-all">
+                        <input type="radio" name="viewType" value="animated"
+                            class="w-4 h-4 text-pink-500 focus:ring-pink-500 focus:ring-2">
+                        <div class="ml-3">
+                            <div class="text-white font-medium">Animated Zoom</div>
+                            <div class="text-gray-400 text-sm">Animated GIF with zoom effect</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Static Parameters -->
+            <div id="staticParams" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">X Min</label>
+                    <input type="number" step="0.1" name="xmin" value="-1.8"
+                        class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Y Min</label>
+                    <input type="number" step="0.1" name="ymin" value="-1.5"
+                        class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">X Max</label>
+                    <input type="number" step="0.1" name="xmax" value="1.2"
+                        class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Y Max</label>
+                    <input type="number" step="0.1" name="ymax" value="1.5"
+                        class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <!-- Animated Parameters -->
+            <div id="animatedParams" class="hidden space-y-4">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Steps</label>
+                        <input type="number" name="steps" value="10" min="1" max="50"
+                            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">X Final Min</label>
+                        <input type="number" step="0.001" name="xfmin" value="-1.110"
+                            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Y Final Min</label>
+                        <input type="number" step="0.001" name="yfmin" value="0.228"
+                            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">X Final Max</label>
+                        <input type="number" step="0.001" name="xfmax" value="-1.106"
+                            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Y Final Max</label>
+                        <input type="number" step="0.001" name="yfmax" value="0.232"
+                            class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preset Buttons -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-3">Quick Presets</label>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="loadPreset('default')"
+                        class="px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg hover:bg-purple-500/30 border border-purple-500/30 transition-all">
+                        Default View
+                    </button>
+                    <button type="button" onclick="loadPreset('scepter')"
+                        class="px-4 py-2 bg-pink-500/20 text-pink-300 rounded-lg hover:bg-pink-500/30 border border-pink-500/30 transition-all">
+                        Scepter Variant
+                    </button>
+                    <button type="button" onclick="loadPreset('seahorse')"
+                        class="px-4 py-2 bg-cyan-500/20 text-cyan-300 rounded-lg hover:bg-cyan-500/30 border border-cyan-500/30 transition-all">
+                        Seahorse Valley
+                    </button>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div>
+                <button type="submit"
+                    class="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-lg hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-purple-500/30">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Generate Fractal
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Fractal Display -->
+    <div class="glass rounded-2xl p-6">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <svg class="w-6 h-6 mr-3 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                </path>
+            </svg>
+            Fractal Visualization
+        </h2>
+
+        <div class="fractal-container text-center">
+            <div id="loading" class="loading-spinner hidden">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+            </div>
+            <img id="fractalImage" src="/mandelbrot?xmin=-1.8&ymin=-1.5&xmax=1.2&ymax=1.5" alt="Mandelbrot Fractal"
+                class="fractal-image mx-auto" onload="document.getElementById('loading').classList.add('hidden')"
+                onerror="document.getElementById('loading').classList.add('hidden')">
+        </div>
+
+        <div class="mt-4 text-center">
+            <p class="text-sm text-gray-400">
+                <span id="imageInfo">512x512 pixels • Default view</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="glass rounded-2xl p-6 border-l-4 border-purple-500">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-purple-400 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <h3 class="text-lg font-semibold text-white mb-2">About the Mandelbrot Set</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    The Mandelbrot set is a famous fractal defined by the iterative equation z = z² + c.
+                    Points are colored based on how quickly they escape to infinity. The set exhibits
+                    infinite complexity and self-similarity at all scales. Try zooming into different
+                    regions to discover intricate patterns and structures!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+    const form = document.getElementById('fractalForm');
+    const staticParams = document.getElementById('staticParams');
+    const animatedParams = document.getElementById('animatedParams');
+    const fractalImage = document.getElementById('fractalImage');
+    const loading = document.getElementById('loading');
+    const imageInfo = document.getElementById('imageInfo');
+
+    // Toggle parameter visibility based on view type
+    document.querySelectorAll('input[name="viewType"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'static') {
+                staticParams.classList.remove('hidden');
+                animatedParams.classList.add('hidden');
+            } else {
+                staticParams.classList.add('hidden');
+                animatedParams.classList.remove('hidden');
+            }
+        });
+    });
+
+    // Load presets
+    function loadPreset(preset) {
+        const form = document.getElementById('fractalForm');
+        if (preset === 'default') {
+            form.xmin.value = -1.8;
+            form.ymin.value = -1.5;
+            form.xmax.value = 1.2;
+            form.ymax.value = 1.5;
+        } else if (preset === 'scepter') {
+            form.querySelector('input[value="animated"]').checked = true;
+            form.querySelector('input[value="animated"]').dispatchEvent(new Event('change'));
+            form.xmin.value = -1.8;
+            form.ymin.value = -1.5;
+            form.xmax.value = 1.2;
+            form.ymax.value = 1.5;
+            form.xfmin.value = -1.110;
+            form.yfmin.value = 0.228;
+            form.xfmax.value = -1.106;
+            form.yfmax.value = 0.232;
+            form.steps.value = 10;
+        } else if (preset === 'seahorse') {
+            form.xmin.value = -0.75;
+            form.ymin.value = -0.1;
+            form.xmax.value = -0.73;
+            form.ymax.value = 0.1;
+        }
+    }
+
+    // Handle form submission
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const viewType = formData.get('viewType');
+
+        let url = '/mandelbrot?';
+        const params = [];
+
+        if (viewType === 'static') {
+            params.push(`xmin=${formData.get('xmin')}`);
+            params.push(`ymin=${formData.get('ymin')}`);
+            params.push(`xmax=${formData.get('xmax')}`);
+            params.push(`ymax=${formData.get('ymax')}`);
+            imageInfo.textContent = '512x512 pixels • Static PNG';
+        } else {
+            params.push(`steps=${formData.get('steps')}`);
+            params.push(`xmin=${formData.get('xmin')}`);
+            params.push(`ymin=${formData.get('ymin')}`);
+            params.push(`xmax=${formData.get('xmax')}`);
+            params.push(`ymax=${formData.get('ymax')}`);
+            params.push(`xfmin=${formData.get('xfmin')}`);
+            params.push(`yfmin=${formData.get('yfmin')}`);
+            params.push(`xfmax=${formData.get('xfmax')}`);
+            params.push(`yfmax=${formData.get('yfmax')}`);
+            imageInfo.textContent = `512x512 pixels • Animated GIF (${formData.get('steps')} frames)`;
+        }
+
+        url += params.join('&');
+
+        // Show loading spinner
+        loading.classList.remove('hidden');
+
+        // Update image source
+        fractalImage.src = url;
+    });
+</script>
+{{end}}
+
+{{template "layout.html" .}}

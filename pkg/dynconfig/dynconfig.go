@@ -3,12 +3,14 @@ package dynconfig
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"github.com/vasu1124/introspect/pkg/logger"
+	"github.com/vasu1124/introspect/pkg/version"
 )
 
 // Handler .
@@ -99,6 +101,35 @@ func (h *Handler) readConfig(config *viper.Viper) {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.example["OSENV_EXAMPLE"] = os.Getenv("OSENV_EXAMPLE")
-	x, _ := json.Marshal(h.example)
-	fmt.Fprintf(w, "%s", x)
+
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/dynamicconfig.html")
+	if err != nil {
+		logger.Log.Error(err, "[dynconfig] template parse error")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	configJSON, err := json.MarshalIndent(h.example, "", "  ")
+	if err != nil {
+		logger.Log.Error(err, "[dynconfig] json marshal error")
+		configJSON = []byte("{}")
+	}
+
+	type PageData struct {
+		Version    string
+		Flag       bool
+		ConfigJSON string
+	}
+
+	data := PageData{
+		Version:    version.Get().GitVersion,
+		Flag:       version.GetPatchVersion()%2 == 0,
+		ConfigJSON: string(configJSON),
+	}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		logger.Log.Error(err, "[dynconfig] executing template")
+		fmt.Fprint(w, "[dynconfig] executing template: ", err)
+	}
 }

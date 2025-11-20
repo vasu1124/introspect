@@ -1,73 +1,132 @@
-<!DOCTYPE html>
-<html>
+{{define "title"}}Introspect - Operator Demo{{end}}
 
-<head>
-  <meta charset="utf-8">
-  <link rel="stylesheet" href="https://unpkg.com/vuetify@0.16.9/dist/vuetify.min.css">
-  <link rel="stylesheet" href="css/switch.css">
-</head>
+{{define "head"}}
+<!-- Vue.js -->
+<script src="https://unpkg.com/vue@2.7.14/dist/vue.js"></script>
 
-<body>
-  <div id="app">
-    <v-app class="grey darken-4">
-      <main>
-        <v-container fluid grid-list-xl>
-          <v-layout row wrap>
-            <v-flex xs6 v-for="item in itemList" :key="item.metadata.uid">
-              <v-card raised color="blue-grey darken-2" class="text-xs-center">
-                <v-card-title primary-title style="height: 80px;">
-                  <div class="title grey--text text--lighten-2">{{"{{item.metadata.name}}"}}</div>
-                </v-card-title>
-                <v-container class="grey--text text--darken-2">
-                  <v-layout row wrap>
-                    <v-flex xs12 class="blue-grey darken-3">
-                      <useless-machine prefix="rs" :id="item.metadata.uid" :name="item.metadata.name"
-                        :desired="item.spec.desiredState" :namespace="item.metadata.namespace" @update="update"
-                        :actual.sync="item.status.actualState" />
-                    </v-flex>
-                  </v-layout>
-                </v-container>
-                <v-alert color="success"
-                  :value="!item.status.actualState || item.spec.desiredState == item.status.actualState">
-                  Everything is under control
-                </v-alert>
-                <v-alert color="error"
-                  :value="item.status.actualState && item.spec.desiredState != item.status.actualState">
-                  Houston, we have a problem
-                </v-alert>
-              </v-card>
-            </v-flex>
-          </v-layout>
-        </v-container>
-      </main>
-    </v-app>
+<!-- Switch CSS -->
+<link rel="stylesheet" href="css/switch.css">
+{{end}}
+
+{{define "content"}}
+<div id="app">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-4xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">
+      Useless Machine Operator
+    </h1>
+    <p class="text-gray-400 mt-2">Kubernetes operator demonstration with interactive switches</p>
   </div>
 
+  <!-- Machines Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div v-for="item in itemList" :key="item.metadata.uid"
+      class="glass rounded-2xl p-6 hover:bg-white/5 transition-all duration-300">
+      <!-- Machine Header -->
+      <div class="mb-6">
+        <h3 class="text-xl font-bold text-white mb-2" v-text="item.metadata.name"></h3>
+        <div class="flex items-center space-x-2 text-sm text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+            </path>
+          </svg>
+          <span v-text="item.metadata.namespace"></span>
+        </div>
+      </div>
 
+      <!-- Switch Container -->
+      <div class="flex justify-center py-8 bg-gray-900/30 rounded-xl mb-6">
+        <useless-machine prefix="rs" :id="item.metadata.uid" :name="item.metadata.name"
+          :desired="item.spec.desiredState" :namespace="item.metadata.namespace" @update="update"
+          :actual.sync="item.status.actualState" />
+      </div>
 
-  <script src="https://unpkg.com/vue@2.5.3/dist/vue.js"></script>
-  <script src="https://unpkg.com/vuetify@0.16.9/dist/vuetify.js"></script>
-  <script>
-    Vue.component('useless-machine', {
-      props: ['prefix', 'id', 'actual', 'desired', 'name', 'namespace'],
-      computed: {
-        checked: {
-          get() {
-            var state = this.actual
-            if (!this.actual) {
-              state = this.desired
-            }
-            return state === "On"
-          },
-          set(actual) {
-            this.$emit('update', { name: this.name, namespace: this.namespace, state: actual ? "On" : "Off" })
+      <!-- Status Alerts -->
+      <div v-if="!item.status.actualState || item.spec.desiredState == item.status.actualState"
+        class="flex items-center p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+        <svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="text-sm text-green-300 font-medium">Everything is under control</span>
+      </div>
+
+      <div v-if="item.status.actualState && item.spec.desiredState != item.status.actualState"
+        class="flex items-center p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+        <svg class="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="text-sm text-red-300 font-medium">Houston, we have a problem</span>
+      </div>
+
+      <!-- State Info -->
+      <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+        <div class="p-3 bg-gray-800/50 rounded-lg">
+          <div class="text-gray-400 text-xs mb-1">Desired State</div>
+          <div class="text-white font-medium" v-text="item.spec.desiredState || 'N/A'"></div>
+        </div>
+        <div class="p-3 bg-gray-800/50 rounded-lg">
+          <div class="text-gray-400 text-xs mb-1">Actual State</div>
+          <div class="text-white font-medium" v-text="item.status.actualState || 'N/A'"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div v-if="itemList.length === 0" class="glass rounded-2xl p-12 text-center">
+    <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+      </path>
+    </svg>
+    <h3 class="text-xl font-semibold text-gray-400 mb-2">No Useless Machines Found</h3>
+    <p class="text-gray-500">Create a UselessMachine custom resource to see it here</p>
+  </div>
+  <!-- Info Box -->
+  <div class="glass rounded-2xl p-6 border-l-4 border-red-500 mt-8">
+    <div class="flex items-start">
+      <svg class="w-6 h-6 text-red-400 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <h3 class="text-lg font-semibold text-white mb-2">About Operator Demo</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          This page demonstrates a Kubernetes Operator in action. The "Useless Machine" operator watches for Custom
+          Resources and ensures the actual state matches the desired state. Toggle the switches to see the operator
+          automatically revert your changes, showcasing the reconciliation loop pattern!
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+  Vue.component('useless-machine', {
+    props: ['prefix', 'id', 'actual', 'desired', 'name', 'namespace'],
+    computed: {
+      checked: {
+        get() {
+          var state = this.actual
+          if (!this.actual) {
+            state = this.desired
           }
+          return state === "On"
         },
-        _id() {
-          return this.prefix + '-' + this.id
+        set(actual) {
+          this.$emit('update', { name: this.name, namespace: this.namespace, state: actual ? "On" : "Off" })
         }
       },
-      template: `
+      _id() {
+        return this.prefix + '-' + this.id
+      }
+    },
+    template: `
 <span class="switch">
   <span class="switch-border1">
 		<span class="switch-border2">
@@ -98,49 +157,49 @@
 		</span>
 	</span>
 </span>`
-    })
+  })
 
-    let ws
+  let ws
 
-    const app = new Vue({
-      el: '#app',
-      data: {
-        itemList: []
-      },
-      mounted() {
-        if (ws) {
-          return false
+  const app = new Vue({
+    el: '#app',
+    data: {
+      itemList: []
+    },
+    mounted() {
+      if (ws) {
+        return false
+      }
+      let wsurl = window.location.href
+      wsurl = wsurl.replace(/^http/, 'ws')
+      wsurl = wsurl.replace('operator', 'operatorws')
+      ws = new WebSocket(wsurl);
+      ws.onclose = evt => {
+        ws = null
+      }
+      ws.onmessage = evt => {
+        try {
+          const message = JSON.parse(evt.data)
+          this.itemList = message.items.sort((a, b) => a.metadata.creationTimestamp.localeCompare(b.metadata.creationTimestamp))
         }
-        let wsurl = window.location.href
-        wsurl = wsurl.replace(/^http/, 'ws')
-        wsurl = wsurl.replace('operator', 'operatorws')
-        ws = new WebSocket(wsurl);
-        ws.onclose = evt => {
-          ws = null
-        }
-        ws.onmessage = evt => {
-          try {
-            const message = JSON.parse(evt.data)
-            this.itemList = message.items.sort((a, b) => a.metadata.creationTimestamp.localeCompare(b.metadata.creationTimestamp))
-          }
-          catch (err) {
-            console.error(err)
-          }
-        }
-        ws.onerror = evt => {
-          console.error(evt.data);
-        }
-      },
-
-      methods: {
-        update(state) {
-          if (ws) {
-            ws.send(JSON.stringify(state))
-          }
+        catch (err) {
+          console.error(err)
         }
       }
-    })
-  </script>
-</body>
+      ws.onerror = evt => {
+        console.error(evt.data);
+      }
+    },
 
-</html>
+    methods: {
+      update(state) {
+        if (ws) {
+          ws.send(JSON.stringify(state))
+        }
+      }
+    }
+  })
+</script>
+{{end}}
+
+{{template "layout.html" .}}

@@ -1,32 +1,251 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <link rel="stylesheet" href="css/bootstrap.css">
-    <style>
-    {{if .Flag }}
-    body { background-color: #F0FFF0; }
-    {{else}}
-    body { background-color: #F0F0FF; }
-    {{end}}
-    </style>
-  </head>
-  <div class="container">
-    <body>
-    <h1>Introspection-{{.Version}}</h1>
-    <table class="table table-bordered">
-      <tr><td><a href="/environ">/environ</a></td><td>List Environment of runtime & HTTP Request</td></tr>
-      <tr><td><a href="/guestbook">/guestbook</a></td><td>Guestbook Demo with MongoDB</td></tr>
-      <tr><td><a href="/mandelbrot?xmin=-1.8&ymin=-1.5&xmax=1.2&ymax=1.5">/mandelbrot</a></td><td>Mandelbrot Demo, default window with xmin=-1.8 ymin=-1.5 xmax=1.2 ymax=1.5</td></tr>
-      <tr><td><a href="/mandelbrot?steps=10&xfmin=-1.110&yfmin=0.228&xfmax=-1.106&yfmax=0.232">/mandelbrot</a></td><td>Mandelbrot animated gif Demo, with steps=10 and default zoom window with xfmin=-1.110 yfmin=0.228 xfmax=-1.106 yfmax=0.232</td></tr>
-      <tr><td><a href="/cookie">/cookie</a></td><td>Cookie Demo</td></tr>
-      <tr><td><a href="/dynconfig">/dynconfig</a></td><td>Dynamic Configuration Demo</td></tr>
-      <tr><td><a href="/election">/election</a></td><td>Leadership Election</td></tr>
-      <tr><td><a href="/operator">/operator</a></td><td>Useless Machine Operator Demo</td></tr>
-      <tr><td><a href="/validate">/validate</a></td><td>ValidatingWebhook Demo</td></tr>
-      <tr><td><a href="/metrics">/metrics</a></td><td>Metrics endpoint for Prometheus</td></tr>
-      <tr><td><a href="/healthz">/healthz</a></td><td>Liveliness endpoint for Kubernetes</td></tr>
-      <tr><td><a href="/healthzr">/healthzr</a></td><td> Readyness endpoint for Kubernetes</td></tr>
-    </table>
-    </body>
+{{define "title"}}Introspect - Main Menu{{end}}
+
+{{define "content"}}
+<div class="space-y-8">
+  <!-- Hero Section -->
+  <div class="text-center space-y-4 py-8">
+    <h1
+      class="text-5xl font-bold bg-gradient-to-r from-primary-400 via-accent-400 to-primary-500 bg-clip-text text-transparent animate-pulse-slow">
+      Introspection Dashboard
+    </h1>
+    <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+      Explore your Kubernetes environment with powerful introspection tools and demonstrations
+    </p>
   </div>
-  </html>
+
+  <!-- Feature Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Environment Card -->
+    <a href="/environ"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+              </path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-primary-300 transition-colors">Environment</h3>
+          <p class="text-sm text-gray-400 mt-1">List environment of runtime & HTTP request details</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Guestbook Card -->
+    <a href="/guestbook"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-green-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+              </path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-green-300 transition-colors">Guestbook</h3>
+          <p class="text-sm text-gray-400 mt-1">Interactive guestbook demo with Valkey storage</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Mandelbrot Card -->
+    <a href="/mandelbrot/view"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z">
+              </path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors">Mandelbrot</h3>
+          <p class="text-sm text-gray-400 mt-1">Fractal visualization with interactive controls</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Cookie Card -->
+    <a href="/cookie"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-amber-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-amber-300 transition-colors">Cookie Demo</h3>
+          <p class="text-sm text-gray-400 mt-1">HTTP cookie management and demonstration</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Dynamic Config Card -->
+    <a href="/dynconfig"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+              </path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">Dynamic Config</h3>
+          <p class="text-sm text-gray-400 mt-1">Runtime configuration management demo</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Election Card -->
+    <a href="/election"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-yellow-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+              </path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-yellow-300 transition-colors">Leadership Election
+          </h3>
+          <p class="text-sm text-gray-400 mt-1">Kubernetes leader election demonstration</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Operator Card -->
+    <a href="/operator"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-red-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+              </path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-red-300 transition-colors">Operator Demo</h3>
+          <p class="text-sm text-gray-400 mt-1">Useless Machine Kubernetes operator</p>
+        </div>
+      </div>
+    </a>
+
+    <!-- Validate Card -->
+    <a href="/validate"
+      class="group glass rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-500/20">
+      <div class="flex items-start space-x-4">
+        <div class="flex-shrink-0">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-lg font-semibold text-white group-hover:text-teal-300 transition-colors">Validating Webhook
+          </h3>
+          <p class="text-sm text-gray-400 mt-1">Kubernetes admission webhook demo</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- System Status Section -->
+  <div class="mt-12 glass rounded-2xl p-8">
+    <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+      <svg class="w-6 h-6 mr-3 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+      System Endpoints
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <a href="/metrics"
+        class="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-700/50 hover:from-gray-700/50 hover:to-gray-600/50 transition-all duration-200 border border-gray-700/50">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+              </path>
+            </svg>
+          </div>
+          <span class="text-sm font-medium text-gray-300">Prometheus Metrics</span>
+        </div>
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </a>
+
+      <a href="/healthz"
+        class="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-700/50 hover:from-gray-700/50 hover:to-gray-600/50 transition-all duration-200 border border-gray-700/50">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+              </path>
+            </svg>
+          </div>
+          <span class="text-sm font-medium text-gray-300">Liveness Check</span>
+        </div>
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </a>
+
+      <a href="/healthzr"
+        class="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gray-800/50 to-gray-700/50 hover:from-gray-700/50 hover:to-gray-600/50 transition-all duration-200 border border-gray-700/50">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <span class="text-sm font-medium text-gray-300">Readiness Check</span>
+        </div>
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{template "layout.html" .}}

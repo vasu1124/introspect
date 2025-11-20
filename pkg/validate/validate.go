@@ -53,7 +53,7 @@ func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	t, err := template.ParseFiles("tmpl/validate.html")
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/validate.html")
 	if err != nil {
 		logger.Log.Error(err, "[validate] error parsing template")
 		fmt.Fprint(w, "[validate] parse template: ", err)

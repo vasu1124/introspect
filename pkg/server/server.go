@@ -120,10 +120,12 @@ func (s *Server) registerHandlers() {
 	logger.Log.Info("[server] registered /favicon.ico")
 	s.router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
 	logger.Log.Info("[server] registered /css")
-	s.router.Handle("/environ", environ.New())
-	logger.Log.Info("[server] registered /environ")
+	s.router.HandleFunc("/mandelbrot/view", serveMandelbrotUI)
+	logger.Log.Info("[server] registered /mandelbrot/view")
 	s.router.Handle("/mandelbrot", mandelbrot.New())
 	logger.Log.Info("[server] registered /mandelbrot")
+	s.router.Handle("/environ", environ.New())
+	logger.Log.Info("[server] registered /environ")
 	s.router.Handle("/dynconfig", dynconfig.New())
 	logger.Log.Info("[server] registered /dynconfig")
 	s.router.Handle("/cookie", cookie.New())
@@ -135,7 +137,9 @@ func (s *Server) registerHandlers() {
 	s.router.Handle("/healthz", healthz.New())
 	s.router.Handle("/healthzr", healthz.New())
 	logger.Log.Info("[server] registered /healthz|r")
-	s.router.Handle("/guestbook", guestbook.New())
+	gh := guestbook.New()
+	s.router.Handle("/guestbook", gh)
+	s.router.HandleFunc("/guestbook/switch", gh.SwitchHandler)
 	logger.Log.Info("[server] registered /guestbook")
 	s.router.Handle("/election", election.New())
 	logger.Log.Info("[server] registered /election")
@@ -155,7 +159,31 @@ func (s *Server) registerMiddlewares() {
 }
 
 func serveMenu(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("tmpl/menu.html")
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/menu.html")
+	if err != nil {
+		logger.Log.Error(err, "[server] template parse error")
+		return
+	}
+	err = r.ParseForm()
+	if err != nil {
+		logger.Log.Error(err, "[server] ParseForm error")
+	}
+
+	type EnvData struct {
+		Version string
+		Flag    bool
+	}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0}
+
+	err = t.Execute(w, data)
+	if err != nil {
+		logger.Log.Error(err, "[server] executing template")
+		fmt.Fprint(w, "[server] executing template: ", err)
+	}
+}
+
+func serveMandelbrotUI(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/mandelbrot.html")
 	if err != nil {
 		logger.Log.Error(err, "[server] template parse error")
 		return

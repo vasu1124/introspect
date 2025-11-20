@@ -129,38 +129,7 @@ func createRecorder(kubeClient *clientset.Clientset) record.EventRecorder {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t, err := template.New("index").Parse(`
-		<!DOCTYPE html>
-		<html>
-			<head>
-				<link rel="stylesheet" href="css/bootstrap.css">
-				<style>
-				{{if .Flag }}
-				body { background-color: #F0FFF0; }
-				{{else}}
-				body { background-color: #F0F0FF; }
-				{{end}}
-				</style>
-			</head>
-			<div class="container">
-				<body>
-				<h1>Introspection-{{.Version}}</h1>
-				I am an <b>{{.Hostname}}</b>.<br>
-				{{if eq .Fail true }}
-					No election could be negotiated<br>
-				{{else}}
-					{{if .Leader }}
-						I am an <b>active</b> Leader<br>
-					{{else}}
-						I am on <b>standby</b><br>
-					{{end}}
-					<br>
-					Leader is {{.LeaderElection.GetLeader}}
-				{{end}}
-				</body>
-			</div>
-			</html>
-  `)
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/leadership.html")
 	if err != nil {
 		logger.Log.Error(err, "[election] error parsing template")
 		fmt.Fprint(w, "[election] error parsing template: ", err)

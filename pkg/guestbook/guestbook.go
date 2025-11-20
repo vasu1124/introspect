@@ -15,6 +15,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/spf13/viper"
 	"github.com/vasu1124/introspect/pkg/logger"
+	"github.com/vasu1124/introspect/pkg/version"
 	etcdv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -184,6 +185,76 @@ func (h *Handler) readConfig(config *viper.Viper) {
 
 }
 
+// SwitchBackend switches the database backend between mongodb and etcd
+func (h *Handler) SwitchBackend(backend string) error {
+	if backend != "mongodb" && backend != "etcd" {
+		return fmt.Errorf("invalid backend: %s", backend)
+	}
+
+	// Close existing connections
+	if h.mgosession != nil {
+		// MongoDB session doesn't need explicit close in this design
+		h.mgosession = nil
+	}
+	if h.etcdsession != nil {
+		h.etcdsession.Close()
+		h.etcdsession = nil
+	}
+
+	// Update the backend type
+	h.dbtype = backend
+
+	// Read config and reconnect
+	config := viper.New()
+	config.SetConfigName("config")
+	config.AddConfigPath("/etc/config/")
+	config.AddConfigPath("./etc/config")
+
+	err := config.ReadInConfig()
+	if err != nil {
+		logger.Log.Error(err, "[guestbook] error reading config during switch")
+		return err
+	}
+
+	// Temporarily override the DBtype in config
+	config.Set("DBtype", backend)
+
+	h.readConfig(config)
+
+	logger.Log.Info("[guestbook] Switched backend", "backend", backend)
+	return nil
+}
+
+// SwitchHandler handles the switch request
+func (h *Handler) SwitchHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		logger.Log.Error(err, "[guestbook] parsing form")
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	backend := r.FormValue("backend")
+	if backend == "" {
+		http.Error(w, "Backend not specified", http.StatusBadRequest)
+		return
+	}
+
+	err = h.SwitchBackend(backend)
+	if err != nil {
+		logger.Log.Error(err, "[guestbook] switching backend")
+		http.Error(w, "Error switching backend", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/guestbook", http.StatusSeeOther)
+}
+
 // Entry .
 type Entry struct {
 	Date    time.Time
@@ -192,13 +263,8 @@ type Entry struct {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h.mgosession == nil && h.etcdsession == nil {
-		fmt.Fprint(w, "[guestbook] No Database Connection")
-		logger.Log.Info("[guestbook] No Database Connection")
-		return
-	}
 
-	t, err := template.ParseFiles("tmpl/guestbook.html")
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/guestbook.html")
 	if err != nil {
 		fmt.Fprint(w, "[guestbook] parsing template error")
 		logger.Log.Error(err, "[guestbook] parsing template")
@@ -215,55 +281,74 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch h.dbtype {
 	case "mongodb":
-
-		if r.Form["name"] != nil && r.Form["comment"] != nil &&
-			r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
-			err = h.mgosession.Insert(&Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
-			if err != nil {
-				logger.Log.Error(err, "[guestbook] insert error")
+		if h.mgosession != nil {
+			if r.Form["name"] != nil && r.Form["comment"] != nil &&
+				r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
+				err = h.mgosession.Insert(&Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
+				if err != nil {
+					logger.Log.Error(err, "[guestbook] insert error")
+				}
 			}
-		}
 
-		err = h.mgosession.Find(nil).All(&entries)
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] find error")
+			err = h.mgosession.Find(nil).All(&entries)
+			if err != nil {
+				logger.Log.Error(err, "[guestbook] find error")
+			}
 		}
 
 	case "etcd":
-		if r.Form["name"] != nil && r.Form["comment"] != nil &&
-			r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
-			entry := Entry{
-				Date:    time.Now(),
-				Name:    r.Form["name"][0],
-				Comment: r.Form["comment"][0],
+		if h.etcdsession != nil {
+			if r.Form["name"] != nil && r.Form["comment"] != nil &&
+				r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
+				entry := Entry{
+					Date:    time.Now(),
+					Name:    r.Form["name"][0],
+					Comment: r.Form["comment"][0],
+				}
+				ret, err := json.Marshal(entry)
+				if err != nil {
+					logger.Log.Error(err, "[guestbook] marshall error")
+					return
+				}
+				_, err = h.etcdsession.Put(context.Background(), entry.Name, string(ret))
+				if err != nil {
+					logger.Log.Error(err, "[guestbook] insert error")
+				}
 			}
-			ret, err := json.Marshal(entry)
-			if err != nil {
-				logger.Log.Error(err, "[guestbook] marshall error")
-				return
-			}
-			_, err = h.etcdsession.Put(context.Background(), entry.Name, string(ret))
-			if err != nil {
-				logger.Log.Error(err, "[guestbook] insert error")
-			}
-		}
 
-		resp, err := h.etcdsession.Get(context.Background(), "", etcdv3.WithPrefix())
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] get error")
-		}
-
-		for _, ev := range resp.Kvs {
-			var entry Entry
-			err = json.Unmarshal(ev.Value, &entry)
+			resp, err := h.etcdsession.Get(context.Background(), "", etcdv3.WithPrefix())
 			if err != nil {
-				logger.Log.Error(err, "[guestbook] unmarshall error")
+				logger.Log.Error(err, "[guestbook] get error")
 			}
-			entries = append(entries, entry)
+
+			for _, ev := range resp.Kvs {
+				var entry Entry
+				err = json.Unmarshal(ev.Value, &entry)
+				if err != nil {
+					logger.Log.Error(err, "[guestbook] unmarshall error")
+				}
+				entries = append(entries, entry)
+			}
 		}
 	}
 
-	err = t.Execute(w, entries)
+	// Create data structure for template
+	type GuestbookData struct {
+		Backend   string
+		Connected bool
+		Entries   []Entry
+		Version   string
+	}
+
+	connected := (h.dbtype == "mongodb" && h.mgosession != nil) || (h.dbtype == "etcd" && h.etcdsession != nil)
+	data := GuestbookData{
+		Backend:   h.dbtype,
+		Connected: connected,
+		Entries:   entries,
+		Version:   version.Get().GitVersion,
+	}
+
+	err = t.Execute(w, data)
 	if err != nil {
 		logger.Log.Error(err, "[guestbook] executing template")
 		fmt.Fprint(w, "[guestbook] executing template: ", err)

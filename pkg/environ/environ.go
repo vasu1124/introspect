@@ -52,7 +52,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveEnviron(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("tmpl/environ.html")
+	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/environ.html")
 	if err != nil {
 		log.Println("[environ] template parse error: ", err)
 		return

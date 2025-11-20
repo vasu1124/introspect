@@ -85,12 +85,13 @@ func New() *Handler {
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	type EnvData struct {
-		Flag bool
+		Version string
+		Flag    bool
 	}
 
-	data := EnvData{version.GetPatchVersion()%2 == 0}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0}
 
-	homeTemplate, err := template.ParseFiles("tmpl/operator.html")
+	homeTemplate, err := template.ParseFiles("tmpl/layout.html", "tmpl/operator.html")
 	if err != nil {
 		fmt.Fprint(w, "[operator] parsing template: ", err)
 		logger.Log.Error(err, "[operator] parsing template")
