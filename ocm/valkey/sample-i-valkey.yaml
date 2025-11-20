@@ -1,0 +1,32 @@
+apiVersion: landscaper.gardener.cloud/v1alpha1
+kind: Installation
+metadata:
+  name: valkey
+  namespace: ls-system
+spec:
+  componentDescriptor:
+    ref:
+      repositoryContext:
+        type: ociRegistry
+        baseUrl: ghcr.io/vasu1124/ocm
+      componentName: valkey.io/valkey
+      version: 8.1.4
+
+  blueprint:
+    ref:
+      resourceName: valkey-blueprint
+
+  imports:
+    targets:
+    - name: cluster
+      # the "#" forces the landscaper to use the target with the name in the same namespace
+      target: "#default"
+
+  importDataMappings:
+    namespace: valkey
+    rootPassword: some-secret-password
+
+  exports:
+    data:
+    - name: connection
+      dataRef: "valkey-connection"
