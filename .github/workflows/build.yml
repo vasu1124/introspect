@@ -24,8 +24,11 @@ on:
       - '!pkg/operator/useless/Dockerfile'
       - '!pkg/operator/useless/Makefile'
 
-# Declare default permissions as read only.
-permissions: read-all
+# Declare default permissions
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
 
 jobs:
   build:
