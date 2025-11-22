@@ -15,4 +15,4 @@ images:
   newTag: "1.0.0"
 - name: mongo:latest
   newName: mongo
-  newTag: "8.0.16"
+  newTag: "8.2.2"
