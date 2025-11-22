@@ -89,8 +89,9 @@ jobs:
     - name: Set version
       run: |
         cat .env >> $GITHUB_ENV
+        echo "" >> $GITHUB_ENV
         if [[ $GITHUB_REF == refs/tags/* ]]; then
-          echo "INTROSPECT_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "INTROSPECT_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
         else
           echo "INTROSPECT_VERSION=$(git describe --tags --always --dirty)" >> $GITHUB_ENV
         fi
