@@ -27,12 +27,12 @@ components:
     input:
       type: helm
       path: ../.gen/${NAME}/${NAME}-helm-${INTROSPECT_VERSION}.tgz
-  sources:
-  - name: ${NAME}
-    type: git
-    version: ${INTROSPECT_VERSION}
-    access:
-      type: gitHub
-      repoUrl: ${COMPONENT_NAME_PREFIX}/${NAME}
-      ref: ${INTROSPECT_REF}
-      commit: ${INTROSPECT_COMMIT}
+#  sources:
+#  - name: ${NAME}
+#    type: git
+#    version: ${INTROSPECT_VERSION}
+#    access:
+#      type: gitHub
+#     repoUrl: ${COMPONENT_NAME_PREFIX}/${NAME}
+#      ref: ${INTROSPECT_REF}
+#      commit: ${INTROSPECT_COMMIT}

@@ -9,6 +9,8 @@ on:
     branches:
     - 'main'
     - 'release/*'
+    tags:
+      - '*'
     paths:
       - '**.go'
       - 'cmd/**'
@@ -82,8 +84,16 @@ jobs:
 
     - name: Check out code
       uses: actions/checkout@v6
-    - run: |
+      with:
+        fetch-depth: 0
+    - name: Set version
+      run: |
         cat .env >> $GITHUB_ENV
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "INTROSPECT_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        else
+          echo "INTROSPECT_VERSION=$(git describe --tags --always --dirty)" >> $GITHUB_ENV
+        fi
 
     - name: Docker login to DockerHub
       if: success()

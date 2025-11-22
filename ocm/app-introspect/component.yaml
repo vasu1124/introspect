@@ -1,6 +1,6 @@
 components:
 - name: ${COMPONENT_NAME_PREFIX}/${NAME}
-  version: ${APP_VERSION}
+  version: ${INTROSPECT_VERSION}
   provider: 
     name: ${PROVIDER}
   componentReferences:

@@ -38,7 +38,7 @@ tls: ${tlsfiles}
 
 .PHONY: clean
 clean:
-	-rm -rf ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml ocm/.gen version.env
+	-rm -rf ${BINARY}-* debug kubernetes/k14s/kbld.lock.yaml ocm/.gen
 
 # kubebuilder: Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
@@ -74,10 +74,10 @@ ${GOPATH}/bin/cfssl:
 # SOURCES := $(shell find . -type f -name '*.go')
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
 
-${BINARY}-linux: ${SOURCES} version.env
+${BINARY}-linux: ${SOURCES} .env
 	CGO_ENABLED=0 GOOS=linux go build ${LDFLAGS} -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o ${BINARY}-linux ./cmd
 
-${BINARY}-darwin: ${SOURCES} version.env
+${BINARY}-darwin: ${SOURCES} .env
 ifeq ($(shell uname -s), Darwin)
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build ${LDFLAGS} -o ${BINARY}-darwin-amd64 ./cmd
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build ${LDFLAGS} -o ${BINARY}-darwin-arm64 ./cmd
@@ -95,7 +95,7 @@ build: ${SOURCES}
 		--build-arg gitTreeState=${gitTreeState} \
 		--file Dockerfile \
 		.
-	docker buildx imagetools inspect ${OCI}/${ORG}/introspect:${gitVersion}
+	docker image inspect ${OCI}/${ORG}/introspect:${gitVersion}
 #	docker manifest inspect ${OCI}/${ORG}/introspect:${gitVersion}
 
 .PHONY: buildx
@@ -149,20 +149,6 @@ docker/ubuntu.docker: ${BINARY}-linux docker/Dockerfile.ubuntu
 docker-push:
 	docker push ${OCI}/${ORG}/introspect:${gitVersion}
 
-version.env: .env
-	cat <<- EOF >$@
-		$$(cat .env)
-		gitVersion=${gitVersion}
-		gitCommit=${gitCommit}
-		gitRefs=${gitRefs}
-		gitTreeState=${gitTreeState}
-		buildDate=${buildDate}
-		INTROSPECT_VERSION=${gitVersion}
-		INTROSPECT_REF: ${gitRefs}
-		INTROSPECT_COMMIT: ${gitCommit}
-		APP_VERSION=${gitVersion}
-	EOF
-
 .PHONY: kubernetes/k8s-visualizer
 kubernetes/k8s-visualizer:
 #	original was git clone https://github.com/brendandburns/gcp-live-k8s-visualizer.git
@@ -172,7 +158,7 @@ kubernetes/k8s-visualizer:
 
 ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz:
 	mkdir -p ocm/.gen/introspect/
-	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} -d ocm/.gen/introspect
+	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} --version ${gitVersion} -d ocm/.gen/introspect
 #	helm push ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz oci://${OCI}/${ORG}/helm
 
 ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz:
@@ -190,10 +176,13 @@ helm: ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz ocm/.gen/mongodb/mon
 
 #.PHONY: ./ocm/.gen/dynamic.yaml
 .ONESHELL:
-./ocm/.gen/dynamic.yaml: version.env
+./ocm/.gen/dynamic.yaml: .env
 	-mkdir -p ocm/.gen
 	cat <<- EOF >$@
-		$$(cat version.env | sed -e "s/\(\w*\)=/\1: /g")
+		$$(cat .env | sed -e "s/\(\w*\)=/\1: /g")
+		INTROSPECT_VERSION: ${gitVersion}
+		INTROSPECT_COMMIT: ${gitCommit}
+		INTROSPECT_REF: ${gitRefs}
 	EOF
 	cat ./ocm/.gen/dynamic.yaml
 
