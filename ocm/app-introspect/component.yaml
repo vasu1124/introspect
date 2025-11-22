@@ -8,7 +8,7 @@ components:
     componentName: github.com/vasu1124/introspect
     version: ${INTROSPECT_VERSION}
   - name: mongodb
-    componentName: bitnami.com/mongodb
+    componentName: mongodb.org/mongodb
     version: ${MONGODB_VERSION}
   - name: etcd
     componentName: etcd.io/etcd

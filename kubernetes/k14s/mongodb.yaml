@@ -18,24 +18,17 @@ spec:
     spec:
       containers:
       - env:
-        - name: BITNAMI_DEBUG
-          value: "false"
-        - name: ALLOW_EMPTY_PASSWORD
-          value: "no"
-        - name: MONGODB_SYSTEM_LOG_VERBOSITY
-          value: "0"
-        - name: MONGODB_DISABLE_SYSTEM_LOG
-          value: "yes"
-        - name: MONGODB_ENABLE_IPV6
-          value: "no"
-        - name: MONGODB_ENABLE_DIRECTORY_PER_DB
-          value: "no"
-        - name: MONGODB_ROOT_PASSWORD
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: mongodb-secret
+        - name: MONGO_INITDB_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
               key: password
               name: mongodb-secret
-        image: bitnami/mongodb:4.4
+        image: mongo:8.0.16
         imagePullPolicy: #@ data.values.imagePullPolicy
         livenessProbe:
           exec:
@@ -65,19 +58,19 @@ spec:
           successThreshold: 1
           timeoutSeconds: 1
         securityContext:
-          runAsUser: 1001
+          runAsUser: 999
         resources:
           requests:
             cpu: 100m
             memory: 256Mi
         volumeMounts:
-        - mountPath: /bitnami/mongodb
+        - mountPath: /data/db
           name: data
       volumes:
       - name: data
         emptyDir: {}
       securityContext:
-        fsGroup: 1001 
+        fsGroup: 999 
 ---
 apiVersion: v1
 kind: Secret

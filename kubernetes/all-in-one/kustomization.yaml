@@ -13,6 +13,6 @@ images:
 - name: ghcr.io/vasu1124/introspect:1.0.0
   newName: ghcr.io/vasu1124/introspect
   newTag: "1.0.0"
-- name: bitnami/mongodb:latest
-  newName: bitnami/mongodb
-  newTag: "4.4"
+- name: mongo:latest
+  newName: mongo
+  newTag: "8.0.16"

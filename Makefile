@@ -163,7 +163,7 @@ ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz:
 
 ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz:
 	mkdir -p ocm/.gen/mongodb/
-	helm pull mongodb -d ocm/.gen/mongodb --version ${MONGODB_CHART} --repo https://charts.bitnami.com/bitnami
+	helm pull mongodb -d ocm/.gen/mongodb --version ${MONGODB_CHART} --repo https://groundhog2k.github.io/helm-charts
 #	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCI}/${ORG}/helm
 
 ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz:
