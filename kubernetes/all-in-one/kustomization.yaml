@@ -12,7 +12,7 @@ resources:
 images:
 - name: ghcr.io/vasu1124/introspect:1.0.0
   newName: ghcr.io/vasu1124/introspect
-  newTag: "1.0.0"
+  newTag: "2.0.0"
 - name: mongo:latest
   newName: mongo
   newTag: "8.0.16"
