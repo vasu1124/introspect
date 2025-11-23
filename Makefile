@@ -156,54 +156,57 @@ kubernetes/k8s-visualizer:
 	echo ./hack/kube-proxy.sh or kubectl proxy --www=./kubernetes/k8s-visualizer/src -p 8001
 	echo open browser with http://localhost:8001/static/
 
-ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz:
-	mkdir -p ocm/.gen/introspect/
-	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} --version ${gitVersion} -d ocm/.gen/introspect
-#	helm push ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz oci://${OCI}/${ORG}/helm
+################################################################################
+# OCM
 
-ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz:
-	mkdir -p ocm/.gen/mongodb/
-	helm pull mongodb -d ocm/.gen/mongodb --version ${MONGODB_CHART} --repo https://groundhog2k.github.io/helm-charts
-#	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCI}/${ORG}/helm
+# ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz:
+# 	mkdir -p ocm/.gen/introspect/
+# 	helm package ./kubernetes/helm/introspect/ --app-version ${gitVersion} --version ${gitVersion} -d ocm/.gen/introspect
+# #	helm push ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz oci://${OCI}/${ORG}/helm
 
-ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz:
-	mkdir -p ocm/.gen/etcd/
-	helm pull etcd -d ocm/.gen/etcd --version ${ETCD_CHART} --repo https://groundhog2k.github.io/helm-charts
-#	helm push ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz oci://${OCI}/${ORG}/helm
+# ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz:
+# 	mkdir -p ocm/.gen/mongodb/
+# 	helm pull mongodb -d ocm/.gen/mongodb --version ${MONGODB_CHART} --repo https://groundhog2k.github.io/helm-charts
+# #	helm push ocm/.gen/mongodb/mongodb-${MONGOCHARTVERSION}.tgz oci://${OCI}/${ORG}/helm
 
-.PHONY: helm
-helm: ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz
+# ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz:
+# 	mkdir -p ocm/.gen/etcd/
+# 	helm pull etcd -d ocm/.gen/etcd --version ${ETCD_CHART} --repo https://groundhog2k.github.io/helm-charts
+# #	helm push ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz oci://${OCI}/${ORG}/helm
 
-#.PHONY: ./ocm/.gen/dynamic.yaml
-.ONESHELL:
-./ocm/.gen/dynamic.yaml: .env
-	-mkdir -p ocm/.gen
-	cat <<- EOF >$@
-		$$(cat .env | sed -e "s/\(\w*\)=/\1: /g")
-		INTROSPECT_VERSION: ${gitVersion}
-		INTROSPECT_COMMIT: ${gitCommit}
-		INTROSPECT_REF: ${gitRefs}
-	EOF
-	cat ./ocm/.gen/dynamic.yaml
+# .PHONY: helm
+# helm: ocm/.gen/introspect/introspect-helm-${gitVersion}.tgz ocm/.gen/mongodb/mongodb-${MONGODB_CHART}.tgz ocm/.gen/etcd/etcd-${ETCD_CHART}.tgz
 
-.PHONY: ocm
-ocm: helm ./ocm/.gen/dynamic.yaml ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
-	ocm cv add -cf -F ./ocm/.gen/ctf ./ocm/introspect/component.yaml  \
-		--settings ./ocm/introspect/settings.yaml \
-		--settings ./ocm/.gen/dynamic.yaml
-	ocm cv add     -F ./ocm/.gen/ctf ./ocm/mongodb/component.yaml     \
-		--settings ./ocm/mongodb/settings.yaml \
-		--settings ./ocm/.gen/dynamic.yaml 
-	ocm cv add     -F ./ocm/.gen/ctf ./ocm/etcd/component.yaml        \
-		--settings ./ocm/etcd/settings.yaml \
-		--settings ./ocm/.gen/dynamic.yaml 
-	ocm cv add     -F ./ocm/.gen/ctf ./ocm/app-introspect/component.yaml \
-		--settings ./ocm/app-introspect/settings.yaml \
-		--settings ./ocm/.gen/dynamic.yaml 
+# #.PHONY: ./ocm/.gen/dynamic.yaml
+# .ONESHELL:
+# ./ocm/.gen/dynamic.yaml: .env
+# 	-mkdir -p ocm/.gen
+# 	cat <<- EOF >$@
+# 		$$(cat .env | sed -e "s/\(\w*\)=/\1: /g")
+# 		INTROSPECT_VERSION: ${gitVersion}
+# 		INTROSPECT_COMMIT: ${gitCommit}
+# 		INTROSPECT_REF: ${gitRefs}
+# 	EOF
+# 	cat ./ocm/.gen/dynamic.yaml
 
-.PHONY: ctf-push
-ctf-push: ocm
-	ocm transfer ctf ./ocm/.gen/ctf ${OCI}/${ORG}/ocm --overwrite
+# .PHONY: ocm
+# ocm: helm ./ocm/.gen/dynamic.yaml ./ocm/introspect/component.yaml ./ocm/mongodb/component.yaml ./ocm/etcd/component.yaml ./ocm/app-introspect/component.yaml
+# 	ocm cv add -cf -F ./ocm/.gen/ctf ./ocm/introspect/component.yaml  \
+# 		--settings ./ocm/introspect/settings.yaml \
+# 		--settings ./ocm/.gen/dynamic.yaml
+# 	ocm cv add     -F ./ocm/.gen/ctf ./ocm/mongodb/component.yaml     \
+# 		--settings ./ocm/mongodb/settings.yaml \
+# 		--settings ./ocm/.gen/dynamic.yaml 
+# 	ocm cv add     -F ./ocm/.gen/ctf ./ocm/etcd/component.yaml        \
+# 		--settings ./ocm/etcd/settings.yaml \
+# 		--settings ./ocm/.gen/dynamic.yaml 
+# 	ocm cv add     -F ./ocm/.gen/ctf ./ocm/app-introspect/component.yaml \
+# 		--settings ./ocm/app-introspect/settings.yaml \
+# 		--settings ./ocm/.gen/dynamic.yaml 
+
+# .PHONY: ctf-push
+# ctf-push: ocm
+# 	ocm transfer ctf ./ocm/.gen/ctf ${OCI}/${ORG}/ocm --overwrite
 
 # openssl genpkey -out mysign.key -algorithm RSA
 # openssl rsa -in private.key -outform PEM -pubout -out mysign.pub

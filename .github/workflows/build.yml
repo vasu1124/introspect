@@ -58,29 +58,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
-    # - name: Set up Go
-    #   uses: actions/setup-go@v3
-    #   with:
-    #     go-version: 1.19
-    #   id: go
-    # - name: Set up QEMU
-    #   uses: docker/setup-qemu-action@v1
-    #   with:
-    #     platforms: linux/amd64,linux/arm64,linux/arm/v7
     - name: Set up Docker Buildx      
       uses: docker/setup-buildx-action@v3
       with:
         version: latest
       id: buildx
-    - name: Set up Helm
-      if: success()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      uses: azure/setup-helm@v4
-    - name: Set up OCM
-      uses: open-component-model/ocm-setup-action@main
-      with:
-        version: 0.33.0
 
     - name: Check out code
       uses: actions/checkout@v6
@@ -109,10 +91,6 @@ jobs:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Helm login to GitHub Container Registry
-      if: success()
-      run: |
-        echo ${{ secrets.GITHUB_TOKEN }} | helm registry login --username ${{ github.repository_owner }} --password-stdin ghcr.io
 
     - name: Docker Buildx (build+push)
       if: success()
@@ -136,7 +114,3 @@ jobs:
       if: success()
       run: |
         docker buildx imagetools inspect ${{ env.OCI }}/${{ env.ORG }}/introspect:${{ env.INTROSPECT_VERSION }}
-
-    - name: create and publish OCM descriptors
-      run: |
-        make ctf-push
