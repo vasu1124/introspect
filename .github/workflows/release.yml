@@ -16,3 +16,4 @@ jobs:
       - uses: googleapis/release-please-action@v4.4.0
         with:
           release-type: simple
+          include-v-in-tag: false
