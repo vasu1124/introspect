@@ -5,12 +5,13 @@ kind: Kustomization
 resources:
 - ../mongodb
 - ../etcd
+- ../valkey
 - ../introspect
 
 # namespace: test
 
 images:
-- name: ghcr.io/vasu1124/introspect:1.0.0
+- name: ghcr.io/vasu1124/introspect:latest
   newName: ghcr.io/vasu1124/introspect
   newTag: "1.0.0"
 - name: mongo:latest

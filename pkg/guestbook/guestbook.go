@@ -9,21 +9,27 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/globalsign/mgo"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 	etcdv3 "go.etcd.io/etcd/client/v3"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Handler .
 type Handler struct {
 	dbtype       string
-	mgosession   *mgo.Collection
+	mongoClient  *mongo.Client
+	mongoColl    *mongo.Collection
 	etcdsession  *etcdv3.Client
+	valkeyClient *redis.Client
 	usernamefile string
 	passwordfile string
 }
@@ -107,7 +113,7 @@ func (h *Handler) watchConfig(config *viper.Viper) {
 			case err := <-watcher.Errors:
 				logger.Log.Error(err, "[guestbook] Watcher error")
 			case <-ticker.C:
-				if h.mgosession == nil && h.etcdsession == nil {
+				if h.mongoClient == nil && h.etcdsession == nil && h.valkeyClient == nil {
 					logger.Log.Info("[guestbook] session try connect ...")
 					h.readConfig(config)
 				}
@@ -141,25 +147,44 @@ func (h *Handler) readConfig(config *viper.Viper) {
 
 	switch h.dbtype {
 	case "mongodb":
-		var dialInfo mgo.DialInfo
-		err = config.Unmarshal(&dialInfo)
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] unable to decode into Mongodb DialInfo struct")
+		addrs := config.GetStringSlice("Addrs")
+		database := config.GetString("Database")
+		if database == "" {
+			database = "guestbook"
+		}
+
+		if len(addrs) == 0 {
+			logger.Log.Error(nil, "[guestbook] No MongoDB addresses found in config")
 			return
 		}
 
-		dialInfo.Username = string(username)
-		dialInfo.Password = string(password)
+		uri := fmt.Sprintf("mongodb://%s", strings.Join(addrs, ","))
+		clientOpts := options.Client().ApplyURI(uri)
+		clientOpts.SetAuth(options.Credential{
+			Username: string(username),
+			Password: string(password),
+		})
 
-		session, err := mgo.DialWithInfo(&dialInfo)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		client, err := mongo.Connect(ctx, clientOpts)
 		if err != nil {
-			logger.Log.Error(err, "[guestbook] Failed MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
-			h.mgosession = nil
+			logger.Log.Error(err, "[guestbook] Failed MongoDB Connect", "Addrs", addrs, "Database", database)
+			h.mongoClient = nil
+			h.mongoColl = nil
 		} else {
-			logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", dialInfo.Addrs, "Database", dialInfo.Database)
-			// Optional. Switch the session to a monotonic behavior.
-			// session.SetMode(mgo.Monotonic, true)
-			h.mgosession = session.DB("").C("guestbook")
+			// Verify connection
+			err = client.Ping(ctx, nil)
+			if err != nil {
+				logger.Log.Error(err, "[guestbook] Failed MongoDB Ping", "Addrs", addrs, "Database", database)
+				h.mongoClient = nil
+				h.mongoColl = nil
+			} else {
+				logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", addrs, "Database", database)
+				h.mongoClient = client
+				h.mongoColl = client.Database(database).Collection("guestbook")
+			}
 		}
 
 	case "etcd":
@@ -181,24 +206,53 @@ func (h *Handler) readConfig(config *viper.Viper) {
 			logger.Log.Info("[guestbook] Connected to Etcdv3", "Endpoints", etcdConfig.Endpoints)
 		}
 
+	case "valkey":
+		valkeyAddr := config.GetString("ValkeyAddr")
+		if valkeyAddr == "" {
+			valkeyAddr = "valkey:6379"
+		}
+
+		h.valkeyClient = redis.NewClient(&redis.Options{
+			Addr:     valkeyAddr,
+			Password: "", // no password set
+			DB:       0,  // use default DB
+		})
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		err := h.valkeyClient.Ping(ctx).Err()
+		if err != nil {
+			logger.Log.Error(err, "[guestbook] Failed Valkey Ping", "Addr", valkeyAddr)
+			h.valkeyClient = nil
+		} else {
+			logger.Log.Info("[guestbook] Connected to Valkey", "Addr", valkeyAddr)
+		}
 	}
 
 }
 
 // SwitchBackend switches the database backend between mongodb and etcd
 func (h *Handler) SwitchBackend(backend string) error {
-	if backend != "mongodb" && backend != "etcd" {
+	if backend != "mongodb" && backend != "etcd" && backend != "valkey" {
 		return fmt.Errorf("invalid backend: %s", backend)
 	}
 
 	// Close existing connections
-	if h.mgosession != nil {
-		// MongoDB session doesn't need explicit close in this design
-		h.mgosession = nil
+	if h.mongoClient != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		h.mongoClient.Disconnect(ctx)
+		h.mongoClient = nil
+		h.mongoColl = nil
 	}
 	if h.etcdsession != nil {
 		h.etcdsession.Close()
 		h.etcdsession = nil
+	}
+	if h.valkeyClient != nil {
+		h.valkeyClient.Close()
+		h.valkeyClient = nil
 	}
 
 	// Update the backend type
@@ -281,18 +335,22 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch h.dbtype {
 	case "mongodb":
-		if h.mgosession != nil {
+		if h.mongoColl != nil {
 			if r.Form["name"] != nil && r.Form["comment"] != nil &&
 				r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
-				err = h.mgosession.Insert(&Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
+				_, err = h.mongoColl.InsertOne(context.Background(), Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
 				if err != nil {
 					logger.Log.Error(err, "[guestbook] insert error")
 				}
 			}
 
-			err = h.mgosession.Find(nil).All(&entries)
+			cursor, err := h.mongoColl.Find(context.Background(), bson.D{})
 			if err != nil {
 				logger.Log.Error(err, "[guestbook] find error")
+			} else {
+				if err = cursor.All(context.Background(), &entries); err != nil {
+					logger.Log.Error(err, "[guestbook] cursor all error")
+				}
 			}
 		}
 
@@ -330,6 +388,42 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				entries = append(entries, entry)
 			}
 		}
+	case "valkey":
+		if h.valkeyClient != nil {
+			if r.Form["name"] != nil && r.Form["comment"] != nil &&
+				r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
+				entry := Entry{
+					Date:    time.Now(),
+					Name:    r.Form["name"][0],
+					Comment: r.Form["comment"][0],
+				}
+				ret, err := json.Marshal(entry)
+				if err != nil {
+					logger.Log.Error(err, "[guestbook] marshall error")
+					return
+				}
+				// Use a list to store entries
+				err = h.valkeyClient.LPush(context.Background(), "guestbook", string(ret)).Err()
+				if err != nil {
+					logger.Log.Error(err, "[guestbook] valkey insert error")
+				}
+			}
+
+			// Get all entries from the list
+			valkeyEntries, err := h.valkeyClient.LRange(context.Background(), "guestbook", 0, -1).Result()
+			if err != nil {
+				logger.Log.Error(err, "[guestbook] valkey get error")
+			}
+
+			for _, ev := range valkeyEntries {
+				var entry Entry
+				err = json.Unmarshal([]byte(ev), &entry)
+				if err != nil {
+					logger.Log.Error(err, "[guestbook] unmarshall error")
+				}
+				entries = append(entries, entry)
+			}
+		}
 	}
 
 	// Create data structure for template
@@ -340,7 +434,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Version   string
 	}
 
-	connected := (h.dbtype == "mongodb" && h.mgosession != nil) || (h.dbtype == "etcd" && h.etcdsession != nil)
+	connected := (h.dbtype == "mongodb" && h.mongoClient != nil) || (h.dbtype == "etcd" && h.etcdsession != nil) || (h.dbtype == "valkey" && h.valkeyClient != nil)
 	data := GuestbookData{
 		Backend:   h.dbtype,
 		Connected: connected,

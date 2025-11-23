@@ -64,6 +64,11 @@ k8s_resource(workload='etcd', objects=[
   'etcd:secret'],
   labels=['introspect']
 )
+k8s_resource(workload='valkey', objects=[
+  'valkey:persistentvolumeclaim',
+  'valkey-secret:secret'],
+  labels=['introspect']
+)
 
 #v1alpha1.extension_repo(name='tilt-extensions', url='https://github.com/tilt-dev/tilt-extensions')
 #v1alpha1.extension(

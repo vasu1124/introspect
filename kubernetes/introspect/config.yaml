@@ -11,7 +11,9 @@ data:
       "FailFast": true,
 
       "Endpoints":   ["etcd:2379"],
-      "DialTimeout": 5000000000
+      "DialTimeout": 5000000000,
+
+      "ValkeyAddr": "valkey:6379"
     }
   example.yaml: |+
     foo: bar
