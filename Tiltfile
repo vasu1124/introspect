@@ -1,4 +1,7 @@
 # -*- mode: Python -*-
+# SPDX-FileCopyrightText: 2025 vasu1124
+#
+# SPDX-License-Identifier: CC0-1.0
 
 # For more on Extensions, see: https://docs.tilt.dev/extensions.html
 load('ext://restart_process', 'docker_build_with_restart')
