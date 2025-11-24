@@ -10,5 +10,6 @@ resources:
 
 
 # labels added to all Resources
-commonLabels:
-  app: mongodb
+labels:
+  - pairs:
+      app: mongodb
