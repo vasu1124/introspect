@@ -11,7 +11,7 @@ DOCKER_TARGET_PLATFORM:=linux/amd64,linux/arm64 #,linux/arm/v7
 
 BINARY:=introspect
 
-gitVersion:=$(shell git describe --tags --always --dirty 2>/dev/null || echo "v0.0.0-dev")
+gitVersion:=$(shell git describe --tags --always --dirty --abbrev=0 2>/dev/null || echo "0.0.0-dev")
 gitCommit:=$(shell git rev-parse --verify HEAD)
 gitRefs:=$(shell git symbolic-ref HEAD)
 gitTreeState=$(shell [ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
@@ -109,7 +109,7 @@ buildx: ${SOURCES}
 		--build-arg gitTreeState=${gitTreeState} \
 		--file Dockerfile \
 		.
-	docker buildx imagetools inspect ${OCI}/${ORG}/introspect:${gitVersion}
+	docker image inspect ${OCI}/${ORG}/introspect:${gitVersion}
 
 .PHONY: deploy
 deploy:

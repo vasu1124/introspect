@@ -29,7 +29,7 @@ spec:
             secretKeyRef:
               key: password
               name: mongodb-secret
-        image: mongo:8.0.16
+        image: mongo:latest
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:

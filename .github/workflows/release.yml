@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4.4.0
+        id: release-please
         with:
-          release-type: simple
-          include-v-in-tag: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: ./github/release-please-config.json
+          manifest-file: ./github/release-please-manifest.json
