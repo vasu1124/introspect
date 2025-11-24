@@ -13,7 +13,7 @@ resources:
 images:
 - name: introspect:latest
   newName: ghcr.io/vasu1124/introspect
-  newTag: 1.1.0   # x-release-please-version
+  newTag: 1.2.0   # x-release-please-version
 - name: mongo:latest
   newName: mongo
   newTag: 8.0.16
