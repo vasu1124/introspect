@@ -5,7 +5,10 @@ load('ext://restart_process', 'docker_build_with_restart')
 load('ext://local_output', 'local_output')
 
 default_registry('ghcr.io/vasu1124')
-allow_k8s_contexts(['colima', 'Default'])
+allow_k8s_contexts(['colima', 'Default', 'desktop', 'docker-desktop', 'kind-kind'])
+
+# Set the version tag to use for Tilt builds
+TAG = str(local('git describe --tags --always --dirty --abbrev=0')).strip()
 
 compile_cmd = 'make introspect-linux'
 
@@ -36,7 +39,7 @@ docker_build_with_restart(
 
 # Load Kubernetes YAML and inject the git tag
 yaml = kustomize('./kubernetes/all-in-one')
-yaml = blob(str(yaml).replace('image: ghcr.io/vasu1124/introspect:1.1.0', 'image: introspect:' + TAG))
+#yaml = blob(str(yaml).replace('image: ghcr.io/vasu1124/introspect:1.1.0', 'image: introspect:' + TAG))
 k8s_yaml(yaml)
 
 k8s_resource(

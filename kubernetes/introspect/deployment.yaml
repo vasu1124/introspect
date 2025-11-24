@@ -16,7 +16,7 @@ spec:
         traffic.sidecar.istio.io/excludeOutboundPorts: "443"
     spec:
       containers:
-      - image: ghcr.io/vasu1124/introspect:latest
+      - image: introspect:latest
         imagePullPolicy: IfNotPresent
     #    imagePullPolicy: Always
         name: introspect
