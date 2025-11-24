@@ -1,4 +1,8 @@
-name: release-please
+# SPDX-FileCopyrightText: 2025 vasu1124
+#
+# SPDX-License-Identifier: CC0-1.0
+
+name: Release-Please
 
 on:
   push:

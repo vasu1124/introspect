@@ -68,6 +68,9 @@ jobs:
       uses: actions/checkout@v6
       with:
         fetch-depth: 0
+    - name: Set version
+      id: INTROSPECT_VERSION
+      run: echo "INTROSPECT_VERSION=$(git describe --tags --always --abrev=0 --dirty)" >> "$GITHUB_OUTPUT" 
 
     - name: Docker login to DockerHub
       if: success()
@@ -87,7 +90,7 @@ jobs:
       if: success()
       uses: docker/build-push-action@v6
       env:
-        INTROSPECT_VERSION: $(git describe --tags --always --abbrev=0 --dirty)
+        INTROSPECT_VERSION: ${{ steps.INTROSPECT_VERSION.outputs.version }}
       with:
         context: .
         # platforms: linux/amd64,linux/arm64,linux/arm/v7
