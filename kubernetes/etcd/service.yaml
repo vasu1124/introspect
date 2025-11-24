@@ -38,5 +38,4 @@ spec:
   publishNotReadyAddresses: true
   selector:
     app.kubernetes.io/name: etcd
-  sessionAffinity: None
   type: ClusterIP

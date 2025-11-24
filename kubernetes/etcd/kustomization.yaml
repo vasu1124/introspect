@@ -9,7 +9,8 @@ resources:
 
 
 # labels added to all Resources
-commonLabels:
-  app.kubernetes.io/instance: etcd
-  app.kubernetes.io/name: etcd
+labels:
+  - pairs:
+      app.kubernetes.io/instance: etcd
+      app.kubernetes.io/name: etcd
 

@@ -15,5 +15,6 @@ resources:
 # - uselessmachine-2.yaml
 
 # labels added to all Resources
-commonLabels:
-  app: introspect
+labels:
+  - pairs:
+      app: introspect
