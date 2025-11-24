@@ -34,7 +34,11 @@ docker_build_with_restart(
   ],
 )
 
-k8s_yaml(kustomize('./kubernetes/all-in-one'))
+# Load Kubernetes YAML and inject the git tag
+yaml = kustomize('./kubernetes/all-in-one')
+yaml = blob(str(yaml).replace('image: ghcr.io/vasu1124/introspect:1.1.0', 'image: introspect:' + TAG))
+k8s_yaml(yaml)
+
 k8s_resource(
   'introspect', 
   port_forwards=[9090],  
