@@ -16,4 +16,4 @@ images:
   newTag: 1.2.1   # x-release-please-version
 - name: mongo:latest
   newName: mongo
-  newTag: 8.0.16
+  newTag: 8.2.3
