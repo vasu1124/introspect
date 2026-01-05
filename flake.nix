@@ -50,8 +50,6 @@ SPDX-License-Identifier: Apache-2.0
               kustomize
               krew
               sops
-              minikube
-              kind
               kubelogin-oidc
               kubectx
               tilt
