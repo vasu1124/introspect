@@ -1,0 +1,21 @@
+do tasks 1.4
+
+---
+
+is it already fixed?
+
+---
+
+do task 2.3
+
+---
+
+{"level":"info","ts":1784387898.7342224,"caller":"server/middleware.go:54","msg":"[http] request","method":"GET","path":"/css/switch.css","status":404,"duration":0.000025875,"remote":"127.0.0.1:52994"}
+
+---
+
+the initial screen is empty
+
+---
+
+no menu is displayed in the initial screen. fix it.

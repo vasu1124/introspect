@@ -1,0 +1,59 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "bba2c904a975",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 14,
+  "files_touched": [
+    "cmd/introspect/server.go",
+    "pkg/assets/assets.go",
+    "pkg/assets/css/switch.css",
+    "pkg/assets/css/tailwindcss.js",
+    "pkg/assets/tmpl/cookie.html",
+    "pkg/assets/tmpl/dynamicconfig.html",
+    "pkg/assets/tmpl/environ.html",
+    "pkg/assets/tmpl/favicon.ico",
+    "pkg/assets/tmpl/favicon.png",
+    "pkg/assets/tmpl/guestbook.html",
+    "pkg/assets/tmpl/layout.html",
+    "pkg/assets/tmpl/leadership.html",
+    "pkg/assets/tmpl/mandelbrot.html",
+    "pkg/assets/tmpl/menu.html",
+    "pkg/assets/tmpl/operator.html",
+    "pkg/assets/tmpl/validate.html",
+    "pkg/config/config.go",
+    "pkg/cookie/cookie.go",
+    "pkg/dynconfig/dynconfig.go",
+    "pkg/election/election.go",
+    "pkg/environ/environ.go",
+    "pkg/environ/metrics.go",
+    "pkg/guestbook/guestbook.go",
+    "pkg/handler/handler.go",
+    "pkg/healthz/healthz.go",
+    "pkg/mandelbrot/mandelbrot.go",
+    "pkg/mandelbrot/metrics.go",
+    "pkg/operator/operator.go",
+    "pkg/server/handler.go",
+    "pkg/server/handlers.go",
+    "pkg/server/middleware.go",
+    "pkg/server/server.go",
+    "pkg/validate/validate.go",
+    "pkg/version/version.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bb/a2c904a975/0/metadata.json",
+      "transcript": "/bb/a2c904a975/0/full.jsonl",
+      "compact_transcript": "/bb/a2c904a975/0/transcript.jsonl",
+      "content_hash": "/bb/a2c904a975/0/content_hash.txt",
+      "prompt": "/bb/a2c904a975/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2559484,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 29071360,
+    "output_tokens": 72852,
+    "api_call_count": 302
+  }
+}
