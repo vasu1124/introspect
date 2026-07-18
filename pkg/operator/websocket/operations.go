@@ -22,7 +22,7 @@ type Notifier struct {
 func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 	m.HandleConnect(func(s *melody.Session) {
 		ul := &uselessmachinev1alpha1.UselessMachineList{}
-		if err := c.List(context.TODO(), ul, &client.ListOptions{}); err != nil {
+		if err := c.List(context.Background(), ul, &client.ListOptions{}); err != nil {
 			logger.Log.Error(err, "[operatorws] can't list ueslessmachines")
 			return
 		}
@@ -42,7 +42,7 @@ func NewNotifier(m *melody.Melody, c client.Client) *Notifier {
 			logger.Log.Error(err, "[operatorws] can't get unmarshal message")
 			return
 		}
-		ctx := context.TODO()
+		ctx := context.Background()
 		useless := &uselessmachinev1alpha1.UselessMachine{}
 		if err := c.Get(ctx, client.ObjectKey{Name: message.Name, Namespace: message.Namespace}, useless); err != nil {
 			logger.Log.Error(err, "[operatorws] can't get uselessmachine")
