@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "040615d532cd",
+  "session_id": "019f758b-0d1a-702b-a4a7-ae9952800818",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-18T14:32:46.428305Z",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "save_step_count": 1,
+  "files_touched": [
+    "pkg/operator/websocket/operations.go"
+  ],
+  "agent": "Pi",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "turn_id": "2c670cc5a78d",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 464250,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 4517376,
+    "output_tokens": 14990,
+    "api_call_count": 97
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-18T14:32:46.401983Z",
+    "agent_lines": 2,
+    "agent_removed": 2,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2,
+    "total_lines_changed": 4,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
