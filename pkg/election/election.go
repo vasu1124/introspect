@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/vasu1124/introspect/pkg/logger"
@@ -21,23 +22,61 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-// Leader ... am I a Leader?
-// TODO: secure with mutex
-var Leader = false
+// ElectionState holds the leader election state with mutex protection.
+type ElectionState struct {
+	mu     sync.RWMutex
+	leader bool
+	fail   bool
+}
 
-// Fail ... did the electionprocess fail?
-// TODO: secure with mutex
-var Fail = true
+// Leader returns whether this instance is the leader.
+func (s *ElectionState) Leader() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.leader
+}
+
+// SetLeader sets the leader state.
+func (s *ElectionState) SetLeader(leader bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.leader = leader
+}
+
+// Fail returns whether the election process failed.
+func (s *ElectionState) Fail() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.fail
+}
+
+// SetFail sets the fail state.
+func (s *ElectionState) SetFail(fail bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.fail = fail
+}
+
+// NewElectionState creates a new ElectionState with default values.
+func NewElectionState() *ElectionState {
+	return &ElectionState{
+		leader: false,
+		fail:   true,
+	}
+}
 
 // Handler .
 type Handler struct {
 	leaderElector *leaderelection.LeaderElector
+	state         *ElectionState
 }
 
 // New .
 func New() *Handler {
 	var h Handler
 	var err error
+
+	h.state = NewElectionState()
 
 	// Create the client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
 	rc, err := config.GetConfig()
@@ -51,11 +90,6 @@ func New() *Handler {
 		return &h
 	}
 
-	// v, err := h.kubeClient.ServerVersion()
-	// if v.Major < 1 && v.Minor < 7 {
-	// 	log.Fatal("Version is not enough")
-	// }
-
 	// Set up leader election if enabled and prepare event recorder.
 	recorder := createRecorder(kubeClient)
 
@@ -66,18 +100,18 @@ func New() *Handler {
 
 	leaderElectionConfig.Callbacks = leaderelection.LeaderCallbacks{
 		OnStartedLeading: func(ctx context.Context) {
-			Fail = false
-			Leader = true
+			h.state.SetFail(false)
+			h.state.SetLeader(true)
 			logger.Log.Info("[election] Got leadership")
 			<-ctx.Done()
 		},
 		OnStoppedLeading: func() {
-			Fail = false
-			Leader = false
+			h.state.SetFail(false)
+			h.state.SetLeader(false)
 			logger.Log.Info("[election] Lost leadership")
 		},
 		OnNewLeader: func(identity string) {
-			Fail = false
+			h.state.SetFail(false)
 			logger.Log.Info("[election] Got informed. Leadership is with", "leadership", identity)
 		},
 	}
@@ -85,7 +119,7 @@ func New() *Handler {
 	if err != nil {
 		logger.Log.Error(err, "[election] leaderElection error")
 	}
-	go h.leaderElector.Run(context.TODO())
+	go h.leaderElector.Run(context.Background())
 
 	return &h
 }
@@ -150,7 +184,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Error(err, "[election] Unable to get hostname")
 		fmt.Fprint(w, "[election] unable to get hostname: ", err)
 	}
-	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, Leader, Fail, h.leaderElector, hostname}
+	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, h.state.Leader(), h.state.Fail(), h.leaderElector, hostname}
 
 	err = t.Execute(w, data)
 	if err != nil {
