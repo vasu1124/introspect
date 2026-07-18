@@ -1,31 +1,38 @@
 package cookie
 
 import (
-	"html/template"
+	"context"
 	"net/http"
 	"time"
 
+	"github.com/vasu1124/introspect/pkg/assets"
+	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 )
 
-// Handler .
+// Handler implements server.Handler for the cookie endpoint.
 type Handler struct{}
 
-// New .
+// New creates a new cookie handler.
 func New() *Handler {
-	var h Handler
-	return &h
+	return &Handler{}
 }
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/cookie.html")
-	if err != nil {
-		logger.Log.Error(err, "[cookie] can't parse template")
-		return
-	}
+// Name implements server.Handler.
+func (h *Handler) Name() string {
+	return "cookie"
+}
 
-	err = r.ParseForm()
+// RegisterRoutes implements server.Handler.
+func (h *Handler) RegisterRoutes(mux *http.ServeMux, ctx context.Context) {
+	mux.HandleFunc("/cookie", h.ServeHTTP)
+	logger.Log.Info("[cookie] registered /cookie")
+}
+
+// ServeHTTP handles the cookie request.
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
 	if err != nil {
 		logger.Log.Error(err, "[cookie] can't parse form")
 	}
@@ -41,19 +48,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &cookie)
 
 		http.Redirect(w, r, "/cookie", http.StatusMovedPermanently)
+		return
 	}
 
-	type EnvData struct {
-		Version string
-		Flag    bool
-		Cookie  []*http.Cookie
+	data := struct {
+		assets.CommonData
+		Cookie []*http.Cookie
+	}{
+		CommonData: assets.CommonData{Version: version.Version, Flag: version.Flag},
+		Cookie:     r.Cookies(),
 	}
 
-	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, r.Cookies()}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		logger.Log.Error(err, "[cookie] can't exectute template")
+	if err := assets.ExecuteTemplate(w, "cookie.html", data); err != nil {
+		logger.Log.Error(err, "[cookie] executing template")
 	}
-
 }
+
+// Ensure Handler implements handler.Handler.
+var _ handler.Handler = (*Handler)(nil)

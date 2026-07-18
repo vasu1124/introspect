@@ -3,205 +3,183 @@ package server
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/vasu1124/introspect/pkg/config"
-	"github.com/vasu1124/introspect/pkg/cookie"
-	"github.com/vasu1124/introspect/pkg/dynconfig"
-	"github.com/vasu1124/introspect/pkg/election"
-	"github.com/vasu1124/introspect/pkg/environ"
-	"github.com/vasu1124/introspect/pkg/guestbook"
-	"github.com/vasu1124/introspect/pkg/healthz"
+	"github.com/vasu1124/introspect/pkg/assets"
 	"github.com/vasu1124/introspect/pkg/logger"
-	"github.com/vasu1124/introspect/pkg/mandelbrot"
-	"github.com/vasu1124/introspect/pkg/middleware"
-	"github.com/vasu1124/introspect/pkg/operator"
-	"github.com/vasu1124/introspect/pkg/validate"
 	"github.com/vasu1124/introspect/pkg/version"
 )
 
 // Server struct
 type Server struct {
-	router *mux.Router
+	router   *http.ServeMux
+	handlers []Handler
+	config   *Config
 }
 
-// NewServer to get to a Server
-func NewServer() *Server {
+// Config holds server configuration.
+type Config struct {
+	Port         int
+	SecurePort   int
+	AssetDir     string
+	TLSCertFile  string
+	TLSKeyFile   string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
+}
+
+// DefaultConfig returns the default server configuration.
+func DefaultConfig() *Config {
+	return &Config{
+		Port:         8080,
+		SecurePort:   8443,
+		AssetDir:     "assets",
+		TLSCertFile:  "etc/tls/server.crt",
+		TLSKeyFile:   "etc/tls/server.key",
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+}
+
+// NewServer creates a new Server with the given config.
+func NewServer(cfg *Config) *Server {
+	if cfg == nil {
+		cfg = DefaultConfig()
+	}
+
 	srv := &Server{
-		router: mux.NewRouter(),
+		router:   http.NewServeMux(),
+		config:   cfg,
+		handlers: []Handler{}, // Handlers will be registered via RegisterHandlers
 	}
 
 	return srv
 }
 
-// Run starts the Server
+// RegisterHandlers registers all feature handlers with the server.
+// This is separate from NewServer to avoid import cycles.
+func (s *Server) RegisterHandlers(handlers []Handler) {
+	s.handlers = handlers
+}
+
+// Run starts the Server and blocks until the stop channel is closed.
 func (s *Server) Run(stop <-chan int) {
-	s.registerHandlers()
-	s.registerMiddlewares()
-
-	srv := s.startServer()
-	srvTLS := s.startServerTLS()
-
-	// wait for Shutdown
-	<-stop
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	rootCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	s.registerHandlers(rootCtx)
+
+	// Apply middlewares to the router
+	finalHandler := MiddlewareChain(s.router, DefaultMiddlewares()...)
+
+	srv := s.startServer(rootCtx, finalHandler)
+	srvTLS := s.startServerTLS(rootCtx, finalHandler)
+
+	// Wait for shutdown signal
+	<-stop
 	logger.Log.Info("[server] Initiated graceful shutdown of HTTP(S) server")
-	time.Sleep(1 * time.Second)
+	cancel()
+
+	// Give in-flight requests a moment to complete
+	time.Sleep(500 * time.Millisecond)
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
 
 	if srv != nil {
-		if err := srv.Shutdown(ctx); err != nil {
+		if err := srv.Shutdown(shutdownCtx); err != nil {
 			logger.Log.Error(err, "[server] Graceful HTTP server shutdown failed")
 		}
 	}
-
 	if srvTLS != nil {
-		if err := srvTLS.Shutdown(ctx); err != nil {
+		if err := srvTLS.Shutdown(shutdownCtx); err != nil {
 			logger.Log.Error(err, "[server] Graceful HTTPS server shutdown failed")
 		}
 	}
 }
 
-func (s *Server) startServer() *http.Server {
+func (s *Server) startServer(ctx context.Context, handler http.Handler) *http.Server {
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", config.Default.Port),
-		WriteTimeout: 30 * time.Second,
-		ReadTimeout:  30 * time.Second,
-		IdleTimeout:  60 * time.Second,
-		Handler:      s.router,
+		Addr:              fmt.Sprintf(":%d", s.config.Port),
+		ReadHeaderTimeout: s.config.ReadTimeout,
+		ReadTimeout:       s.config.ReadTimeout,
+		WriteTimeout:      s.config.WriteTimeout,
+		IdleTimeout:       s.config.IdleTimeout,
+		Handler:           handler,
 	}
 
 	go func() {
 		logger.Log.Info("[server] Serving HTTP", "HTTP", srv.Addr)
-		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Error(err, "[server] HTTP server crashed")
 		}
 	}()
 
+	// Small delay to ensure server is ready
+	time.Sleep(100 * time.Millisecond)
+
 	return srv
 }
 
-func (s *Server) startServerTLS() *http.Server {
-	if _, err := os.Stat("etc/tls/server.key"); err != nil {
+func (s *Server) startServerTLS(ctx context.Context, handler http.Handler) *http.Server {
+	if _, err := os.Stat(s.config.TLSKeyFile); err != nil {
 		return nil
 	}
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", config.Default.SecurePort),
-		WriteTimeout: 30 * time.Second,
-		ReadTimeout:  30 * time.Second,
-		IdleTimeout:  60 * time.Second,
-		Handler:      s.router,
+		Addr:              fmt.Sprintf(":%d", s.config.SecurePort),
+		ReadHeaderTimeout: s.config.ReadTimeout,
+		ReadTimeout:       s.config.ReadTimeout,
+		WriteTimeout:      s.config.WriteTimeout,
+		IdleTimeout:       s.config.IdleTimeout,
+		Handler:           handler,
 	}
 
 	go func() {
-		logger.Log.Info("[server] Serving HTTPS ", "HTTPS", srv.Addr)
-		if err := srv.ListenAndServeTLS("etc/tls/server.crt", "etc/tls/server.key"); err != http.ErrServerClosed {
+		logger.Log.Info("[server] Serving HTTPS", "HTTPS", srv.Addr)
+		if err := srv.ListenAndServeTLS(s.config.TLSCertFile, s.config.TLSKeyFile); err != nil && err != http.ErrServerClosed {
 			logger.Log.Error(err, "[server] HTTPS server crashed")
-
 		}
 	}()
 
 	return srv
 }
 
-func (s *Server) registerHandlers() {
-	s.router.HandleFunc("/", serveMenu)
-	logger.Log.Info("[server] registered /")
-	s.router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "tmpl/favicon.ico")
-	})
-	logger.Log.Info("[server] registered /favicon.ico")
-	s.router.PathPrefix("/css/").Handler(http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
-	logger.Log.Info("[server] registered /css")
-	s.router.HandleFunc("/mandelbrot/view", serveMandelbrotUI)
-	logger.Log.Info("[server] registered /mandelbrot/view")
-	s.router.Handle("/mandelbrot", mandelbrot.New())
-	logger.Log.Info("[server] registered /mandelbrot")
-	s.router.Handle("/environ", environ.New())
-	logger.Log.Info("[server] registered /environ")
-	s.router.Handle("/dynconfig", dynconfig.New())
-	logger.Log.Info("[server] registered /dynconfig")
-	s.router.Handle("/cookie", cookie.New())
-	logger.Log.Info("[server] registered /cookie")
-	s.router.Handle("/metrics", promhttp.Handler())
-	logger.Log.Info("[server] registered /metrics")
-	s.router.Handle("/validate", validate.New())
-	logger.Log.Info("[server] registered /validate")
-	s.router.Handle("/healthz", healthz.New())
-	s.router.Handle("/healthzr", healthz.New())
-	logger.Log.Info("[server] registered /healthz|r")
-	gh := guestbook.New()
-	s.router.Handle("/guestbook", gh)
-	s.router.HandleFunc("/guestbook/switch", gh.SwitchHandler)
-	logger.Log.Info("[server] registered /guestbook")
-	s.router.Handle("/election", election.New())
-	logger.Log.Info("[server] registered /election")
-	o := operator.New()
-	if o != nil {
-		s.router.Handle("/operator", o)
-		s.router.HandleFunc("/operatorws", func(w http.ResponseWriter, r *http.Request) {
-			o.Melody.HandleRequest(w, r)
-		})
-		logger.Log.Info("[server] registered /operator")
+func (s *Server) registerHandlers(ctx context.Context) {
+	// Initialize embedded templates
+	if err := assets.InitTemplates(); err != nil {
+		logger.Log.Error(err, "[server] failed to initialize templates")
 	}
 
-}
+	// Static routes
+	s.router.HandleFunc("/", serveMenu)
+	s.router.HandleFunc("/favicon.ico", assets.FaviconHandler())
+	s.router.Handle("/css/", assets.CSSHandler())
+	s.router.Handle("/metrics", promhttp.Handler())
 
-func (s *Server) registerMiddlewares() {
-	s.router.Use(middleware.NewRequestLoggerHandler)
+	// Register all feature handlers
+	for _, h := range s.handlers {
+		h.RegisterRoutes(s.router, ctx)
+	}
+
+	// Log all registered routes
+	logger.Log.Info("[server] All handlers registered")
 }
 
 func serveMenu(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/menu.html")
-	if err != nil {
-		logger.Log.Error(err, "[server] template parse error")
-		return
-	}
-	err = r.ParseForm()
-	if err != nil {
-		logger.Log.Error(err, "[server] ParseForm error")
+	data := struct {
+		assets.CommonData
+	}{
+		CommonData: assets.CommonData{Version: version.Version, Flag: version.Flag},
 	}
 
-	type EnvData struct {
-		Version string
-		Flag    bool
-	}
-	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		logger.Log.Error(err, "[server] executing template")
-		fmt.Fprint(w, "[server] executing template: ", err)
-	}
-}
-
-func serveMandelbrotUI(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/mandelbrot.html")
-	if err != nil {
-		logger.Log.Error(err, "[server] template parse error")
-		return
-	}
-	err = r.ParseForm()
-	if err != nil {
-		logger.Log.Error(err, "[server] ParseForm error")
-	}
-
-	type EnvData struct {
-		Version string
-		Flag    bool
-	}
-	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		logger.Log.Error(err, "[server] executing template")
-		fmt.Fprint(w, "[server] executing template: ", err)
+	if err := assets.ExecuteTemplate(w, "menu.html", data); err != nil {
+		logger.Log.Error(err, "[server] executing menu template")
+		http.Error(w, "Failed to render menu", http.StatusInternalServerError)
 	}
 }

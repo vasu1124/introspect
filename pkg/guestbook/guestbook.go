@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"github.com/vasu1124/introspect/pkg/assets"
+	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 	etcdv3 "go.etcd.io/etcd/client/v3"
@@ -23,271 +24,229 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Handler .
+// Backend is the interface for guestbook storage backends.
+type Backend interface {
+	Insert(ctx context.Context, entry Entry) error
+	Entries(ctx context.Context) ([]Entry, error)
+	Close() error
+	Ping(ctx context.Context) error
+}
+
+// Handler implements handler.Handler for the guestbook endpoint.
 type Handler struct {
-	dbtype       string
-	mongoClient  *mongo.Client
-	mongoColl    *mongo.Collection
-	etcdsession  *etcdv3.Client
-	valkeyClient *redis.Client
-	usernamefile string
-	passwordfile string
+	mu        sync.RWMutex
+	backend   Backend
+	dbtype    string
+	username  string
+	password  string
+	config    *viper.Viper
+	watcher   *fsnotify.Watcher
+	cancelCtx context.CancelFunc
 }
 
-// New .
+// Entry represents a guestbook entry.
+type Entry struct {
+	Date    time.Time
+	Name    string
+	Comment string
+}
+
+// New creates a new guestbook handler.
 func New() *Handler {
-	var h Handler
-	config := viper.New()
+	h := &Handler{}
 
-	config.SetConfigName("config")       // name of config file (without extension)
-	config.AddConfigPath("/etc/config/") // path to look for the config file in
-	config.AddConfigPath("./etc/config") // call multiple times to add many search paths
-	err := config.ReadInConfig()         // Find and read the config file
-	if err != nil {                      // Handle errors reading the config file
-		logger.Log.Error(err, "[guestbook] Fatal error config file")
-	}
-
-	h.usernamefile, _ = filepath.Abs("etc/secret/username") //try relative
-	if _, err := os.Stat(h.usernamefile); os.IsNotExist(err) {
-		h.usernamefile, _ = filepath.Abs("/etc/secret/username") //try absolute
-	}
-
-	h.passwordfile, _ = filepath.Abs("etc/secret/password") //try relative
-	if _, err := os.Stat(h.passwordfile); os.IsNotExist(err) {
-		h.passwordfile, _ = filepath.Abs("/etc/secret/password") //try absolute
-	}
-
-	//initally read and configure
-	h.readConfig(config)
-
-	//Establish a watch on config, username & password files
-	go h.watchConfig(config)
-
-	// don't ever close the mgosession. bad design. but good enough for demo
-	// defer h.mgosession.Close()
-	return &h
-}
-
-func (h *Handler) watchConfig(config *viper.Viper) {
-	// Do not use config.WatchConfig()... in pod:
-	// The config file that ConfigMap mounts in the pod is actually a symlink to a version of our config file.
-	// Thus when ConfigMap updates occur, kubernetes' AtomicWriter() can achieve atomic ConfigMap updates as follows:
-	// AtomicWriter() creates a new directory. Writes the updated ConfigMap to the new directory.
-	// Once the write is complete it removes the original config file symlink.
-	// And replaces it with a new symlink pointing to the contents of the newly created directory.
-
-	// config.WatchConfig()
-	// config.OnConfigChange(func(e fsnotify.Event) {
-	// 	log.Println("Config file changed:", e.Name)
-	// 	h.readConfig(config)
-	// })
-
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] fsnotify error")
-	}
-	defer watcher.Close()
-
-	watcher.Add(h.usernamefile)
-	watcher.Add(h.passwordfile)
-	watcher.Add(config.ConfigFileUsed())
-
-	done := make(chan bool)
-	go func() {
-		ticker := time.NewTicker(60 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case e := <-watcher.Events:
-				if e.Op&fsnotify.Write == fsnotify.Write { //standard change
-					logger.Log.Info("[guestbook] Config file changed", "file", e.Name)
-					h.readConfig(config)
-				}
-				if e.Op&fsnotify.Remove == fsnotify.Remove { //symlink remove change
-					logger.Log.Info("[guestbook] Config file removed", "file", e.Name)
-					watcher.Remove(e.Name)
-					watcher.Add(e.Name)
-					h.readConfig(config)
-				}
-			case err := <-watcher.Errors:
-				logger.Log.Error(err, "[guestbook] Watcher error")
-			case <-ticker.C:
-				if h.mongoClient == nil && h.etcdsession == nil && h.valkeyClient == nil {
-					logger.Log.Info("[guestbook] session try connect ...")
-					h.readConfig(config)
-				}
-			}
-		}
-	}()
-
-	<-done
-}
-
-func (h *Handler) readConfig(config *viper.Viper) {
-	err := config.ReadInConfig()
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] fatal error config file")
-		return
-	}
-
-	username, err := ioutil.ReadFile(h.usernamefile)
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] file error")
-		return
-	}
-
-	password, err := ioutil.ReadFile(h.passwordfile)
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] file error")
-		return
-	}
-
-	h.dbtype = config.Get("DBtype").(string)
-
-	switch h.dbtype {
-	case "mongodb":
-		addrs := config.GetStringSlice("Addrs")
-		database := config.GetString("Database")
-		if database == "" {
-			database = "guestbook"
-		}
-
-		if len(addrs) == 0 {
-			logger.Log.Error(nil, "[guestbook] No MongoDB addresses found in config")
-			return
-		}
-
-		uri := fmt.Sprintf("mongodb://%s", strings.Join(addrs, ","))
-		clientOpts := options.Client().ApplyURI(uri)
-		clientOpts.SetAuth(options.Credential{
-			Username: string(username),
-			Password: string(password),
-		})
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		client, err := mongo.Connect(ctx, clientOpts)
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] Failed MongoDB Connect", "Addrs", addrs, "Database", database)
-			h.mongoClient = nil
-			h.mongoColl = nil
-		} else {
-			// Verify connection
-			err = client.Ping(ctx, nil)
-			if err != nil {
-				logger.Log.Error(err, "[guestbook] Failed MongoDB Ping", "Addrs", addrs, "Database", database)
-				h.mongoClient = nil
-				h.mongoColl = nil
-			} else {
-				logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", addrs, "Database", database)
-				h.mongoClient = client
-				h.mongoColl = client.Database(database).Collection("guestbook")
-			}
-		}
-
-	case "etcd":
-		var etcdConfig etcdv3.Config
-		err = config.Unmarshal(&etcdConfig)
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] unable to decode into Etcdv3 Config struct")
-			return
-		}
-
-		etcdConfig.Username = string(username)
-		etcdConfig.Password = string(password)
-
-		h.etcdsession, err = etcdv3.New(etcdConfig)
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] Failed Etcdv3", "Endpoints", etcdConfig.Endpoints)
-			h.etcdsession = nil
-		} else {
-			logger.Log.Info("[guestbook] Connected to Etcdv3", "Endpoints", etcdConfig.Endpoints)
-		}
-
-	case "valkey":
-		valkeyAddr := config.GetString("ValkeyAddr")
-		if valkeyAddr == "" {
-			valkeyAddr = "valkey:6379"
-		}
-
-		h.valkeyClient = redis.NewClient(&redis.Options{
-			Addr:     valkeyAddr,
-			Password: "", // no password set
-			DB:       0,  // use default DB
-		})
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		err := h.valkeyClient.Ping(ctx).Err()
-		if err != nil {
-			logger.Log.Error(err, "[guestbook] Failed Valkey Ping", "Addr", valkeyAddr)
-			h.valkeyClient = nil
-		} else {
-			logger.Log.Info("[guestbook] Connected to Valkey", "Addr", valkeyAddr)
-		}
-	}
-
-}
-
-// SwitchBackend switches the database backend between mongodb and etcd
-func (h *Handler) SwitchBackend(backend string) error {
-	if backend != "mongodb" && backend != "etcd" && backend != "valkey" {
-		return fmt.Errorf("invalid backend: %s", backend)
-	}
-
-	// Close existing connections
-	if h.mongoClient != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		h.mongoClient.Disconnect(ctx)
-		h.mongoClient = nil
-		h.mongoColl = nil
-	}
-	if h.etcdsession != nil {
-		h.etcdsession.Close()
-		h.etcdsession = nil
-	}
-	if h.valkeyClient != nil {
-		h.valkeyClient.Close()
-		h.valkeyClient = nil
-	}
-
-	// Update the backend type
-	h.dbtype = backend
-
-	// Read config and reconnect
 	config := viper.New()
 	config.SetConfigName("config")
 	config.AddConfigPath("/etc/config/")
 	config.AddConfigPath("./etc/config")
-
-	err := config.ReadInConfig()
-	if err != nil {
-		logger.Log.Error(err, "[guestbook] error reading config during switch")
-		return err
+	if err := config.ReadInConfig(); err != nil {
+		logger.Log.Error(err, "[guestbook] Fatal error config file")
 	}
 
-	// Temporarily override the DBtype in config
-	config.Set("DBtype", backend)
+	h.loadSecrets()
+	h.config = config
 
+	ctx, cancel := context.WithCancel(context.Background())
+	h.cancelCtx = cancel
+
+	// Initialize backend from config
 	h.readConfig(config)
 
-	logger.Log.Info("[guestbook] Switched backend", "backend", backend)
-	return nil
+	// Start config watcher
+	go h.watchConfig(ctx, config)
+
+	return h
 }
 
-// SwitchHandler handles the switch request
+func (h *Handler) loadSecrets() {
+	usernamefile, _ := filepath.Abs("etc/secret/username")
+	if _, err := os.Stat(usernamefile); os.IsNotExist(err) {
+		usernamefile, _ = filepath.Abs("/etc/secret/username")
+	}
+	passwordfile, _ := filepath.Abs("etc/secret/password")
+	if _, err := os.Stat(passwordfile); os.IsNotExist(err) {
+		passwordfile, _ = filepath.Abs("/etc/secret/password")
+	}
+
+	if u, err := os.ReadFile(usernamefile); err == nil {
+		h.username = strings.TrimSpace(string(u))
+	}
+	if p, err := os.ReadFile(passwordfile); err == nil {
+		h.password = strings.TrimSpace(string(p))
+	}
+}
+
+func (h *Handler) readConfig(config *viper.Viper) {
+	if err := config.ReadInConfig(); err != nil {
+		logger.Log.Error(err, "[guestbook] fatal error config file")
+		return
+	}
+
+	dbtype := config.GetString("DBtype")
+	if dbtype == "" {
+		dbtype = "mongodb"
+	}
+
+	username := h.username
+	password := h.password
+
+	var backend Backend
+	var err error
+
+	switch dbtype {
+	case "mongodb":
+		backend, err = newMongoBackend(config, username, password)
+	case "etcd":
+		backend, err = newEtcdBackend(config, username, password)
+	case "valkey":
+		backend, err = newValkeyBackend(config)
+	default:
+		logger.Log.Error(nil, "[guestbook] Unknown DB type", "type", dbtype)
+	}
+
+	h.mu.Lock()
+	if h.backend != nil {
+		h.backend.Close()
+	}
+	h.backend = backend
+	h.dbtype = dbtype
+	h.mu.Unlock()
+
+	if err != nil {
+		logger.Log.Error(err, "[guestbook] Failed to init backend", "type", dbtype)
+	}
+}
+
+func (h *Handler) watchConfig(ctx context.Context, config *viper.Viper) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		logger.Log.Error(err, "[guestbook] fsnotify error")
+		return
+	}
+	h.watcher = watcher
+	defer watcher.Close()
+
+	watcher.Add(config.ConfigFileUsed())
+
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case e := <-watcher.Events:
+			if e.Op&fsnotify.Write == fsnotify.Write {
+				logger.Log.Info("[guestbook] Config file changed", "file", e.Name)
+				h.readConfig(config)
+			}
+			if e.Op&fsnotify.Remove == fsnotify.Remove {
+				logger.Log.Info("[guestbook] Config file removed", "file", e.Name)
+				watcher.Remove(e.Name)
+				watcher.Add(e.Name)
+				h.readConfig(config)
+			}
+		case err := <-watcher.Errors:
+			logger.Log.Error(err, "[guestbook] Watcher error")
+		case <-ticker.C:
+			h.mu.RLock()
+			needsReconnect := h.backend == nil
+			h.mu.RUnlock()
+			if needsReconnect {
+				h.readConfig(config)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// Name implements handler.Handler.
+func (h *Handler) Name() string {
+	return "guestbook"
+}
+
+// RegisterRoutes implements handler.Handler.
+func (h *Handler) RegisterRoutes(mux *http.ServeMux, ctx context.Context) {
+	mux.HandleFunc("/guestbook", h.ServeHTTP)
+	mux.HandleFunc("/guestbook/switch", h.SwitchHandler)
+	logger.Log.Info("[guestbook] registered /guestbook and /guestbook/switch")
+}
+
+// ServeHTTP handles the guestbook request.
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.mu.RLock()
+	backend := h.backend
+	dbtype := h.dbtype
+	h.mu.RUnlock()
+
+	var entries []Entry
+
+	if backend != nil {
+		if r.Form == nil {
+			r.ParseForm()
+		}
+
+		if r.Form["name"] != nil && r.Form["comment"] != nil &&
+			r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
+			entry := Entry{
+				Date:    time.Now(),
+				Name:    r.Form["name"][0],
+				Comment: r.Form["comment"][0],
+			}
+			if err := backend.Insert(r.Context(), entry); err != nil {
+				logger.Log.Error(err, "[guestbook] insert error")
+			}
+		}
+
+		entries, _ = backend.Entries(r.Context())
+	}
+
+	connected := backend != nil
+
+	data := struct {
+		assets.CommonData
+		Backend   string
+		Connected bool
+		Entries   []Entry
+	}{
+		CommonData: assets.CommonData{Version: version.Version, Flag: version.Flag},
+		Backend:    dbtype,
+		Connected:  connected,
+		Entries:    entries,
+	}
+
+	if err := assets.ExecuteTemplate(w, "guestbook.html", data); err != nil {
+		logger.Log.Error(err, "[guestbook] executing template")
+	}
+}
+
+// SwitchHandler handles backend switching.
 func (h *Handler) SwitchHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	err := r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		logger.Log.Error(err, "[guestbook] parsing form")
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
@@ -299,8 +258,7 @@ func (h *Handler) SwitchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.SwitchBackend(backend)
-	if err != nil {
+	if err := h.SwitchBackend(backend); err != nil {
 		logger.Log.Error(err, "[guestbook] switching backend")
 		http.Error(w, "Error switching backend", http.StatusInternalServerError)
 		return
@@ -309,143 +267,254 @@ func (h *Handler) SwitchHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/guestbook", http.StatusSeeOther)
 }
 
-// Entry .
-type Entry struct {
-	Date    time.Time
-	Name    string
-	Comment string
-}
+// SwitchBackend switches the database backend.
+func (h *Handler) SwitchBackend(backendType string) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/guestbook.html")
-	if err != nil {
-		fmt.Fprint(w, "[guestbook] parsing template error")
-		logger.Log.Error(err, "[guestbook] parsing template")
-		return
+	if backendType != "mongodb" && backendType != "etcd" && backendType != "valkey" {
+		return fmt.Errorf("invalid backend: %s", backendType)
 	}
 
-	err = r.ParseForm()
+	if h.backend != nil {
+		if err := h.backend.Close(); err != nil {
+			logger.Log.Error(err, "[guestbook] closing old backend")
+		}
+	}
+
+	var backend Backend
+	var err error
+
+	switch backendType {
+	case "mongodb":
+		backend, err = newMongoBackend(h.config, h.username, h.password)
+	case "etcd":
+		backend, err = newEtcdBackend(h.config, h.username, h.password)
+	case "valkey":
+		backend, err = newValkeyBackend(h.config)
+	}
+
+	h.backend = backend
+	h.dbtype = backendType
+
 	if err != nil {
-		fmt.Fprint(w, "[guestbook] parsing form error")
-		logger.Log.Error(err, "[guestbook] parsing form")
+		logger.Log.Error(err, "[guestbook] Failed to init backend", "type", backendType)
+		return err
+	}
+
+	logger.Log.Info("[guestbook] Switched backend", "backend", backendType)
+	return nil
+}
+
+// Close implements graceful shutdown.
+func (h *Handler) Close() error {
+	if h.cancelCtx != nil {
+		h.cancelCtx()
+	}
+	if h.watcher != nil {
+		h.watcher.Close()
+	}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.backend != nil {
+		return h.backend.Close()
+	}
+	return nil
+}
+
+// Ensure Handler implements handler.Handler.
+var _ handler.Handler = (*Handler)(nil)
+
+// --- MongoDB Backend ---
+
+type mongoBackend struct {
+	client  *mongo.Client
+	coll    *mongo.Collection
+}
+
+func newMongoBackend(config *viper.Viper, username, password string) (*mongoBackend, error) {
+	addrs := config.GetStringSlice("Addrs")
+	database := config.GetString("Database")
+	if database == "" {
+		database = "guestbook"
+	}
+
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("no MongoDB addresses in config")
+	}
+
+	uri := fmt.Sprintf("mongodb://%s", strings.Join(addrs, ","))
+	clientOpts := options.Client().ApplyURI(uri)
+	clientOpts.SetAuth(options.Credential{
+		Username: username,
+		Password: password,
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, clientOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := client.Ping(ctx, nil); err != nil {
+		return nil, err
+	}
+
+	coll := client.Database(database).Collection("guestbook")
+	logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", addrs, "Database", database)
+	return &mongoBackend{client: client, coll: coll}, nil
+}
+
+func (b *mongoBackend) Insert(ctx context.Context, entry Entry) error {
+	_, err := b.coll.InsertOne(ctx, entry)
+	return err
+}
+
+func (b *mongoBackend) Entries(ctx context.Context) ([]Entry, error) {
+	cursor, err := b.coll.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var entries []Entry
+	if err := cursor.All(ctx, &entries); err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func (b *mongoBackend) Close() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return b.client.Disconnect(ctx)
+}
+
+func (b *mongoBackend) Ping(ctx context.Context) error {
+	return b.client.Ping(ctx, nil)
+}
+
+// --- etcd Backend ---
+
+type etcdBackend struct {
+	client *etcdv3.Client
+}
+
+func newEtcdBackend(config *viper.Viper, username, password string) (*etcdBackend, error) {
+	var etcdConfig etcdv3.Config
+	if err := config.Unmarshal(&etcdConfig); err != nil {
+		return nil, err
+	}
+
+	etcdConfig.Username = username
+	etcdConfig.Password = password
+
+	client, err := etcdv3.New(etcdConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Log.Info("[guestbook] Connected to Etcdv3", "Endpoints", etcdConfig.Endpoints)
+	return &etcdBackend{client: client}, nil
+}
+
+func (b *etcdBackend) Insert(ctx context.Context, entry Entry) error {
+	data, err := json.Marshal(entry)
+	if err != nil {
+		return err
+	}
+	_, err = b.client.Put(ctx, entry.Name, string(data))
+	return err
+}
+
+func (b *etcdBackend) Entries(ctx context.Context) ([]Entry, error) {
+	resp, err := b.client.Get(ctx, "", etcdv3.WithPrefix())
+	if err != nil {
+		return nil, err
 	}
 
 	var entries []Entry
-
-	switch h.dbtype {
-	case "mongodb":
-		if h.mongoColl != nil {
-			if r.Form["name"] != nil && r.Form["comment"] != nil &&
-				r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
-				_, err = h.mongoColl.InsertOne(context.Background(), Entry{time.Now(), r.Form["name"][0], r.Form["comment"][0]})
-				if err != nil {
-					logger.Log.Error(err, "[guestbook] insert error")
-				}
-			}
-
-			cursor, err := h.mongoColl.Find(context.Background(), bson.D{})
-			if err != nil {
-				logger.Log.Error(err, "[guestbook] find error")
-			} else {
-				if err = cursor.All(context.Background(), &entries); err != nil {
-					logger.Log.Error(err, "[guestbook] cursor all error")
-				}
-			}
+	for _, kv := range resp.Kvs {
+		var entry Entry
+		if err := json.Unmarshal(kv.Value, &entry); err != nil {
+			logger.Log.Error(err, "[guestbook] etcd unmarshall error")
+			continue
 		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
 
-	case "etcd":
-		if h.etcdsession != nil {
-			if r.Form["name"] != nil && r.Form["comment"] != nil &&
-				r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
-				entry := Entry{
-					Date:    time.Now(),
-					Name:    r.Form["name"][0],
-					Comment: r.Form["comment"][0],
-				}
-				ret, err := json.Marshal(entry)
-				if err != nil {
-					logger.Log.Error(err, "[guestbook] marshall error")
-					return
-				}
-				_, err = h.etcdsession.Put(context.Background(), entry.Name, string(ret))
-				if err != nil {
-					logger.Log.Error(err, "[guestbook] insert error")
-				}
-			}
+func (b *etcdBackend) Close() error {
+	return b.client.Close()
+}
 
-			resp, err := h.etcdsession.Get(context.Background(), "", etcdv3.WithPrefix())
-			if err != nil {
-				logger.Log.Error(err, "[guestbook] get error")
-			}
+func (b *etcdBackend) Ping(ctx context.Context) error {
+	_, err := b.client.Status(ctx, b.client.Endpoints()[0])
+	return err
+}
 
-			for _, ev := range resp.Kvs {
-				var entry Entry
-				err = json.Unmarshal(ev.Value, &entry)
-				if err != nil {
-					logger.Log.Error(err, "[guestbook] unmarshall error")
-				}
-				entries = append(entries, entry)
-			}
-		}
-	case "valkey":
-		if h.valkeyClient != nil {
-			if r.Form["name"] != nil && r.Form["comment"] != nil &&
-				r.Form["name"][0] != "" && r.Form["comment"][0] != "" {
-				entry := Entry{
-					Date:    time.Now(),
-					Name:    r.Form["name"][0],
-					Comment: r.Form["comment"][0],
-				}
-				ret, err := json.Marshal(entry)
-				if err != nil {
-					logger.Log.Error(err, "[guestbook] marshall error")
-					return
-				}
-				// Use a list to store entries
-				err = h.valkeyClient.LPush(context.Background(), "guestbook", string(ret)).Err()
-				if err != nil {
-					logger.Log.Error(err, "[guestbook] valkey insert error")
-				}
-			}
+// --- Valkey/Redis Backend ---
 
-			// Get all entries from the list
-			valkeyEntries, err := h.valkeyClient.LRange(context.Background(), "guestbook", 0, -1).Result()
-			if err != nil {
-				logger.Log.Error(err, "[guestbook] valkey get error")
-			}
+type valkeyBackend struct {
+	client *redis.Client
+}
 
-			for _, ev := range valkeyEntries {
-				var entry Entry
-				err = json.Unmarshal([]byte(ev), &entry)
-				if err != nil {
-					logger.Log.Error(err, "[guestbook] unmarshall error")
-				}
-				entries = append(entries, entry)
-			}
-		}
+func newValkeyBackend(config *viper.Viper) (*valkeyBackend, error) {
+	addr := config.GetString("ValkeyAddr")
+	if addr == "" {
+		addr = "valkey:6379"
 	}
 
-	// Create data structure for template
-	type GuestbookData struct {
-		Backend   string
-		Connected bool
-		Entries   []Entry
-		Version   string
+	client := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: "",
+		DB:       0,
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, err
 	}
 
-	connected := (h.dbtype == "mongodb" && h.mongoClient != nil) || (h.dbtype == "etcd" && h.etcdsession != nil) || (h.dbtype == "valkey" && h.valkeyClient != nil)
-	data := GuestbookData{
-		Backend:   h.dbtype,
-		Connected: connected,
-		Entries:   entries,
-		Version:   version.Get().GitVersion,
-	}
+	logger.Log.Info("[guestbook] Connected to Valkey", "Addr", addr)
+	return &valkeyBackend{client: client}, nil
+}
 
-	err = t.Execute(w, data)
+func (b *valkeyBackend) Insert(ctx context.Context, entry Entry) error {
+	data, err := json.Marshal(entry)
 	if err != nil {
-		logger.Log.Error(err, "[guestbook] executing template")
-		fmt.Fprint(w, "[guestbook] executing template: ", err)
+		return err
+	}
+	return b.client.LPush(ctx, "guestbook", string(data)).Err()
+}
+
+func (b *valkeyBackend) Entries(ctx context.Context) ([]Entry, error) {
+	vals, err := b.client.LRange(ctx, "guestbook", 0, -1).Result()
+	if err != nil {
+		return nil, err
 	}
 
+	var entries []Entry
+	for _, v := range vals {
+		var entry Entry
+		if err := json.Unmarshal([]byte(v), &entry); err != nil {
+			logger.Log.Error(err, "[guestbook] valkey unmarshall error")
+			continue
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (b *valkeyBackend) Close() error {
+	return b.client.Close()
+}
+
+func (b *valkeyBackend) Ping(ctx context.Context) error {
+	return b.client.Ping(ctx).Err()
 }

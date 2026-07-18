@@ -26,7 +26,20 @@ var serverCmd = &cobra.Command{
 		)
 
 		stop := signal.Handler()
-		srv := server.NewServer()
+
+		cfg := &server.Config{
+			Port:         config.Default.Port,
+			SecurePort:   config.Default.SecurePort,
+			AssetDir:     config.Default.AssetDir,
+			TLSCertFile:  config.Default.TLSCertFile,
+			TLSKeyFile:   config.Default.TLSKeyFile,
+			ReadTimeout:  config.Default.ReadTimeout,
+			WriteTimeout: config.Default.WriteTimeout,
+			IdleTimeout:  config.Default.IdleTimeout,
+		}
+
+		srv := server.NewServer(cfg)
+		srv.RegisterHandlers(server.BuildHandlers())
 		srv.Run(stop)
 	},
 }

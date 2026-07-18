@@ -2,6 +2,7 @@ package mandelbrot
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"image/color"
 	"image/gif"
@@ -13,40 +14,69 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/vasu1124/introspect/pkg/assets"
 	"github.com/vasu1124/introspect/pkg/logger"
+	"github.com/vasu1124/introspect/pkg/version"
+	"github.com/vasu1124/introspect/pkg/handler"
+)
+
+var (
+	requestCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mandelbrot_requests_total",
+			Help: "Total number of requests to mandelbrot endpoint",
+		},
+		[]string{"proto"},
+	)
+	requestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "mandelbrot_request_duration_seconds",
+			Help:    "Request duration for mandelbrot endpoint",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"proto"},
+	)
 )
 
 func init() {
-	// Register the summary and the histogram with Prometheus's default registry.
-	prometheus.MustRegister(requestCount)
-	prometheus.MustRegister(requestDuration)
+	prometheus.MustRegister(requestCount, requestDuration)
 }
 
-// Handler .
+// Handler implements server.Handler for the mandelbrot endpoint.
 type Handler struct{}
 
-// New .
+// New creates a new mandelbrot handler.
 func New() *Handler {
-	var h Handler
-	return &h
+	return &Handler{}
 }
 
-func form2float64(form []string, def float64) (f float64) {
-	f = def
-	if form != nil {
-		f, _ = strconv.ParseFloat(form[0], 64)
-	}
-	return
+// Name implements server.Handler.
+func (h *Handler) Name() string {
+	return "mandelbrot"
 }
 
+// RegisterRoutes implements server.Handler.
+func (h *Handler) RegisterRoutes(mux *http.ServeMux, ctx context.Context) {
+	mux.HandleFunc("/mandelbrot/view", h.ServeView)
+	mux.Handle("/mandelbrot", h)
+	logger.Log.Info("[mandelbrot] registered /mandelbrot/view and /mandelbrot")
+}
+
+// ServeHTTP handles the mandelbrot image generation.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
+	defer func() {
+		duration := time.Since(start).Seconds() * 1e3
+		proto := strconv.Itoa(r.ProtoMajor) + "." + strconv.Itoa(r.ProtoMinor)
+		requestCount.WithLabelValues(proto).Inc()
+		requestDuration.WithLabelValues(proto).Observe(duration)
+	}()
 
 	if err := r.ParseForm(); err != nil {
 		logger.Log.Error(err, "[mandelbrot] ParseForm error")
 	}
 
-	var xmin, ymin, xmax, ymax float64 // = -2, -2, 2, 2
+	var xmin, ymin, xmax, ymax float64
 	xmin = form2float64(r.Form["xmin"], -1.8)
 	ymin = form2float64(r.Form["ymin"], -1.5)
 	xmax = form2float64(r.Form["xmax"], 1.2)
@@ -56,8 +86,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		img := mandelbrot(xmin, ymin, xmax, ymax)
 		png.Encode(w, img)
 	} else {
-		//	Scepter Variant -1.108, 0.230
-		var steps, xfmin, yfmin, xfmax, yfmax float64 // = 10, -1.110, 0.228, -1.106, 0.232
+		var steps, xfmin, yfmin, xfmax, yfmax float64
 		xfmin = form2float64(r.Form["xfmin"], -1.110)
 		yfmin = form2float64(r.Form["yfmin"], 0.228)
 		xfmax = form2float64(r.Form["xfmax"], -1.106)
@@ -77,8 +106,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			opt.NumColors = 256
 
 			gif.Encode(&buf, img, &opt)
-			gif, _ := gif.DecodeAll(&buf)
-			images = append(images, gif.Image[0])
+			g, _ := gif.DecodeAll(&buf)
+			images = append(images, g.Image[0])
 			delays = append(delays, 50)
 		}
 
@@ -87,17 +116,29 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Delay: delays,
 		})
 	}
-
-	duration := time.Since(start).Seconds() * 1e3 //time.Now().Sub(start).Seconds() * 1e3
-
-	proto := strconv.Itoa(r.ProtoMajor)
-	proto = proto + "." + strconv.Itoa(r.ProtoMinor)
-
-	requestCount.WithLabelValues(proto).Inc()
-	requestDuration.WithLabelValues(proto).Observe(duration)
 }
 
-// mandelbrot is famous
+// ServeView serves the mandelbrot UI page.
+func (h *Handler) ServeView(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		assets.CommonData
+	}{
+		CommonData: assets.CommonData{Version: version.Version, Flag: version.Flag},
+	}
+
+	if err := assets.ExecuteTemplate(w, "mandelbrot.html", data); err != nil {
+		logger.Log.Error(err, "[mandelbrot] executing template")
+	}
+}
+
+func form2float64(form []string, def float64) (f float64) {
+	f = def
+	if form != nil {
+		f, _ = strconv.ParseFloat(form[0], 64)
+	}
+	return
+}
+
 func mandelbrot(xmin, ymin, xmax, ymax float64) image.Image {
 	const (
 		width, height = 512, 512
@@ -126,11 +167,12 @@ func m(z complex128) color.Color {
 	for n := uint8(0); n < iterations; n++ {
 		v = v*v + z
 		if cmplx.Abs(v) > 2 {
-			//return color.Gray{255 - contrast*n}
-			//return color.RGBA{255 - contrast*n, 255, contrast * n, 255}
 			r, g, b := color.YCbCrToRGB(255, 255-contrast*n, 255-contrast*n)
 			return color.RGBA{r, g, b, 255}
 		}
 	}
 	return color.Black
 }
+
+// Ensure Handler implements handler.Handler.
+var _ handler.Handler = (*Handler)(nil)

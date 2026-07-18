@@ -1,12 +1,14 @@
 package validate
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
-	"html/template"
 	"net/http"
 	"regexp"
+	"sync"
 
+	"github.com/vasu1124/introspect/pkg/assets"
+	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 	admission "k8s.io/api/admission/v1"
@@ -15,21 +17,33 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// Handler .
+// Handler implements server.Handler for the validate endpoint.
 type Handler struct {
-	AdmissionReviews map[types.UID]*admission.AdmissionReview
-	Regexp           string
+	mu              sync.RWMutex
+	admissionReviews map[types.UID]*admission.AdmissionReview
+	regexp          string
 }
 
-// New .
+// New creates a new validate handler.
 func New() *Handler {
-	var h Handler
-	h.AdmissionReviews = map[types.UID]*admission.AdmissionReview{}
-	h.Regexp = ".*"
-
-	return &h
+	return &Handler{
+		admissionReviews: make(map[types.UID]*admission.AdmissionReview),
+		regexp:           ".*",
+	}
 }
 
+// Name implements server.Handler.
+func (h *Handler) Name() string {
+	return "validate"
+}
+
+// RegisterRoutes implements server.Handler.
+func (h *Handler) RegisterRoutes(mux *http.ServeMux, ctx context.Context) {
+	mux.HandleFunc("/validate", h.ServeHTTP)
+	logger.Log.Info("[validate] registered /validate")
+}
+
+// ServeHTTP handles both the webhook and the UI.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.UserAgent() != "kube-apiserver-admission" {
 		h.userUI(w, r)
@@ -41,39 +55,33 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) userUI(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Info("[validate] rendering ui")
 
-	logger.Log.Info("[validate] Regexp", "RegExp", h.Regexp)
+	h.mu.RLock()
+	regexp := h.regexp
+	h.mu.RUnlock()
+
 	if r.Method == "POST" {
 		err := r.ParseForm()
 		if err != nil {
 			logger.Log.Error(err, "[validate] error parsing form")
 		}
 		if r.Form["Regexp"] != nil {
-			h.Regexp = r.Form["Regexp"][0]
-			logger.Log.Info("[validate] setting Regexp", "RegExp", h.Regexp)
+			h.mu.Lock()
+			h.regexp = r.Form["Regexp"][0]
+			h.mu.Unlock()
+			logger.Log.Info("[validate] setting Regexp", "RegExp", h.regexp)
 		}
 	}
 
-	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/validate.html")
-	if err != nil {
-		logger.Log.Error(err, "[validate] error parsing template")
-		fmt.Fprint(w, "[validate] parse template: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	data := struct {
+		assets.CommonData
+		Regexp string
+	}{
+		CommonData: assets.CommonData{Version: version.Version, Flag: version.Flag},
+		Regexp:     regexp,
 	}
 
-	type EnvData struct {
-		Version string
-		Flag    bool
-		Handler *Handler
-	}
-
-	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, h}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		logger.Log.Error(err, "[validate] error executing template")
-		fmt.Fprint(w, "[validate] executing template: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
+	if err := assets.ExecuteTemplate(w, "validate.html", data); err != nil {
+		logger.Log.Error(err, "[validate] executing template")
 	}
 }
 
@@ -84,7 +92,7 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(ar)
 	if err != nil {
 		logger.Log.Error(err, "[validate] error decoding")
-		handleError(w, nil, err)
+		h.handleError(w, nil, err)
 		return
 	}
 
@@ -95,11 +103,11 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 	pod := &corev1.Pod{}
 	if err := json.Unmarshal(ar.Request.Object.Raw, pod); err != nil {
 		logger.Log.Error(err, "[validate] error unmarshalling")
-		handleError(w, nil, err)
+		h.handleError(w, nil, err)
 		return
 	}
 
-	re := regexp.MustCompile(h.Regexp)
+	re := regexp.MustCompile(h.getRegexp())
 
 	for _, c := range pod.Spec.Containers {
 		if !re.MatchString(c.Image) {
@@ -116,12 +124,29 @@ func (h *Handler) validate(w http.ResponseWriter, r *http.Request) {
 		Response: response,
 	}
 	ar.Response = response
-	h.AdmissionReviews[ar.Request.UID] = ar
+
+	h.mu.Lock()
+	h.admissionReviews[ar.Request.UID] = ar
+	// Keep map bounded - remove oldest if over 128 entries
+	if len(h.admissionReviews) > 128 {
+		for k := range h.admissionReviews {
+			delete(h.admissionReviews, k)
+			break
+		}
+	}
+	h.mu.Unlock()
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(responseAR)
 }
 
-func handleError(w http.ResponseWriter, ar *admission.AdmissionReview, err error) {
+func (h *Handler) getRegexp() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.regexp
+}
+
+func (h *Handler) handleError(w http.ResponseWriter, ar *admission.AdmissionReview, err error) {
 	w.WriteHeader(http.StatusOK)
 	if err != nil {
 		logger.Log.Error(err, "[validate] error webhook")
@@ -137,3 +162,6 @@ func handleError(w http.ResponseWriter, ar *admission.AdmissionReview, err error
 	ar.Response = response
 	json.NewEncoder(w).Encode(ar)
 }
+
+// Ensure Handler implements handler.Handler.
+var _ handler.Handler = (*Handler)(nil)

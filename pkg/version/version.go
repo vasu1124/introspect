@@ -16,6 +16,12 @@ var (
 	buildDate    = "1970-01-01T00:00:00Z"
 )
 
+// Version is the exported git version string.
+var Version = gitVersion
+
+// Flag is true when patch version is even (for UI toggling).
+var Flag = GetPatchVersion()%2 == 0
+
 // GetPatchVersion returns the patch version.
 func GetPatchVersion() int {
 	var version = strings.Split(gitVersion, ".")
@@ -41,6 +47,10 @@ func Get() apimachineryversion.Info {
 		gitMajor = version[0]
 		gitMinor = version[1]
 	}
+
+	// Update exported variables
+	Version = gitVersion
+	Flag = GetPatchVersion()%2 == 0
 
 	return apimachineryversion.Info{
 		Major:        gitMajor,

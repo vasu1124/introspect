@@ -2,15 +2,15 @@ package election
 
 import (
 	"context"
-	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/vasu1124/introspect/pkg/assets"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
+	"github.com/vasu1124/introspect/pkg/handler"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
@@ -65,37 +65,46 @@ func NewElectionState() *ElectionState {
 	}
 }
 
-// Handler .
+// Handler implements server.Handler for the election endpoint.
 type Handler struct {
 	leaderElector *leaderelection.LeaderElector
 	state         *ElectionState
+	hostname      string
 }
 
-// New .
+// New creates a new election handler.
 func New() *Handler {
-	var h Handler
-	var err error
+	h := &Handler{
+		state: NewElectionState(),
+	}
 
-	h.state = NewElectionState()
+	// Get hostname
+	hostname, err := os.Hostname()
+	if err != nil {
+		logger.Log.Error(err, "[election] Unable to get hostname")
+		hostname = "unknown"
+	}
+	h.hostname = hostname
 
-	// Create the client config. Use masterURL and kubeconfig if given, otherwise assume in-cluster.
+	// Create client config
 	rc, err := config.GetConfig()
 	if err != nil {
 		logger.Log.Error(err, "[election] KubeConfig error")
-		return &h
+		return h
 	}
 	kubeClient, err := clientset.NewForConfig(rc)
 	if err != nil {
 		logger.Log.Error(err, "[election] ClientSet error")
-		return &h
+		return h
 	}
 
-	// Set up leader election if enabled and prepare event recorder.
+	// Set up leader election
 	recorder := createRecorder(kubeClient)
 
-	leaderElectionConfig, err := makeLeaderElectionConfig(kubeClient, recorder)
+	leaderElectionConfig, err := makeLeaderElectionConfig(kubeClient, recorder, hostname)
 	if err != nil {
 		logger.Log.Error(err, "[election] leaderElectionConfig error")
+		return h
 	}
 
 	leaderElectionConfig.Callbacks = leaderelection.LeaderCallbacks{
@@ -115,21 +124,17 @@ func New() *Handler {
 			logger.Log.Info("[election] Got informed. Leadership is with", "leadership", identity)
 		},
 	}
+
 	h.leaderElector, err = leaderelection.NewLeaderElector(*leaderElectionConfig)
 	if err != nil {
 		logger.Log.Error(err, "[election] leaderElection error")
+		return h
 	}
-	go h.leaderElector.Run(context.Background())
 
-	return &h
+	return h
 }
 
-func makeLeaderElectionConfig(client *clientset.Clientset, recorder record.EventRecorder) (*leaderelection.LeaderElectionConfig, error) {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get hostname: %v", err)
-	}
-
+func makeLeaderElectionConfig(client *clientset.Clientset, recorder record.EventRecorder, hostname string) (*leaderelection.LeaderElectionConfig, error) {
 	namespace, exists := os.LookupEnv("NAMESPACE")
 	if !exists {
 		namespace = "default"
@@ -162,34 +167,40 @@ func createRecorder(kubeClient *clientset.Clientset) record.EventRecorder {
 	return eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: "introspect-election"})
 }
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("tmpl/layout.html", "tmpl/leadership.html")
-	if err != nil {
-		logger.Log.Error(err, "[election] error parsing template")
-		fmt.Fprint(w, "[election] error parsing template: ", err)
-		return
-	}
+// Name implements server.Handler.
+func (h *Handler) Name() string {
+	return "election"
+}
 
-	type EnvData struct {
-		Version        string
-		Flag           bool
+// RegisterRoutes implements server.Handler.
+func (h *Handler) RegisterRoutes(mux *http.ServeMux, ctx context.Context) {
+	mux.HandleFunc("/election", h.ServeHTTP)
+	logger.Log.Info("[election] registered /election")
+
+	// Start leader election with the server context
+	go h.leaderElector.Run(ctx)
+}
+
+// ServeHTTP handles the election page request.
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		assets.CommonData
 		Leader         bool
 		Fail           bool
 		LeaderElection *leaderelection.LeaderElector
 		Hostname       string
+	}{
+		CommonData:     assets.CommonData{Version: version.Version, Flag: version.Flag},
+		Leader:         h.state.Leader(),
+		Fail:           h.state.Fail(),
+		LeaderElection: h.leaderElector,
+		Hostname:       h.hostname,
 	}
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		logger.Log.Error(err, "[election] Unable to get hostname")
-		fmt.Fprint(w, "[election] unable to get hostname: ", err)
+	if err := assets.ExecuteTemplate(w, "leadership.html", data); err != nil {
+		logger.Log.Error(err, "[election] executing template")
 	}
-	data := EnvData{version.Get().GitVersion, version.GetPatchVersion()%2 == 0, h.state.Leader(), h.state.Fail(), h.leaderElector, hostname}
-
-	err = t.Execute(w, data)
-	if err != nil {
-		logger.Log.Error(err, "[election] error executing template")
-		fmt.Fprint(w, "[election] error executing template: ", err)
-	}
-
 }
+
+// Ensure Handler implements handler.Handler.
+var _ handler.Handler = (*Handler)(nil)
