@@ -39,13 +39,13 @@
         </div>
         
         <!-- Toggle Switch -->
-        <label class="toggle-switch relative inline-flex items-center cursor-pointer" title="Toggle Liveness (Alive/Dead)">
+        <label class="relative inline-flex items-center cursor-pointer" title="Toggle Liveness (Alive/Dead)">
           <input type="checkbox" id="liveness-switch" class="sr-only peer" checked aria-label="Liveness probe status">
-          <div class="toggle-track w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-green-500 peer-checked:border-green-500"></div>
-          <div class="toggle-thumb absolute w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
-          <div class="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
-            <span class="text-xs font-medium text-gray-500 peer-checked:opacity-0 transition-opacity">DEAD</span>
-            <span class="text-xs font-medium text-gray-500 opacity-0 peer-checked:opacity-100 transition-opacity text-green-400">ALIVE</span>
+          <div class="w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-green-500 peer-checked:border-green-500"></div>
+          <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
+          <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-medium pointer-events-none">
+            <span class="text-gray-500 transition-opacity duration-300 peer-checked:opacity-0"></span>
+            <span class="text-gray-500 text-green-400 opacity-0 transition-opacity duration-300 peer-checked:opacity-100"></span>
           </div>
         </label>
       </div>
@@ -77,13 +77,13 @@
         </div>
         
         <!-- Toggle Switch -->
-        <label class="toggle-switch relative inline-flex items-center cursor-pointer" title="Toggle Readiness (Ready/Not Ready)">
+        <label class="relative inline-flex items-center cursor-pointer" title="Toggle Readiness (Ready/Not Ready)">
           <input type="checkbox" id="readiness-switch" class="sr-only peer" checked aria-label="Readiness probe status">
-          <div class="toggle-track w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-emerald-500 peer-checked:border-emerald-500"></div>
-          <div class="toggle-thumb absolute w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
-          <div class="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
-            <span class="text-xs font-medium text-gray-500 peer-checked:opacity-0 transition-opacity">NOT READY</span>
-            <span class="text-xs font-medium text-gray-500 opacity-0 peer-checked:opacity-100 transition-opacity text-emerald-400">READY</span>
+          <div class="w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-emerald-500 peer-checked:border-emerald-500"></div>
+          <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
+          <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-medium pointer-events-none">
+            <span class="text-gray-500 transition-opacity duration-300 peer-checked:opacity-0"></span>
+            <span class="text-gray-500 text-emerald-400 opacity-0 transition-opacity duration-300 peer-checked:opacity-100"></span>
           </div>
         </label>
       </div>
@@ -216,7 +216,7 @@ function updateReadinessUI(ready, statusCode) {
 async function sendHealthRequest(url, action) {
   try {
     const response = await fetch(`${url}?${action}`, { method: 'GET' });
-    return { ok: response.ok, status: response.status };
+    return { ok: true, status: response.status };
   } catch (err) {
     console.error('Health request failed:', err);
     return { ok: false, status: 0, error: err.message };
