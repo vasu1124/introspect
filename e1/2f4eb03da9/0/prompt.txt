@@ -1,0 +1,25 @@
+simplify the html handling. they should not be managed twice, once under /css, /tmpl and duplicate under /pkg/assets/css,tmpl. this is unacceptable.
+
+---
+
+remove the go:embedd of css and tmpl. serve from local files
+
+---
+
+update AGENTS.md
+
+---
+
+the health check switches in healthz.html are not working
+
+---
+
+the toggle is working. the UI is just not updated with the toggle state and the updated http code.
+
+---
+
+the state of the switch (on/off) is not represented correctly
+
+---
+
+use a standard css toggle from tailwindcss. do not create own switch.css file.
