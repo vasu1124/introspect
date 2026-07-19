@@ -1,0 +1,5 @@
+for the UI, liveness and readiness check, create a UI switch (displayed underneath each check), that in the background sends a ?die or ?live request
+
+---
+
+the buttons "Set Alive", "Set Dead", "Check Status" do not work
