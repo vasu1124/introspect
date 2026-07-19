@@ -1,7 +1,10 @@
 package server
 
 import (
+	"bufio"
+	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -73,7 +76,7 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 		duration := time.Since(start).Seconds()
 
-		httpRequestsTotal.WithLabelValues(r.Method, path, string(rune(lrw.statusCode))).Inc()
+		httpRequestsTotal.WithLabelValues(r.Method, path, strconv.Itoa(lrw.statusCode)).Inc()
 		httpRequestDuration.WithLabelValues(r.Method, path).Observe(duration)
 	})
 }
@@ -100,6 +103,15 @@ type loggingResponseWriter struct {
 func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.statusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
+}
+
+// Hijack implements http.Hijacker for WebSocket support.
+func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := lrw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, http.ErrNotSupported
+	}
+	return h.Hijack()
 }
 
 // DefaultMiddlewares returns the standard middleware chain for the server.
