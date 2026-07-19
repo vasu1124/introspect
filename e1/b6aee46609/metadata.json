@@ -3,7 +3,7 @@
   "checkpoint_id": "e1b6aee46609",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "pkg/assets/tmpl/healthz.html",
     "pkg/assets/tmpl/menu.html",
@@ -17,13 +17,20 @@
       "compact_transcript": "/e1/b6aee46609/0/transcript.jsonl",
       "content_hash": "/e1/b6aee46609/0/content_hash.txt",
       "prompt": "/e1/b6aee46609/0/prompt.txt"
+    },
+    {
+      "metadata": "/e1/b6aee46609/1/metadata.json",
+      "transcript": "/e1/b6aee46609/1/full.jsonl",
+      "compact_transcript": "/e1/b6aee46609/1/transcript.jsonl",
+      "content_hash": "/e1/b6aee46609/1/content_hash.txt",
+      "prompt": "/e1/b6aee46609/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 650134,
+    "input_tokens": 944291,
     "cache_creation_tokens": 0,
-    "cache_read_tokens": 7124224,
-    "output_tokens": 43217,
-    "api_call_count": 112
+    "cache_read_tokens": 9287168,
+    "output_tokens": 53486,
+    "api_call_count": 193
   }
 }
