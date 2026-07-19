@@ -1,0 +1,60 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "8ca44f170955",
+  "session_id": "019f79f6-08b6-7fb0-92f8-1fe80fb978c4",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-19T11:00:32.643926Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "pkg/assets/assets.go",
+    "pkg/assets/tmpl/menu.html"
+  ],
+  "agent": "Pi",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+  "turn_id": "880a4fac0ba9",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 294157,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 2162944,
+    "output_tokens": 10269,
+    "api_call_count": 81
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-19T11:00:32.629822Z",
+    "agent_lines": 0,
+    "agent_removed": 1,
+    "human_added": 0,
+    "human_modified": 3,
+    "human_removed": 276,
+    "total_committed": 4,
+    "total_lines_changed": 2465,
+    "agent_percentage": 0.04056795131845842,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 1043,
+      "user_lines_removed": 30,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "TASK.md": 245,
+        "pkg/assets/tmpl/healthz.html": 341,
+        "pkg/assets/tmpl/menu.html": 22,
+        "pkg/healthz/healthz.go": 74,
+        "tmpl/healthz.html": 339,
+        "tmpl/menu.html": 22
+      },
+      "user_removed_per_file": {
+        "pkg/healthz/healthz.go": 30
+      }
+    }
+  ]
+}
