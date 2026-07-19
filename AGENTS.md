@@ -49,8 +49,8 @@ introspect/
 │   ├── network/          # Network info
 │   └── osinfo/           # OS info (build tags: linux/darwin)
 ├── kubernetes/           # K8s manifests (kapp/kustomize)
-├── tmpl/                 # Source HTML templates (copied to pkg/assets/tmpl at build)
-├── css/                  # Source CSS
+├── tmpl/                 # Source HTML templates (served from filesystem)
+├── css/                  # Source CSS/JS (served from filesystem)
 ├── etc/config/           # Example config files
 ├── hack/                 # Build scripts (TLS certs, etc.)
 ├── Tiltfile              # Tilt dev workflow
@@ -93,9 +93,10 @@ Zap-based, implements `logr.Logger` interface. Used throughout via `logger.Log`.
 - `config.Default.LogLevel` controls verbosity
 
 ### Templates & Assets (pkg/assets/)
-- Go:embed templates at build time (`assets/assets.go`)
-- HTML templates in `pkg/assets/tmpl/`
-- CSS served from embedded FS (`assets.CSSHandler()`)
+- Serve templates from filesystem at `/tmpl/` (`assets.ExecuteTemplate`)
+- Serve CSS/JS from filesystem at `/css/` (`assets.CSSHandler()`)
+- Templates parsed per-request with layout + page
+- No build-time embedding or code generation needed
 
 ---
 
@@ -189,7 +190,7 @@ go run ./cmd --log-level=debug --development
 ```bash
 # 1. Create pkg/newfeature/newfeature.go
 # 2. Implement handler.Handler
-# 3. Add template to pkg/assets/tmpl/newfeature.html
+# 3. Add template to tmpl/newfeature.html
 # 4. Register in pkg/server/handlers.go
 # 5. Add config if needed to pkg/config/config.go
 # 6. Test: go run ./cmd
@@ -258,7 +259,7 @@ go mod verify
 - **Context**: Always pass `ctx` through call chains; respect cancellation
 - **Naming**: `Handler` for HTTP handlers; `Backend` for storage interfaces; `New()` constructors
 - **Interfaces**: Keep small (`Handler`, `Closer`, `Backend`); define in `pkg/handler/`, `pkg/guestbook/`
-- **Templates**: Use `assets.ExecuteTemplate(w, "name.html", data)` — handles embedding
+- **Templates**: Use `assets.ExecuteTemplate(w, "name.html", data)` — reads from filesystem at `tmpl/`
 
 ---
 
@@ -273,7 +274,7 @@ go mod verify
 | `pkg/handler/handler.go` | Handler interface |
 | `pkg/config/config.go` | Central config struct |
 | `pkg/logger/logger.go` | Logging setup |
-| `pkg/assets/assets.go` | Template embedding |
+| `pkg/assets/assets.go` | Template/CSS filesystem serving |
 | `pkg/election/election.go` | Leader election (race-prone) |
 | `pkg/guestbook/guestbook.go` | Multi-backend guestbook |
 | `pkg/operator/operator.go` | Operator + controller-runtime |
@@ -294,7 +295,7 @@ go mod verify
 **DON'T:**
 - ❌ Create global mutable state without mutex/atomic
 - ❌ Use `context.Background()` in request handlers
-- ❌ Read templates from filesystem at runtime
+- ❌ Read templates from filesystem at runtime (use `assets.ExecuteTemplate` which does this efficiently)
 - ❌ Add dependencies without `go mod tidy` + verification
 - ❌ Skip `make fmt vet` before committing
 
