@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "cd1cd9a79f6f",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "pkg/guestbook/guestbook.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/cd/1cd9a79f6f/0/metadata.json",
+      "transcript": "/cd/1cd9a79f6f/0/full.jsonl",
+      "compact_transcript": "/cd/1cd9a79f6f/0/transcript.jsonl",
+      "content_hash": "/cd/1cd9a79f6f/0/content_hash.txt",
+      "prompt": "/cd/1cd9a79f6f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 167515,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 792064,
+    "output_tokens": 5725,
+    "api_call_count": 30
+  }
+}
