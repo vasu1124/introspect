@@ -1,0 +1,9 @@
+simplify the html handling. they should not be managed twice, once under /css, /tmpl and duplicate under /pkg/assets/css,tmpl. this is unacceptable.
+
+---
+
+remove the go:embedd of css and tmpl. serve from local files
+
+---
+
+update AGENTS.md
