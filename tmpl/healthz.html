@@ -1,0 +1,341 @@
+{{define "title"}}Introspect - Health Checks{{end}}
+
+{{define "content"}}
+<div class="space-y-8">
+  <!-- Hero Section -->
+  <div class="text-center space-y-4 py-8">
+    <h1
+      class="text-5xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 bg-clip-text text-transparent animate-pulse-slow">
+      Health Checks
+    </h1>
+    <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+      Monitor and control Kubernetes liveness and readiness probes for this pod
+    </p>
+  </div>
+
+  <!-- Liveness Check Card -->
+  <div class="glass rounded-2xl p-6 border border-green-500/20">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div class="flex items-center space-x-4">
+        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+            </path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-white">Liveness Probe <span class="text-sm font-normal text-gray-400 ml-2">(/healthz)</span></h3>
+          <p class="text-sm text-gray-400 mt-1">Kubernetes liveness probe - determines if pod should be restarted</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-6">
+        <!-- Status Indicator -->
+        <div class="flex items-center space-x-3">
+          <div id="liveness-indicator" class="w-4 h-4 rounded-full bg-green-500 animate-pulse" title="Alive"></div>
+          <span id="liveness-text" class="text-sm font-medium text-green-400">Alive</span>
+          <span id="liveness-code-badge" class="px-2 py-1 text-xs font-mono bg-green-500/20 text-green-300 rounded">200</span>
+        </div>
+        
+        <!-- Toggle Switch -->
+        <label class="toggle-switch relative inline-flex items-center cursor-pointer" title="Toggle Liveness (Alive/Dead)">
+          <input type="checkbox" id="liveness-switch" class="sr-only peer" checked aria-label="Liveness probe status">
+          <div class="toggle-track w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-green-500 peer-checked:border-green-500"></div>
+          <div class="toggle-thumb absolute w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
+          <div class="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
+            <span class="text-xs font-medium text-gray-500 peer-checked:opacity-0 transition-opacity">DEAD</span>
+            <span class="text-xs font-medium text-gray-500 opacity-0 peer-checked:opacity-100 transition-opacity text-green-400">ALIVE</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Readiness Check Card -->
+  <div class="glass rounded-2xl p-6 border border-emerald-500/20">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div class="flex items-center space-x-4">
+        <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-white">Readiness Probe <span class="text-sm font-normal text-gray-400 ml-2">(/healthzr)</span></h3>
+          <p class="text-sm text-gray-400 mt-1">Kubernetes readiness probe - determines if pod receives traffic</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-6">
+        <!-- Status Indicator -->
+        <div class="flex items-center space-x-3">
+          <div id="readiness-indicator" class="w-4 h-4 rounded-full bg-emerald-500 animate-pulse" title="Ready"></div>
+          <span id="readiness-text" class="text-sm font-medium text-emerald-400">Ready</span>
+          <span id="readiness-code-badge" class="px-2 py-1 text-xs font-mono bg-emerald-500/20 text-emerald-300 rounded">200</span>
+        </div>
+        
+        <!-- Toggle Switch -->
+        <label class="toggle-switch relative inline-flex items-center cursor-pointer" title="Toggle Readiness (Ready/Not Ready)">
+          <input type="checkbox" id="readiness-switch" class="sr-only peer" checked aria-label="Readiness probe status">
+          <div class="toggle-track w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-emerald-500 peer-checked:border-emerald-500"></div>
+          <div class="toggle-thumb absolute w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
+          <div class="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
+            <span class="text-xs font-medium text-gray-500 peer-checked:opacity-0 transition-opacity">NOT READY</span>
+            <span class="text-xs font-medium text-gray-500 opacity-0 peer-checked:opacity-100 transition-opacity text-emerald-400">READY</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Section -->
+  <div class="glass rounded-2xl p-6">
+    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      How It Works
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-300">
+      <div class="space-y-3">
+        <h4 class="font-medium text-gray-200 flex items-center">
+          <svg class="w-4 h-4 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Liveness Probe (/healthz)
+        </h4>
+        <ul class="space-y-1 ml-6 list-disc">
+          <li><code>GET /healthz?die</code> - Sets liveness to <span class="text-red-400">500</span> (pod will be restarted)</li>
+          <li><code>GET /healthz?live</code> - Sets liveness to <span class="text-green-400">200</span> (pod is healthy)</li>
+          <li>Default: <span class="text-green-400">200 OK</span></li>
+          <li>Kubernetes restarts pod when liveness fails</li>
+        </ul>
+      </div>
+      <div class="space-y-3">
+        <h4 class="font-medium text-gray-200 flex items-center">
+          <svg class="w-4 h-4 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Readiness Probe (/healthzr)
+        </h4>
+        <ul class="space-y-1 ml-6 list-disc">
+          <li><code>GET /healthzr?die</code> - Sets readiness to <span class="text-red-400">503</span> (pod removed from service)</li>
+          <li><code>GET /healthzr?live</code> - Sets readiness to <span class="text-emerald-400">200</span> (pod receives traffic)</li>
+          <li>Default: <span class="text-emerald-400">200 OK</span></li>
+          <li>Kubernetes stops sending traffic when readiness fails</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kubernetes Probe Config Reference -->
+  <div class="glass rounded-2xl p-6 border border-primary-500/20">
+    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 16l4-16M6 16l-4-16m16 16l-4-16M3 12h18"></path>
+      </svg>
+      Kubernetes Probe Configuration Reference
+    </h3>
+    <pre class="bg-gray-900/50 rounded-xl p-4 overflow-x-auto text-sm text-gray-300"><code>livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 9090
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /healthzr
+    port: 9090
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 3</code></pre>
+  </div>
+</div>
+
+<!-- Health Check Status Script -->
+<script>
+// Health check endpoints
+const HEALTHZ_URL = '/healthz';
+const HEALTHZR_URL = '/healthzr';
+
+// State tracking
+let livenessAlive = true;
+let readinessReady = true;
+
+// Update UI for liveness
+function updateLivenessUI(alive, statusCode) {
+  livenessAlive = alive;
+  const statusEl = document.getElementById('liveness-indicator');
+  const textEl = document.getElementById('liveness-text');
+  const codeEl = document.getElementById('liveness-code-badge');
+  const switchEl = document.getElementById('liveness-switch');
+  
+  if (alive) {
+    statusEl.className = 'w-4 h-4 rounded-full bg-green-500 animate-pulse';
+    textEl.className = 'text-sm font-medium text-green-400';
+    textEl.textContent = 'Alive';
+    codeEl.textContent = statusCode || 200;
+    codeEl.className = 'px-2 py-1 text-xs font-mono bg-green-500/20 text-green-300 rounded';
+    switchEl.checked = true;
+  } else {
+    statusEl.className = 'w-4 h-4 rounded-full bg-red-500';
+    textEl.className = 'text-sm font-medium text-red-400';
+    textEl.textContent = 'Dead';
+    codeEl.textContent = statusCode || 500;
+    codeEl.className = 'px-2 py-1 text-xs font-mono bg-red-500/20 text-red-300 rounded';
+    switchEl.checked = false;
+  }
+}
+
+// Update UI for readiness
+function updateReadinessUI(ready, statusCode) {
+  readinessReady = ready;
+  const statusEl = document.getElementById('readiness-indicator');
+  const textEl = document.getElementById('readiness-text');
+  const codeEl = document.getElementById('readiness-code-badge');
+  const switchEl = document.getElementById('readiness-switch');
+  
+  if (ready) {
+    statusEl.className = 'w-4 h-4 rounded-full bg-emerald-500 animate-pulse';
+    textEl.className = 'text-sm font-medium text-emerald-400';
+    textEl.textContent = 'Ready';
+    codeEl.textContent = statusCode || 200;
+    codeEl.className = 'px-2 py-1 text-xs font-mono bg-emerald-500/20 text-emerald-300 rounded';
+    switchEl.checked = true;
+  } else {
+    statusEl.className = 'w-4 h-4 rounded-full bg-red-500';
+    textEl.className = 'text-sm font-medium text-red-400';
+    textEl.textContent = 'Not Ready';
+    codeEl.textContent = statusCode || 503;
+    codeEl.className = 'px-2 py-1 text-xs font-mono bg-red-500/20 text-red-300 rounded';
+    switchEl.checked = false;
+  }
+}
+
+// Send request to health endpoint
+async function sendHealthRequest(url, action) {
+  try {
+    const response = await fetch(`${url}?${action}`, { method: 'GET' });
+    return { ok: response.ok, status: response.status };
+  } catch (err) {
+    console.error('Health request failed:', err);
+    return { ok: false, status: 0, error: err.message };
+  }
+}
+
+// Check current status
+async function checkLiveness() {
+  try {
+    const response = await fetch(HEALTHZ_URL);
+    updateLivenessUI(response.ok, response.status);
+  } catch (err) {
+    console.error('Liveness check failed:', err);
+    updateLivenessUI(false, 0);
+  }
+}
+
+async function checkReadiness() {
+  try {
+    const response = await fetch(HEALTHZR_URL);
+    updateReadinessUI(response.ok, response.status);
+  } catch (err) {
+    console.error('Readiness check failed:', err);
+    updateReadinessUI(false, 0);
+  }
+}
+
+// Toggle liveness via switch
+async function toggleLiveness() {
+  const switchEl = document.getElementById('liveness-switch');
+  const action = switchEl.checked ? 'live' : 'die';
+  
+  switchEl.disabled = true;
+  const result = await sendHealthRequest(HEALTHZ_URL, action);
+  
+  if (result.ok) {
+    updateLivenessUI(switchEl.checked, result.status);
+  } else {
+    switchEl.checked = !switchEl.checked;
+    console.error('Failed to toggle liveness:', result);
+  }
+  switchEl.disabled = false;
+}
+
+// Toggle readiness via switch
+async function toggleReadiness() {
+  const switchEl = document.getElementById('readiness-switch');
+  const action = switchEl.checked ? 'live' : 'die';
+  
+  switchEl.disabled = true;
+  const result = await sendHealthRequest(HEALTHZR_URL, action);
+  
+  if (result.ok) {
+    updateReadinessUI(switchEl.checked, result.status);
+  } else {
+    switchEl.checked = !switchEl.checked;
+    console.error('Failed to toggle readiness:', result);
+  }
+  switchEl.disabled = false;
+}
+
+// Button handlers
+async function setLivenessLive() {
+  const btn = document.getElementById('liveness-live-btn');
+  btn.disabled = true;
+  const result = await sendHealthRequest(HEALTHZ_URL, 'live');
+  if (result.ok) updateLivenessUI(true, result.status);
+  btn.disabled = false;
+}
+
+async function setLivenessDie() {
+  const btn = document.getElementById('liveness-die-btn');
+  btn.disabled = true;
+  const result = await sendHealthRequest(HEALTHZ_URL, 'die');
+  if (result.ok) updateLivenessUI(false, result.status);
+  btn.disabled = false;
+}
+
+async function setReadinessLive() {
+  const btn = document.getElementById('readiness-live-btn');
+  btn.disabled = true;
+  const result = await sendHealthRequest(HEALTHZR_URL, 'live');
+  if (result.ok) updateReadinessUI(true, result.status);
+  btn.disabled = false;
+}
+
+async function setReadinessDie() {
+  const btn = document.getElementById('readiness-die-btn');
+  btn.disabled = true;
+  const result = await sendHealthRequest(HEALTHZR_URL, 'die');
+  if (result.ok) updateReadinessUI(false, result.status);
+  btn.disabled = false;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  // Initial status check
+  checkLiveness();
+  checkReadiness();
+  
+  // Switch listeners
+  document.getElementById('liveness-switch').addEventListener('change', toggleLiveness);
+  document.getElementById('readiness-switch').addEventListener('change', toggleReadiness);
+  
+  // Button listeners
+  document.getElementById('liveness-live-btn').addEventListener('click', setLivenessLive);
+  document.getElementById('liveness-die-btn').addEventListener('click', setLivenessDie);
+  document.getElementById('liveness-check-btn').addEventListener('click', checkLiveness);
+  document.getElementById('readiness-live-btn').addEventListener('click', setReadinessLive);
+  document.getElementById('readiness-die-btn').addEventListener('click', setReadinessDie);
+  document.getElementById('readiness-check-btn').addEventListener('click', checkReadiness);
+  
+  // Periodic status check (every 10 seconds)
+  setInterval(() => {
+    checkLiveness();
+    checkReadiness();
+  }, 10000);
+});
+</script>
+{{end}}
+
+{{template "layout.html" .}}

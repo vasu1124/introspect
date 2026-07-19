@@ -1,18 +1,19 @@
 package assets
 
 import (
-	"embed"
 	"html/template"
-	"io/fs"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
-//go:embed ../../tmpl/*
-var templateFS embed.FS
-
-//go:embed ../../scss/*
-var cssFS embed.FS
+var (
+	// TemplateDir is the directory containing HTML templates
+	TemplateDir = "tmpl"
+	// CSSDir is the directory containing CSS/JS files
+	CSSDir = "css"
+)
 
 // CommonData contains data shared across all templates.
 type CommonData struct {
@@ -31,10 +32,8 @@ func InitTemplates() error {
 	return nil
 }
 
-// CSSHandler serves embedded CSS files.
+// CSSHandler serves CSS/JS files from the filesystem.
 func CSSHandler() http.Handler {
-	// The embedded FS has files at css/switch.css, etc.
-	// We need to serve them at /css/switch.css
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Remove /css/ prefix from path
 		path := strings.TrimPrefix(r.URL.Path, "/css/")
@@ -43,9 +42,15 @@ func CSSHandler() http.Handler {
 			return
 		}
 
-		// Look up file in embedded FS at css/{path}
-		fullPath := "css/" + path
-		data, err := fs.ReadFile(cssFS, fullPath)
+		// Prevent directory traversal
+		path = filepath.Clean(path)
+		if strings.HasPrefix(path, "..") {
+			http.NotFound(w, r)
+			return
+		}
+
+		fullPath := filepath.Join(CSSDir, path)
+		data, err := os.ReadFile(fullPath)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -61,10 +66,10 @@ func CSSHandler() http.Handler {
 	})
 }
 
-// FaviconHandler serves the embedded favicon.
+// FaviconHandler serves the favicon from the filesystem.
 func FaviconHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := fs.ReadFile(templateFS, "tmpl/favicon.ico")
+		data, err := os.ReadFile(filepath.Join(TemplateDir, "favicon.ico"))
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -78,13 +83,15 @@ func FaviconHandler() http.HandlerFunc {
 // It parses layout.html + the named page template together to avoid block conflicts.
 func ExecuteTemplate(w http.ResponseWriter, pageName string, data any) error {
 	// Read layout template
-	layoutContent, err := fs.ReadFile(templateFS, "tmpl/layout.html")
+	layoutPath := filepath.Join(TemplateDir, "layout.html")
+	layoutContent, err := os.ReadFile(layoutPath)
 	if err != nil {
 		return err
 	}
 
 	// Read page template
-	pageContent, err := fs.ReadFile(templateFS, "tmpl/"+pageName)
+	pagePath := filepath.Join(TemplateDir, pageName)
+	pageContent, err := os.ReadFile(pagePath)
 	if err != nil {
 		return err
 	}
@@ -103,4 +110,10 @@ func ExecuteTemplate(w http.ResponseWriter, pageName string, data any) error {
 
 	// Execute the page template (which includes layout via {{template "layout.html" .}})
 	return tmpl.ExecuteTemplate(w, pageName, data)
+}
+
+// StaticFS returns an http.FileSystem for serving static files.
+// Deprecated: Use CSSHandler and individual handlers instead.
+func StaticFS() http.FileSystem {
+	return http.FS(os.DirFS("."))
 }
