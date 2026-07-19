@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "e1b6aee46609",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "pkg/assets/tmpl/healthz.html",
+    "pkg/assets/tmpl/menu.html",
+    "pkg/healthz/healthz.go",
+    "tmpl/menu.html"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e1/b6aee46609/0/metadata.json",
+      "transcript": "/e1/b6aee46609/0/full.jsonl",
+      "compact_transcript": "/e1/b6aee46609/0/transcript.jsonl",
+      "content_hash": "/e1/b6aee46609/0/content_hash.txt",
+      "prompt": "/e1/b6aee46609/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 650134,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 7124224,
+    "output_tokens": 43217,
+    "api_call_count": 112
+  }
+}
