@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-//go:embed tmpl/*
+//go:embed ../../tmpl/*
 var templateFS embed.FS
 
-//go:embed css/*
+//go:embed ../../scss/*
 var cssFS embed.FS
 
 // CommonData contains data shared across all templates.
