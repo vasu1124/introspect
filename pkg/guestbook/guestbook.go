@@ -124,17 +124,20 @@ func (h *Handler) readConfig(config *viper.Viper) {
 		logger.Log.Error(nil, "[guestbook] Unknown DB type", "type", dbtype)
 	}
 
-	h.mu.Lock()
-	if h.backend != nil {
-		h.backend.Close()
-	}
-	h.backend = backend
-	h.dbtype = dbtype
-	h.mu.Unlock()
-
 	if err != nil {
-		logger.Log.Error(err, "[guestbook] Failed to init backend", "type", dbtype)
-	}
+	logger.Log.Error(err, "[guestbook] Failed to init backend", "type", dbtype)
+	return
+}
+
+h.mu.Lock()
+if h.backend != nil {
+	h.backend.Close()
+}
+h.backend = backend
+h.dbtype = dbtype
+h.mu.Unlock()
+
+logger.Log.Info("[guestbook] Backend initialized", "type", dbtype)
 }
 
 func (h *Handler) watchConfig(ctx context.Context, config *viper.Viper) {
