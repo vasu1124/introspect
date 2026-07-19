@@ -15,9 +15,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/vasu1124/introspect/pkg/assets"
+	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
-	"github.com/vasu1124/introspect/pkg/handler"
 )
 
 var (

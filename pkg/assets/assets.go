@@ -42,7 +42,7 @@ func CSSHandler() http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		
+
 		// Look up file in embedded FS at css/{path}
 		fullPath := "css/" + path
 		data, err := fs.ReadFile(cssFS, fullPath)
@@ -50,7 +50,7 @@ func CSSHandler() http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		
+
 		// Set content type based on extension
 		if strings.HasSuffix(path, ".css") {
 			w.Header().Set("Content-Type", "text/css")
@@ -100,7 +100,7 @@ func ExecuteTemplate(w http.ResponseWriter, pageName string, data any) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// Execute the page template (which includes layout via {{template "layout.html" .}})
 	return tmpl.ExecuteTemplate(w, pageName, data)
 }

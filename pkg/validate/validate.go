@@ -19,9 +19,9 @@ import (
 
 // Handler implements server.Handler for the validate endpoint.
 type Handler struct {
-	mu              sync.RWMutex
+	mu               sync.RWMutex
 	admissionReviews map[types.UID]*admission.AdmissionReview
-	regexp          string
+	regexp           string
 }
 
 // New creates a new validate handler.

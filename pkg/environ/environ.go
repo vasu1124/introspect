@@ -92,25 +92,25 @@ func (h *Handler) serveEnviron(w http.ResponseWriter, r *http.Request) {
 	}
 
 	requestMap := map[string][]string{
-		"ContentLength":  {strconv.FormatInt(r.ContentLength, 10)},
-		"Host":           {r.Host},
-		"RemoteAddr":     {r.RemoteAddr},
-		"Proto":          {r.Proto},
-		"Method":         {r.Method},
-		"Referer":        {r.Referer()},
-		"RequestURI":     {r.RequestURI},
+		"ContentLength":    {strconv.FormatInt(r.ContentLength, 10)},
+		"Host":             {r.Host},
+		"RemoteAddr":       {r.RemoteAddr},
+		"Proto":            {r.Proto},
+		"Method":           {r.Method},
+		"Referer":          {r.Referer()},
+		"RequestURI":       {r.RequestURI},
 		"TransferEncoding": r.TransferEncoding,
 	}
 
 	processMap := map[string]string{
-		"GO ARCH":           runtime.GOARCH,
-		"GO OS":             runtime.GOOS,
-		"GO Version":        runtime.Version(),
-		"GO NumCPU":         strconv.Itoa(runtime.NumCPU()),
-		"GO NumGoroutine":   strconv.Itoa(runtime.NumGoroutine()),
-		"Introspect Version": version.Get().GitVersion,
+		"GO ARCH":              runtime.GOARCH,
+		"GO OS":                runtime.GOOS,
+		"GO Version":           runtime.Version(),
+		"GO NumCPU":            strconv.Itoa(runtime.NumCPU()),
+		"GO NumGoroutine":      strconv.Itoa(runtime.NumGoroutine()),
+		"Introspect Version":   version.Get().GitVersion,
 		"Introspect TreeState": version.Get().GitTreeState,
-		"Introspect Commit": version.Get().GitCommit,
+		"Introspect Commit":    version.Get().GitCommit,
 		"Introspect BuildDate": version.Get().BuildDate,
 	}
 
@@ -131,7 +131,7 @@ func (h *Handler) serveEnviron(w http.ResponseWriter, r *http.Request) {
 		Counter     uint32
 		Network     network.Data
 	}{
-		CommonData: assets.CommonData{Version: version.Version, Flag: version.Flag},
+		CommonData:  assets.CommonData{Version: version.Version, Flag: version.Flag},
 		Environment: envMap,
 		Header:      r.Header,
 		Form:        r.Form,

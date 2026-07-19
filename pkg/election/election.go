@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/vasu1124/introspect/pkg/assets"
+	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
-	"github.com/vasu1124/introspect/pkg/handler"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"

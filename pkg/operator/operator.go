@@ -7,16 +7,16 @@ import (
 
 	"github.com/olahol/melody"
 	"github.com/vasu1124/introspect/pkg/assets"
+	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/operator/useless/api/v1alpha1"
+	"github.com/vasu1124/introspect/pkg/operator/useless/controllers"
 	"github.com/vasu1124/introspect/pkg/operator/websocket"
-	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/version"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/apimachinery/pkg/runtime"
 	controllerRuntime "sigs.k8s.io/controller-runtime"
-	"github.com/vasu1124/introspect/pkg/operator/useless/controllers"
 )
 
 var (

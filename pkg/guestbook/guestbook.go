@@ -125,19 +125,19 @@ func (h *Handler) readConfig(config *viper.Viper) {
 	}
 
 	if err != nil {
-	logger.Log.Error(err, "[guestbook] Failed to init backend", "type", dbtype)
-	return
-}
+		logger.Log.Error(err, "[guestbook] Failed to init backend", "type", dbtype)
+		return
+	}
 
-h.mu.Lock()
-if h.backend != nil {
-	h.backend.Close()
-}
-h.backend = backend
-h.dbtype = dbtype
-h.mu.Unlock()
+	h.mu.Lock()
+	if h.backend != nil {
+		h.backend.Close()
+	}
+	h.backend = backend
+	h.dbtype = dbtype
+	h.mu.Unlock()
 
-logger.Log.Info("[guestbook] Backend initialized", "type", dbtype)
+	logger.Log.Info("[guestbook] Backend initialized", "type", dbtype)
 }
 
 func (h *Handler) watchConfig(ctx context.Context, config *viper.Viper) {
@@ -331,8 +331,8 @@ var _ handler.Handler = (*Handler)(nil)
 // --- MongoDB Backend ---
 
 type mongoBackend struct {
-	client  *mongo.Client
-	coll    *mongo.Collection
+	client *mongo.Client
+	coll   *mongo.Collection
 }
 
 func newMongoBackend(config *viper.Viper, username, password string) (*mongoBackend, error) {
