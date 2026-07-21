@@ -90,7 +90,7 @@ jobs:
 
     - name: Docker Buildx (build+push)
       if: success()
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
         INTROSPECT_VERSION: ${{ env.INTROSPECT_VERSION }}
       with:
