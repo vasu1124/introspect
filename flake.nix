@@ -39,7 +39,7 @@ SPDX-License-Identifier: Apache-2.0
               go-tools  # static checks
               gnumake   # standard make
 
-              etcd_3_4
+              etcd
               # mongodb-5_0
               cfssl
               istioctl
