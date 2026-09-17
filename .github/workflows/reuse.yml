@@ -27,7 +27,7 @@ jobs:
         egress-policy: audit
 
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     # REUSE Compliance Check
     - name: REUSE Compliance Check
