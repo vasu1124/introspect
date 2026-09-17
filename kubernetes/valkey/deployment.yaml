@@ -66,8 +66,7 @@ spec:
           name: data
       volumes:
       - name: data
-        persistentVolumeClaim:
-          claimName: valkey
+        emptyDir: {}
       securityContext:
         fsGroup: 1001      
 

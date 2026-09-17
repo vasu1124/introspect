@@ -274,7 +274,7 @@ k8s_resource(workload='introspect', objects=[
   labels=['introspect']
 )
 k8s_resource(workload='mongodb', objects=[
-  'mongodb:persistentvolumeclaim',
+#  'mongodb:persistentvolumeclaim',
   'mongodb-secret:secret'],
   labels=['introspect']
 )
@@ -283,7 +283,7 @@ k8s_resource(workload='etcd', objects=[
   labels=['introspect']
 )
 k8s_resource(workload='valkey', objects=[
-  'valkey:persistentvolumeclaim',
+#  'valkey:persistentvolumeclaim',
   'valkey-secret:secret'],
   labels=['introspect']
 )
