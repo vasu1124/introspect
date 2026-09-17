@@ -279,12 +279,6 @@ func (h *Handler) SwitchBackend(backendType string) error {
 		return fmt.Errorf("invalid backend: %s", backendType)
 	}
 
-	if h.backend != nil {
-		if err := h.backend.Close(); err != nil {
-			logger.Log.Error(err, "[guestbook] closing old backend")
-		}
-	}
-
 	var backend Backend
 	var err error
 
@@ -297,13 +291,19 @@ func (h *Handler) SwitchBackend(backendType string) error {
 		backend, err = newValkeyBackend(h.config)
 	}
 
-	h.backend = backend
-	h.dbtype = backendType
-
 	if err != nil {
 		logger.Log.Error(err, "[guestbook] Failed to init backend", "type", backendType)
 		return err
 	}
+
+	if h.backend != nil {
+		if err := h.backend.Close(); err != nil {
+			logger.Log.Error(err, "[guestbook] closing old backend")
+		}
+	}
+
+	h.backend = backend
+	h.dbtype = backendType
 
 	logger.Log.Info("[guestbook] Switched backend", "backend", backendType)
 	return nil
@@ -390,6 +390,9 @@ func (b *mongoBackend) Entries(ctx context.Context) ([]Entry, error) {
 }
 
 func (b *mongoBackend) Close() error {
+	if b == nil || b.client == nil {
+		return nil
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return b.client.Disconnect(ctx)
@@ -451,6 +454,9 @@ func (b *etcdBackend) Entries(ctx context.Context) ([]Entry, error) {
 }
 
 func (b *etcdBackend) Close() error {
+	if b == nil || b.client == nil {
+		return nil
+	}
 	return b.client.Close()
 }
 
@@ -515,6 +521,9 @@ func (b *valkeyBackend) Entries(ctx context.Context) ([]Entry, error) {
 }
 
 func (b *valkeyBackend) Close() error {
+	if b == nil || b.client == nil {
+		return nil
+	}
 	return b.client.Close()
 }
 
