@@ -9,32 +9,26 @@ load('ext://local_output', 'local_output')
 load('ext://restart_process', 'custom_build_with_restart')
 
 def podman_build(
-  ref, context, ignore=None, extra_flags=None, deps=None, live_update=[], push_extra_flags=None
+  ref, context, entrypoint=None, dockerfile=None, ignore=None, deps=None, live_update=[]
 ):
   """Use Podman (https://podman.io/) to build images for Tilt.
   Args:
     ref: The name of the image to build. Must match the image
       name in the Kubernetes resources you're deploying.
     context: The build context of the binary to build. Expressed as a file path.
+    entrypoint: The command to be (re-)executed when the container starts or when a live_update is run.
+    dockerfile: The path to the Dockerfile to use for the build.
     deps: Changes to the given files or directories that will trigger rebuilds.
       Defaults to the build context.
     ignore: Changes to the given files or directories do not trigger rebuilds.
       Does not affect the build context.
-    extra_flags: Extra flags to pass to podman build. Expressed as an argv-style array.
-    push_extra_flags: Extra flags to pass to podman push. Expressed as an argv-style array.
     live_update: Set of steps for updating a running container
       (see https://docs.tilt.dev/live_update_reference.html)
   """
-  deps = deps or [context]
-  extra_flags = extra_flags or []
-  push_extra_flags = push_extra_flags or []
-  extra_flags_str = ' '.join([shlex.quote(f) for f in extra_flags])
-  push_extra_flags_str = ' '.join([shlex.quote(f) for f in push_extra_flags])
-
   # We use --format=docker due to
   # https://github.com/containers/buildah/issues/1589
   # which lots of people are still reporting, even though it's closed :shrug:
-  push_cmd = "podman push %s --format=docker $EXPECTED_REF\n" % push_extra_flags_str
+  push_cmd = "podman push %s --format=docker $EXPECTED_REF\n" % ref
 
   custom_build(
     ref=ref,
@@ -42,15 +36,17 @@ def podman_build(
       "set -ex\n" +
       "podman build -t $EXPECTED_REF %s %s\n" +
       push_cmd
-    ) % (extra_flags_str, shlex.quote(context)),
+    ) % (ref, shlex.quote(context)),
+    entrypoint=entrypoint,
     ignore=ignore,
     deps=deps,
     live_update=live_update,
+    disable_push=True,
     skips_local_docker=True,
   )
 
 def podman_build_with_restart(
-    ref, context, entrypoint, ignore=None, extra_flags=None, deps=None, live_update=[], push_extra_flags=None
+  ref, context, entrypoint=None, dockerfile=None, ignore=None, deps=None, live_update=[]
 ):
   """Use Podman (https://podman.io/) to build images for Tilt. Wrap a custom_build_with_restart so that the last step
     of any live update is to rerun the given entrypoint.
@@ -59,39 +55,36 @@ def podman_build_with_restart(
       name in the Kubernetes resources you're deploying.
     context: The build context of the binary to build. Expressed as a file path.
     entrypoint: The command to be (re-)executed when the container starts or when a live_update is run.
+    dockerfile: The path to the Dockerfile to use for the build.
     deps: Changes to the given files or directories that will trigger rebuilds.
       Defaults to the build context.
     ignore: Changes to the given files or directories do not trigger rebuilds.
       Does not affect the build context.
-    extra_flags: Extra flags to pass to podman build. Expressed as an argv-style array.
-    push_extra_flags: Extra flags to pass to podman push. Expressed as an argv-style array.
     live_update: Set of steps for updating a running container
       (see https://docs.tilt.dev/live_update_reference.html)
   """
-  deps = deps or [context]
-  extra_flags = extra_flags or []
-  push_extra_flags = push_extra_flags or []
-  extra_flags_str = ' '.join([shlex.quote(f) for f in extra_flags])
-  push_extra_flags_str = ' '.join([shlex.quote(f) for f in push_extra_flags])
   # We use --format=docker due to
   # https://github.com/containers/buildah/issues/1589
   # which lots of people are still reporting, even though it's closed :shrug:
-  push_cmd = "podman push %s --format=docker $EXPECTED_REF\n" % push_extra_flags_str
+  push_cmd = "podman push %s --format=docker $EXPECTED_REF\n" % ref
 
   custom_build_with_restart(
     ref=ref,
     command=(
       "set -ex\n" +
-      "podman build -t $EXPECTED_REF %s %s\n"
-    ) % (extra_flags_str, shlex.quote(context)),
+      "podman build -t $EXPECTED_REF %s %s\n" +
+      push_cmd
+    ) % (ref, shlex.quote(context)),
+    entrypoint=entrypoint,
     ignore=ignore,
     deps=deps,
-    entrypoint=entrypoint,
     live_update=live_update,
+    disable_push=True,
+    skips_local_docker=True,
   )
 
 def container_build(
-    ref, context, dockerfile=None, cluster_name='k8s-dev', push=False, ignore=None, extra_flags=None, deps=None, live_update=[], push_extra_flags=None
+  ref, context, entrypoint=None, dockerfile=None, ignore=None, deps=None, live_update=[]
 ):
   """Use Apple's container CLI (https://github.com/apple/container) to build images for Tilt
   and load them into the local Kubernetes cluster.
@@ -99,55 +92,31 @@ def container_build(
     ref: The name of the image to build. Must match the image
       name in the Kubernetes resources you're deploying.
     context: The build context of the binary to build. Expressed as a file path.
-    dockerfile: Path to Dockerfile.
-    cluster_name: Name of the local k8s cluster managed by container k8s (defaults to 'k8s-dev').
-    push: Set to True if pushing to a remote registry instead of loading into the local cluster.
+    entrypoint: The command to be (re-)executed when the container starts or when a live_update is run.
+    dockerfile: The path to the Dockerfile to use for the build.
     deps: Changes to the given files or directories that will trigger rebuilds.
       Defaults to the build context.
     ignore: Changes to the given files or directories do not trigger rebuilds.
-    extra_flags: Extra flags to pass to container build. Expressed as an argv-style array.
-    push_extra_flags: Extra flags to pass to container image push. Expressed as an argv-style array.
+      Does not affect the build context.
     live_update: Set of steps for updating a running container
       (see https://docs.tilt.dev/live_update_reference.html)
   """
-  deps = deps or [context]
-  extra_flags = extra_flags or []
-  push_extra_flags = push_extra_flags or []
-
-  df_flag = ("-f %s" % shlex.quote(dockerfile)) if dockerfile else ""
-  extra_flags_str = ' '.join([shlex.quote(f) for f in extra_flags])
-  push_extra_flags_str = ' '.join([shlex.quote(f) for f in push_extra_flags])
-  flags = ' '.join([f for f in [df_flag, extra_flags_str] if f])
-  if flags:
-    flags = " " + flags
-
-  if push:
-    load_cmd = "container image push %s $EXPECTED_REF\n" % push_extra_flags_str
-  else:
-    load_cmd = (
-      "if container k8s list 2>/dev/null | grep -q %s; then\n" +
-      "  container k8s load-image --name %s $EXPECTED_REF\n" +
-      "elif command -v kind >/dev/null 2>&1; then\n" +
-      "  kind load docker-image $EXPECTED_REF --name %s\n" +
-      "else\n" +
-      "  container k8s load-image --name %s $EXPECTED_REF\n" +
-      "fi\n"
-    ) % (shlex.quote(cluster_name), shlex.quote(cluster_name), shlex.quote(cluster_name), shlex.quote(cluster_name))
+  push_cmd = "container k8s load-image $EXPECTED_REF"
 
   custom_build(
     ref=ref,
     command=(
       "set -ex\n" +
-      "container build -t $EXPECTED_REF%s %s\n" +
-      load_cmd
-    ) % (flags, shlex.quote(context)),
+      "container build -t $EXPECTED_REF -f %s %s\n" +
+      push_cmd
+    ) % (dockerfile, shlex.quote(context)),
+    entrypoint=entrypoint,
     ignore=ignore,
     deps=deps,
     live_update=live_update,
+    disable_push=True,
     skips_local_docker=True,
   )
-
-apple_container_build = container_build
 
 default_registry('ghcr.io/vasu1124')
 allow_k8s_contexts(['colima', 'Default', 'desktop', 'docker-desktop', 'kind-kind', 'rancher-desktop', 'k8s-dev'])
@@ -188,13 +157,13 @@ if explicit_tool:
 else:
   # Auto-detection:
   # 1. If Apple container is running and reachable, use container
-  if _check_tool('which container'):
+  if _check_tool('container system status'):
     selected_tool = 'container'
   # 2. If Docker daemon is running and reachable, use docker
-  elif _check_tool('which docker'):
+  elif _check_tool('docker info'):
     selected_tool = 'docker'
   # 3. If Podman is running and reachable, use podman
-  elif _check_tool('which podman'):
+  elif _check_tool('podman info'):
     selected_tool = 'podman'
   else:
     selected_tool = 'docker'
@@ -204,8 +173,8 @@ if selected_tool == 'container':
   container_build(
     'ghcr.io/vasu1124/introspect',
     '.',
+    entrypoint=['/introspect-linux'],
     dockerfile='docker/Dockerfile.alpine',
-    cluster_name=cluster_name,
     deps=[
       './introspect-linux',
       './css', 
@@ -220,7 +189,8 @@ elif selected_tool == 'podman':
   podman_build(
     'ghcr.io/vasu1124/introspect',
     '.',
-    extra_flags=['-f', 'docker/Dockerfile.alpine'],
+    entrypoint=['/introspect-linux'],
+    dockerfile='docker/Dockerfile.alpine',
     deps=[
       './introspect-linux',
       './css', 
