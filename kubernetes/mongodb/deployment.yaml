@@ -70,6 +70,8 @@ spec:
       volumes:
       - name: data
         emptyDir: {}
+#        persistentVolumeClaim:
+#          claimName: mongodb
       securityContext:
         fsGroup: 999      
 
