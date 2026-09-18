@@ -15,12 +15,6 @@ COPY pkg pkg
 COPY .env ./ 
 RUN buildDate=$(date -I'seconds'); \
     go build \
-    -ldflags "\
-	-X github.com/vasu1124/introspect/pkg/version.gitVersion=${gitVersion} \
- 	-X github.com/vasu1124/introspect/pkg/version.gitCommit=${gitCommit} \
-	-X github.com/vasu1124/introspect/pkg/version.gitTreeState=${gitTreeState} \
-	-X github.com/vasu1124/introspect/pkg/version.buildDate=${buildDate} \
-    " \
     -o introspect-linux ./cmd
 
 # final stage

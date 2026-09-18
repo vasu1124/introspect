@@ -17,11 +17,7 @@ gitRefs:=$(shell git symbolic-ref HEAD)
 gitTreeState=$(shell [ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
 buildDate:=$(shell date --rfc-3339=seconds | sed 's/ /T/')
 
-LDFLAGS=-ldflags \
-	"-X github.com/vasu1124/introspect/pkg/version.gitVersion=${gitVersion} \
- 	 -X github.com/vasu1124/introspect/pkg/version.gitCommit=${gitCommit} \
-	 -X github.com/vasu1124/introspect/pkg/version.gitTreeState=${gitTreeState} \
-	 -X github.com/vasu1124/introspect/pkg/version.buildDate=${buildDate}"
+LDFLAGS=""
 
 # Build the project
 ifeq ($(shell uname -s), Darwin)

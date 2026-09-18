@@ -7,6 +7,10 @@
                 {
                     "type": "generic",
                     "path": "kubernetes/all-in-one/kustomization.yaml"
+                },
+                {
+                    "type": "generic",
+                    "path": "pkg/version/version.go"
                 }
             ]
         }
