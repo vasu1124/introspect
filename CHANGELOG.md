@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.1](https://github.com/vasu1124/introspect/compare/1.3.0...1.3.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* keep the commented pvc ([f97bf9a](https://github.com/vasu1124/introspect/commit/f97bf9a23908dc168e7ce1e5517eadffa1dfcc3f))
+* Tiltfile cleanup from slop ([5ab2ab3](https://github.com/vasu1124/introspect/commit/5ab2ab32eb2f32d53db1a40ae27885ec9c348480))
+
+
+### Miscellaneous Chores
+
+* release 1.3.1 ([d6d6701](https://github.com/vasu1124/introspect/commit/d6d670157ebdb0afa6d57872e1ed8754e70846a3))
+
 ## [1.3.0](https://github.com/vasu1124/introspect/compare/1.2.1...1.3.0) (2026-09-17)
 
 
