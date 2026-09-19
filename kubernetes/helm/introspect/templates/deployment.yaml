@@ -32,8 +32,6 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-          - name: OSENV_EXAMPLE
-            value: some_value
           - name: NAMESPACE
             valueFrom:
               fieldRef:
@@ -72,6 +70,8 @@ spec:
               readOnly: true
             - mountPath: /etc/config
               name: config-volume
+            - mountPath: /etc/config/dynconfig
+              name: introspect-dynconfig-volume
       volumes:
       - name: secret-volume
         secret:
@@ -82,6 +82,9 @@ spec:
       - name: config-volume
         configMap:
           name: {{ $fullName }}-config
+      - name: introspect-dynconfig-volume
+        configMap:
+          name: {{ $fullName }}-introspect-dynconfig
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

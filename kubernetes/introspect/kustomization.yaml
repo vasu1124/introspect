@@ -6,6 +6,7 @@ resources:
 - ../../pkg/operator/useless/config/crd/
 - ../../pkg/operator/useless/config/rbac/
 - config.yaml
+- introspect-dynconfig.yaml
 - deployment.yaml
 - service.yaml
 - introspect-tls.yaml

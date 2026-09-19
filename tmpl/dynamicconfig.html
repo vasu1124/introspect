@@ -3,32 +3,228 @@
 {{define "content"}}
 <div class="space-y-6">
     <!-- Page Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Dynamic Configuration
-            </h1>
-            <p class="text-gray-400 mt-2">Live view of the application's dynamic configuration</p>
+            <div class="flex items-center space-x-3">
+                <h1
+                    class="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">
+                    Dynamic Configuration
+                </h1>
+                <!-- WebSocket Live Badge -->
+                <span id="wsStatusBadge"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span id="wsStatusDot" class="w-2 h-2 mr-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="wsStatusText">Connecting...</span>
+                </span>
+            </div>
+            <p class="text-gray-400 mt-2">Live Kubernetes ConfigMap synchronization &amp; filesystem notification
+                monitor</p>
+        </div>
+
+        <!-- Target Info Badges -->
+        <div class="flex flex-wrap items-center gap-2">
+            <span
+                class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-mono bg-purple-500/10 text-purple-300 border border-purple-500/30">
+                <svg class="w-3.5 h-3.5 mr-1.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                    </path>
+                </svg>
+                ConfigMap: <strong class="ml-1 text-white">{{.ConfigMapName}}</strong>
+            </span>
+            <span
+                class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+                <svg class="w-3.5 h-3.5 mr-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                </svg>
+                Namespace: <strong class="ml-1 text-white">{{.Namespace}}</strong>
+            </span>
+            {{if .InCluster}}
+            <span
+                class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                <svg class="w-3.5 h-3.5 mr-1.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Cluster Connected
+            </span>
+            {{else}}
+            <span
+                class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-medium bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                <svg class="w-3.5 h-3.5 mr-1.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Local / Standalone Mode
+            </span>
+            {{end}}
         </div>
     </div>
 
-    <!-- Configuration Content -->
-    <div class="glass rounded-2xl p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-white flex items-center">
-                <svg class="w-6 h-6 mr-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                    </path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                Current Configuration
-            </h2>
+    <!-- Alert / Toast Banner -->
+    <div id="alertBanner" class="hidden rounded-xl p-4 transition-all duration-300"></div>
+
+    <!-- Main Grid: Editor & Current State -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Section 1: ConfigMap Editor -->
+        <div
+            class="glass rounded-2xl p-6 flex flex-col space-y-4 border border-purple-500/20 shadow-xl shadow-purple-500/5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                    ConfigMap Editor
+                    <span class="ml-2 text-xs font-mono font-normal text-gray-400">(example.yaml)</span>
+                </h2>
+                <button type="button" id="resetEditorBtn"
+                    class="px-3 py-1 text-xs font-medium text-gray-300 hover:text-white bg-gray-800/60 hover:bg-gray-700/60 rounded-lg border border-gray-700/60 transition duration-150">
+                    Reset
+                </button>
+            </div>
+
+            <p class="text-xs text-gray-400">
+                Edit YAML content below and click <strong>Apply to Cluster</strong> to push updates to the Kubernetes
+                ConfigMap.
+            </p>
+
+            <div class="relative flex-1">
+                <textarea id="yamlEditor" rows="12" spellcheck="false"
+                    class="w-full font-mono text-sm bg-gray-950/80 text-purple-200 p-4 rounded-xl border border-gray-700/60 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all outline-none resize-y leading-relaxed shadow-inner"
+                    placeholder="Enter valid YAML configuration...">{{.RawContent}}</textarea>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+                <div id="editorStatus" class="text-xs text-gray-400">Ready to edit</div>
+                <button type="button" id="applyConfigBtn"
+                    class="inline-flex items-center px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 active:scale-95 transition-all shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg id="applySpinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <svg id="applyIcon" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Apply to Cluster
+                </button>
+            </div>
         </div>
 
-        <div class="bg-gray-900/50 rounded-xl p-4 overflow-x-auto border border-gray-700/50">
-            <pre class="font-mono text-sm text-green-400"><code>{{.ConfigJSON}}</code></pre>
+        <!-- Section 2: Current Example File Content -->
+        <div id="currentStateCard"
+            class="glass rounded-2xl p-6 flex flex-col space-y-4 border border-indigo-500/20 shadow-xl shadow-indigo-500/5 transition-colors duration-500">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Current Configuration
+                    <span id="updateFlashBadge"
+                        class="hidden ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">UPDATED</span>
+                </h2>
+
+                <!-- View Toggle Tabs -->
+                <div class="inline-flex rounded-lg p-1 bg-gray-900/60 border border-gray-800">
+                    <button type="button" id="tabYamlBtn"
+                        class="px-3 py-1 text-xs font-medium rounded-md bg-purple-600 text-white transition-all">
+                        Raw YAML
+                    </button>
+                    <button type="button" id="tabJsonBtn"
+                        class="px-3 py-1 text-xs font-medium rounded-md text-gray-400 hover:text-white transition-all">
+                        Parsed JSON
+                    </button>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-400">
+                Currently loaded configuration in application memory. Live-refreshed whenever Kubernetes mounts update.
+            </p>
+
+            <!-- Raw YAML View -->
+            <div id="yamlViewContainer"
+                class="flex-1 bg-gray-950/80 rounded-xl p-4 overflow-x-auto border border-gray-700/60 shadow-inner">
+                <pre id="rawYamlContent"
+                    class="font-mono text-sm text-indigo-300 leading-relaxed"><code>{{if .RawContent}}{{.RawContent}}{{else}}# Waiting for file content...{{end}}</code></pre>
+            </div>
+
+            <!-- Parsed JSON View -->
+            <div id="jsonViewContainer"
+                class="hidden flex-1 bg-gray-950/80 rounded-xl p-4 overflow-x-auto border border-gray-700/60 shadow-inner">
+                <pre id="parsedJsonContent"
+                    class="font-mono text-sm text-green-400 leading-relaxed"><code>{{.ConfigJSON}}</code></pre>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 text-xs text-gray-400">
+                <span id="lastUpdatedTime">Last sync: Initial load</span>
+                <span class="font-mono text-gray-500">Mount: /etc/config/dynconfig/example.yaml</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: fsnotify Notification Log -->
+    <div class="glass rounded-2xl p-6 border border-gray-700/40">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center">
+                        Filesystem Notifications (fsnotify Log)
+                        <span id="eventCountBadge"
+                            class="ml-2 px-2 py-0.5 rounded-full text-xs font-mono bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                            {{len .Events}} events
+                        </span>
+                    </h2>
+                    <p class="text-xs text-gray-400">Real-time log of kernel inotify / fsnotify events detected on the
+                        config mount</p>
+                </div>
+            </div>
+
+            <button type="button" id="clearLogBtn"
+                class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-gray-800/40 hover:bg-gray-700/60 rounded-lg border border-gray-700/50 transition duration-150">
+                Clear Log
+            </button>
+        </div>
+
+        <div id="eventLogContainer"
+            class="bg-gray-950/80 rounded-xl p-4 border border-gray-700/50 max-h-64 overflow-y-auto font-mono text-xs space-y-2">
+            {{if .Events}}
+            {{range .Events}}
+            <div
+                class="flex items-center justify-between p-2 rounded-lg bg-gray-900/50 border border-gray-800/60 hover:bg-gray-850/60 transition-colors">
+                <div class="flex items-center space-x-3">
+                    <span class="px-2 py-0.5 rounded font-bold text-[10px] 
+                            {{if eq .Op " WRITE"}}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30
+                        {{else if eq .Op "CREATE" }}bg-blue-500/20 text-blue-300 border border-blue-500/30 {{else if eq
+                        .Op "RENAME" }}bg-amber-500/20 text-amber-300 border border-amber-500/30 {{else if eq
+                        .Op "REMOVE" }}bg-rose-500/20 text-rose-300 border border-rose-500/30 {{else}}bg-purple-500/20
+                        text-purple-300 border border-purple-500/30{{end}}">
+                        {{.Op}}
+                    </span>
+                    <span class="text-gray-300">{{.File}}</span>
+                    <span class="text-gray-500 text-[11px]">— {{.Message}}</span>
+                </div>
+                <span class="text-gray-500">{{.Timestamp}}</span>
+            </div>
+            {{end}}
+            {{else}}
+            <div id="emptyLogPlaceholder" class="text-center py-6 text-gray-500">
+                No filesystem events logged yet. Edit the config or update the ConfigMap in Kubernetes to see live
+                notifications.
+            </div>
+            {{end}}
         </div>
     </div>
 
@@ -41,16 +237,261 @@
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <div>
-                <h3 class="text-lg font-semibold text-white mb-2">About Dynamic Configuration</h3>
+                <h3 class="text-lg font-semibold text-white mb-2">How Dynamic ConfigMap Synchronization Works</h3>
                 <p class="text-gray-400 text-sm leading-relaxed">
-                    This page displays the current dynamic configuration loaded by the application.
-                    Changes to the configuration source (e.g., ConfigMap updates in Kubernetes) are detected and
-                    reflected here in real-time without restarting the application.
+                    The <code>introspect-dynconfig</code> ConfigMap is mounted into the container at
+                    <code>/etc/config/dynconfig/</code>.
+                    When updated via the editor or <code>kubectl</code>, Kubernetes updates the volume mount directory
+                    symlinks atomically.
+                    An internal Go <code>fsnotify</code> watcher detects the file system event, reloads the
+                    configuration in memory without restarting the pod,
+                    and broadcasts the new state over WebSocket to this page in real-time.
                 </p>
             </div>
         </div>
     </div>
 </div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+    (() => {
+        let ws = null;
+        let reconnectTimer = null;
+        let eventCount = {{ len .Events }};
+        let currentRawYaml = {{ .RawContent }};
+
+    // DOM Elements
+    const wsStatusBadge = document.getElementById('wsStatusBadge');
+    const wsStatusDot = document.getElementById('wsStatusDot');
+    const wsStatusText = document.getElementById('wsStatusText');
+    const alertBanner = document.getElementById('alertBanner');
+    const yamlEditor = document.getElementById('yamlEditor');
+    const applyConfigBtn = document.getElementById('applyConfigBtn');
+    const applySpinner = document.getElementById('applySpinner');
+    const applyIcon = document.getElementById('applyIcon');
+    const resetEditorBtn = document.getElementById('resetEditorBtn');
+    const editorStatus = document.getElementById('editorStatus');
+    const tabYamlBtn = document.getElementById('tabYamlBtn');
+    const tabJsonBtn = document.getElementById('tabJsonBtn');
+    const yamlViewContainer = document.getElementById('yamlViewContainer');
+    const jsonViewContainer = document.getElementById('jsonViewContainer');
+    const rawYamlContent = document.getElementById('rawYamlContent');
+    const parsedJsonContent = document.getElementById('parsedJsonContent');
+    const currentStateCard = document.getElementById('currentStateCard');
+    const updateFlashBadge = document.getElementById('updateFlashBadge');
+    const lastUpdatedTime = document.getElementById('lastUpdatedTime');
+    const eventLogContainer = document.getElementById('eventLogContainer');
+    const eventCountBadge = document.getElementById('eventCountBadge');
+    const clearLogBtn = document.getElementById('clearLogBtn');
+    const emptyLogPlaceholder = document.getElementById('emptyLogPlaceholder');
+
+    // Tab switching
+    tabYamlBtn.addEventListener('click', () => {
+        tabYamlBtn.classList.remove('text-gray-400');
+        tabYamlBtn.classList.add('bg-purple-600', 'text-white');
+        tabJsonBtn.classList.remove('bg-purple-600', 'text-white');
+        tabJsonBtn.classList.add('text-gray-400');
+        yamlViewContainer.classList.remove('hidden');
+        jsonViewContainer.classList.add('hidden');
+    });
+
+    tabJsonBtn.addEventListener('click', () => {
+        tabJsonBtn.classList.remove('text-gray-400');
+        tabJsonBtn.classList.add('bg-purple-600', 'text-white');
+        tabYamlBtn.classList.remove('bg-purple-600', 'text-white');
+        tabYamlBtn.classList.add('text-gray-400');
+        jsonViewContainer.classList.remove('hidden');
+        yamlViewContainer.classList.add('hidden');
+    });
+
+    // Reset button
+    resetEditorBtn.addEventListener('click', () => {
+        yamlEditor.value = currentRawYaml;
+        editorStatus.textContent = "Reset to current state";
+        setTimeout(() => { editorStatus.textContent = "Ready to edit"; }, 2000);
+    });
+
+    // Clear log button
+    clearLogBtn.addEventListener('click', () => {
+        eventLogContainer.innerHTML = '<div id="emptyLogPlaceholder" class="text-center py-6 text-gray-500">Log cleared. Waiting for new events...</div>';
+        eventCount = 0;
+        eventCountBadge.textContent = "0 events";
+    });
+
+    // Helper: Show banner alert
+    function showAlert(type, message) {
+        alertBanner.className = `rounded-xl p-4 transition-all duration-300 border flex items-center justify-between ${type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' :
+                type === 'error' ? 'bg-rose-500/10 text-rose-300 border-rose-500/30' :
+                    'bg-purple-500/10 text-purple-300 border-purple-500/30'
+            }`;
+        alertBanner.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${type === 'success'
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
+                </svg>
+                <span class="text-sm font-medium">${message}</span>
+            </div>
+            <button type="button" onclick="document.getElementById('alertBanner').classList.add('hidden')" class="text-gray-400 hover:text-white text-xs px-2 py-1">Dismiss</button>
+        `;
+        alertBanner.classList.remove('hidden');
+    }
+
+    // Apply to Cluster via POST /dynconfig/apply
+    applyConfigBtn.addEventListener('click', async () => {
+        const content = yamlEditor.value.trim();
+        if (!content) {
+            showAlert('error', 'Editor content cannot be empty.');
+            return;
+        }
+
+        applyConfigBtn.disabled = true;
+        applySpinner.classList.remove('hidden');
+        applyIcon.classList.add('hidden');
+        editorStatus.textContent = "Applying to cluster...";
+
+        try {
+            const resp = await fetch('/dynconfig/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            });
+
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                showAlert('success', data.message);
+                editorStatus.textContent = "Applied successfully!";
+            } else {
+                showAlert('error', data.error || 'Failed to apply configuration.');
+                editorStatus.textContent = "Apply failed";
+            }
+        } catch (err) {
+            showAlert('error', `Network error: ${err.message}`);
+            editorStatus.textContent = "Network error";
+        } finally {
+            applyConfigBtn.disabled = false;
+            applySpinner.classList.add('hidden');
+            applyIcon.classList.remove('hidden');
+            setTimeout(() => { editorStatus.textContent = "Ready to edit"; }, 3000);
+        }
+    });
+
+    // Helper: Append event to log
+    function appendEventLog(event) {
+        if (!event) return;
+        const emptyPl = document.getElementById('emptyLogPlaceholder');
+        if (emptyPl) emptyPl.remove();
+
+        const op = event.op || 'WRITE';
+        let opClass = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+        if (op === 'WRITE') opClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+        else if (op === 'CREATE') opClass = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        else if (op === 'RENAME') opClass = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+        else if (op === 'REMOVE') opClass = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-2 rounded-lg bg-gray-900/50 border border-gray-800/60 hover:bg-gray-850/60 transition-colors animate-pulse';
+        row.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <span class="px-2 py-0.5 rounded font-bold text-[10px] ${opClass}">${op}</span>
+                <span class="text-gray-300">${event.file || 'example.yaml'}</span>
+                <span class="text-gray-500 text-[11px]">— ${event.message || ''}</span>
+            </div>
+            <span class="text-gray-500">${event.timestamp || new Date().toLocaleTimeString()}</span>
+        `;
+
+        eventLogContainer.insertBefore(row, eventLogContainer.firstChild);
+        setTimeout(() => row.classList.remove('animate-pulse'), 1000);
+
+        eventCount++;
+        eventCountBadge.textContent = `${eventCount} events`;
+    }
+
+    // Helper: Update visible current state
+    function updateCurrentState(rawContent, configJson) {
+        if (rawContent !== undefined && rawContent !== null) {
+            currentRawYaml = rawContent;
+            rawYamlContent.querySelector('code').textContent = rawContent;
+        }
+        if (configJson !== undefined && configJson !== null) {
+            parsedJsonContent.querySelector('code').textContent = configJson;
+        }
+
+        lastUpdatedTime.textContent = `Last sync: ${new Date().toLocaleTimeString()}`;
+
+        // Flash visual highlight
+        currentStateCard.classList.add('border-emerald-500', 'bg-emerald-500/5');
+        updateFlashBadge.classList.remove('hidden');
+
+        setTimeout(() => {
+            currentStateCard.classList.remove('border-emerald-500', 'bg-emerald-500/5');
+            updateFlashBadge.classList.add('hidden');
+        }, 2000);
+    }
+
+    // Connect WebSocket
+    function connectWebSocket() {
+        if (ws) {
+            try { ws.close(); } catch (e) { }
+        }
+
+        let wsUrl = window.location.href.replace(/^http/, 'ws');
+        wsUrl = wsUrl.replace(/\/dynconfig(\/.*)?$/, '/dynconfigws');
+
+        wsStatusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        wsStatusDot.className = 'w-2 h-2 mr-2 rounded-full bg-amber-400 animate-pulse';
+        wsStatusText.textContent = 'Connecting...';
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            wsStatusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+            wsStatusDot.className = 'w-2 h-2 mr-2 rounded-full bg-emerald-400';
+            wsStatusText.textContent = 'Live Connected';
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+        };
+
+        ws.onmessage = (evt) => {
+            try {
+                const msg = JSON.parse(evt.data);
+                if (msg.type === 'init') {
+                    updateCurrentState(msg.rawContent, msg.configJson);
+                    if (msg.events && msg.events.length > 0) {
+                        eventLogContainer.innerHTML = '';
+                        eventCount = 0;
+                        msg.events.forEach(e => appendEventLog(e));
+                    }
+                } else if (msg.type === 'fsnotify') {
+                    appendEventLog(msg.event);
+                    updateCurrentState(msg.rawContent, msg.configJson);
+                    showAlert('success', `fsnotify ${msg.event ? msg.event.op : 'UPDATE'}: Configuration reloaded from ${msg.event ? msg.event.file : 'volume'}`);
+                }
+            } catch (err) {
+                console.error('[dynconfigws] parse error:', err);
+            }
+        };
+
+        ws.onclose = () => {
+            wsStatusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30';
+            wsStatusDot.className = 'w-2 h-2 mr-2 rounded-full bg-rose-400';
+            wsStatusText.textContent = 'Disconnected';
+            reconnectTimer = setTimeout(connectWebSocket, 3000);
+        };
+
+        ws.onerror = (err) => {
+            console.error('[dynconfigws] error:', err);
+        };
+    }
+
+    // Initialize WebSocket on page load
+    connectWebSocket();
+}) ();
+</script>
 {{end}}
 
 {{template "layout.html" .}}

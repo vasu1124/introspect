@@ -232,6 +232,7 @@ k8s_resource(
 
 k8s_resource(workload='introspect', objects=[
   'introspect-config:configmap',
+  'introspect-dynconfig:configmap',
   'introspect-tls:secret',
   'introspect-validationwebook:validatingwebhookconfiguration',
   'uselessmachines.introspect.actvirtual.com:customresourcedefinition',

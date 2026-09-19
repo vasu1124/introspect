@@ -15,7 +15,3 @@ data:
 
       "ValkeyAddr": "valkey:6379"
     }
-  example.yaml: |+
-    foo: bar
-    exact: true
-    timeout: 18

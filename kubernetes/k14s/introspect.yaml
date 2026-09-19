@@ -29,6 +29,14 @@ data:
       "DialTimeout": 5000000000
 
     }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: introspect-dynconfig
+  namespace: #@ data.values.namespace
+  labels: #@ data.values.introspect_labels
+data:
   example.yaml: |+
     foo: bar
     exact: true
@@ -55,8 +63,6 @@ spec:
         imagePullPolicy: #@ data.values.imagePullPolicy
         name: introspect
         env:
-        - name: OSENV_EXAMPLE
-          value: some_value
         - name: NAMESPACE
           valueFrom:
             fieldRef:
@@ -93,6 +99,8 @@ spec:
           readOnly: true
         - mountPath: /etc/config
           name: config-volume
+        - mountPath: /etc/config/dynconfig
+          name: introspect-dynconfig-volume
       volumes:
       - name: secret-volume
         secret:
@@ -100,6 +108,9 @@ spec:
       - name: config-volume
         configMap:
           name: introspect-config
+      - name: introspect-dynconfig-volume
+        configMap:
+          name: introspect-dynconfig
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role

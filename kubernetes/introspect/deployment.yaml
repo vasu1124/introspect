@@ -24,8 +24,6 @@ spec:
     #    imagePullPolicy: Always
         name: introspect
         env:
-        - name: OSENV_EXAMPLE
-          value: some_value
         - name: NAMESPACE
           valueFrom:
             fieldRef:
@@ -67,6 +65,8 @@ spec:
           readOnly: true
         - mountPath: /etc/config
           name: config-volume
+        - mountPath: /etc/config/dynconfig
+          name: introspect-dynconfig-volume
       volumes:
       - name: secret-volume
         secret:
@@ -77,3 +77,6 @@ spec:
       - name: config-volume
         configMap:
           name: introspect-config
+      - name: introspect-dynconfig-volume
+        configMap:
+          name: introspect-dynconfig
