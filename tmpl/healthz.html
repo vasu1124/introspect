@@ -3,89 +3,216 @@
 {{define "content"}}
 <div class="space-y-8">
   <!-- Hero Section -->
-  <div class="text-center space-y-4 py-8">
-    <h1
-      class="text-5xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 bg-clip-text text-transparent animate-pulse-slow">
-      Health Checks
-    </h1>
-    <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-      Monitor and control Kubernetes liveness and readiness probes for this pod
-    </p>
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 py-6 border-b border-gray-800">
+    <div>
+      <div class="flex items-center space-x-3">
+        <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent">
+          Health Checks
+        </h1>
+        <span id="wsStatusBadge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          <span id="wsStatusDot" class="w-2 h-2 mr-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span id="wsStatusText">Connecting WebSocket...</span>
+        </span>
+      </div>
+      <p class="text-gray-400 text-base md:text-lg mt-2 max-w-3xl">
+        Monitor and control Kubernetes liveness and readiness probes for this pod with real-time WebSocket log streaming
+      </p>
+    </div>
+
+    <!-- Quick Probe Simulation Controls -->
+    <div class="flex flex-wrap items-center gap-2">
+      <button id="quick-probe-liveness"
+        class="px-3.5 py-2 text-xs font-medium bg-green-500/10 hover:bg-green-500/20 text-green-300 border border-green-500/30 rounded-xl transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        Probe /healthz
+      </button>
+      <button id="quick-probe-readiness"
+        class="px-3.5 py-2 text-xs font-medium bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Probe /healthzr
+      </button>
+    </div>
   </div>
 
-  <!-- Liveness Check Card -->
-  <div class="glass rounded-2xl p-6 border border-green-500/20">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-      <div class="flex items-center space-x-4">
-        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
-            </path>
-          </svg>
+  <!-- Probe Status Cards Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Liveness Check Card -->
+    <div class="glass rounded-2xl p-6 border border-green-500/20 flex flex-col justify-between space-y-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+              </path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold text-white flex items-center gap-2">
+              Liveness Probe
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">/healthz</span>
+            </h3>
+            <p class="text-xs text-gray-400 mt-1">K8s restarts container if probe fails repeatedly</p>
+          </div>
         </div>
-        <div>
-          <h3 class="text-xl font-semibold text-white">Liveness Probe <span class="text-sm font-normal text-gray-400 ml-2">(/healthz)</span></h3>
-          <p class="text-sm text-gray-400 mt-1">Kubernetes liveness probe - determines if pod should be restarted</p>
+
+        <!-- Status Indicator Badge -->
+        <div class="flex items-center space-x-2.5">
+          <div id="liveness-indicator" class="w-3.5 h-3.5 rounded-full bg-green-500 animate-pulse" title="Alive"></div>
+          <span id="liveness-text" class="text-sm font-semibold text-green-400">Alive</span>
+          <span id="liveness-code-badge" class="px-2 py-0.5 text-xs font-mono bg-green-500/20 text-green-300 border border-green-500/30 rounded-lg">200</span>
         </div>
       </div>
-      
-      <div class="flex items-center space-x-6">
-        <!-- Status Indicator -->
+
+      <div class="flex items-center justify-between pt-4 border-t border-gray-800/80">
+        <span class="text-sm text-gray-300 font-medium">Liveness Status Switch:</span>
         <div class="flex items-center space-x-3">
-          <div id="liveness-indicator" class="w-4 h-4 rounded-full bg-green-500 animate-pulse" title="Alive"></div>
-          <span id="liveness-text" class="text-sm font-medium text-green-400">Alive</span>
-          <span id="liveness-code-badge" class="px-2 py-1 text-xs font-mono bg-green-500/20 text-green-300 rounded">200</span>
+          <span class="text-xs text-gray-400">Dead</span>
+          <!-- Toggle Switch -->
+          <label class="relative inline-flex items-center cursor-pointer" title="Toggle Liveness (Alive/Dead)">
+            <input type="checkbox" id="liveness-switch" class="sr-only peer" checked aria-label="Liveness probe status">
+            <div class="w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-green-500 peer-checked:border-green-500"></div>
+            <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
+          </label>
+          <span class="text-xs text-green-400 font-medium">Alive</span>
         </div>
-        
-        <!-- Toggle Switch -->
-        <label class="relative inline-flex items-center cursor-pointer" title="Toggle Liveness (Alive/Dead)">
-          <input type="checkbox" id="liveness-switch" class="sr-only peer" checked aria-label="Liveness probe status">
-          <div class="w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-green-500 peer-checked:border-green-500"></div>
-          <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
-          <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-medium pointer-events-none">
-            <span class="text-gray-500 transition-opacity duration-300 peer-checked:opacity-0"></span>
-            <span class="text-gray-500 text-green-400 opacity-0 transition-opacity duration-300 peer-checked:opacity-100"></span>
+      </div>
+    </div>
+
+    <!-- Readiness Check Card -->
+    <div class="glass rounded-2xl p-6 border border-emerald-500/20 flex flex-col justify-between space-y-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-center space-x-4">
+          <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
           </div>
-        </label>
+          <div>
+            <h3 class="text-xl font-semibold text-white flex items-center gap-2">
+              Readiness Probe
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">/healthzr</span>
+            </h3>
+            <p class="text-xs text-gray-400 mt-1">K8s removes pod from service endpoints when not ready</p>
+          </div>
+        </div>
+
+        <!-- Status Indicator Badge -->
+        <div class="flex items-center space-x-2.5">
+          <div id="readiness-indicator" class="w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse" title="Ready"></div>
+          <span id="readiness-text" class="text-sm font-semibold text-emerald-400">Ready</span>
+          <span id="readiness-code-badge" class="px-2 py-0.5 text-xs font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-lg">200</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-4 border-t border-gray-800/80">
+        <span class="text-sm text-gray-300 font-medium">Readiness Status Switch:</span>
+        <div class="flex items-center space-x-3">
+          <span class="text-xs text-gray-400">Not Ready</span>
+          <!-- Toggle Switch -->
+          <label class="relative inline-flex items-center cursor-pointer" title="Toggle Readiness (Ready/Not Ready)">
+            <input type="checkbox" id="readiness-switch" class="sr-only peer" checked aria-label="Readiness probe status">
+            <div class="w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-emerald-500 peer-checked:border-emerald-500"></div>
+            <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
+          </label>
+          <span class="text-xs text-emerald-400 font-medium">Ready</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Readiness Check Card -->
-  <div class="glass rounded-2xl p-6 border border-emerald-500/20">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-      <div class="flex items-center space-x-4">
-        <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
+  <!-- Live Feed of Logs over WebSocket -->
+  <div class="glass rounded-2xl border border-gray-800/80 shadow-2xl overflow-hidden">
+    <!-- Header with Controls & Filters -->
+    <div class="p-5 bg-gray-900/60 border-b border-gray-800/80 space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-3 h-3 rounded-full bg-green-500 animate-ping"></div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            Live Probe Logs Feed
+            <span class="text-xs font-normal text-gray-400 px-2.5 py-0.5 rounded-full bg-gray-800 border border-gray-700">WebSocket</span>
+          </h2>
+          <span id="log-count-badge" class="text-xs font-mono text-gray-400 px-2 py-0.5 rounded bg-gray-800/60">0 logs</span>
         </div>
-        <div>
-          <h3 class="text-xl font-semibold text-white">Readiness Probe <span class="text-sm font-normal text-gray-400 ml-2">(/healthzr)</span></h3>
-          <p class="text-sm text-gray-400 mt-1">Kubernetes readiness probe - determines if pod receives traffic</p>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Auto-scroll Toggle -->
+          <button id="toggle-autoscroll"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 transition flex items-center gap-1.5">
+            <span id="autoscroll-dot" class="w-2 h-2 rounded-full bg-green-400"></span>
+            Auto-scroll: <span id="autoscroll-text">ON</span>
+          </button>
+          <!-- Clear Logs -->
+          <button id="clear-logs-btn"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-800 text-gray-400 border border-gray-700 hover:text-white hover:bg-gray-700 transition">
+            Clear Feed
+          </button>
         </div>
       </div>
-      
-      <div class="flex items-center space-x-6">
-        <!-- Status Indicator -->
-        <div class="flex items-center space-x-3">
-          <div id="readiness-indicator" class="w-4 h-4 rounded-full bg-emerald-500 animate-pulse" title="Ready"></div>
-          <span id="readiness-text" class="text-sm font-medium text-emerald-400">Ready</span>
-          <span id="readiness-code-badge" class="px-2 py-1 text-xs font-mono bg-emerald-500/20 text-emerald-300 rounded">200</span>
+
+      <!-- Filter Controls Bar -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2">
+        <!-- Filter Tabs -->
+        <div class="inline-flex p-1 bg-gray-950/70 rounded-xl border border-gray-800 text-xs font-medium">
+          <button id="filter-all" class="filter-tab px-3 py-1.5 rounded-lg text-white bg-primary-600 shadow transition">
+            All Probes
+          </button>
+          <button id="filter-liveness" class="filter-tab px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition">
+            Liveness (/healthz)
+          </button>
+          <button id="filter-readiness" class="filter-tab px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition">
+            Readiness (/healthzr)
+          </button>
+          <button id="filter-errors" class="filter-tab px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition">
+            Failures Only (5xx)
+          </button>
         </div>
-        
-        <!-- Toggle Switch -->
-        <label class="relative inline-flex items-center cursor-pointer" title="Toggle Readiness (Ready/Not Ready)">
-          <input type="checkbox" id="readiness-switch" class="sr-only peer" checked aria-label="Readiness probe status">
-          <div class="w-14 h-8 bg-gray-700 rounded-full border border-gray-600 transition-colors duration-300 peer-checked:bg-emerald-500 peer-checked:border-emerald-500"></div>
-          <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 transform peer-checked:translate-x-6"></div>
-          <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-medium pointer-events-none">
-            <span class="text-gray-500 transition-opacity duration-300 peer-checked:opacity-0"></span>
-            <span class="text-gray-500 text-emerald-400 opacity-0 transition-opacity duration-300 peer-checked:opacity-100"></span>
+
+        <!-- Search Input -->
+        <div class="relative min-w-[240px]">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
           </div>
-        </label>
+          <input type="text" id="log-search-input"
+            placeholder="Filter IP, agent, status, msg..."
+            class="w-full pl-9 pr-3 py-1.5 bg-gray-950/80 border border-gray-800 rounded-xl text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-primary-500 transition">
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal Body -->
+    <div class="bg-gray-950/90 font-mono text-xs">
+      <!-- Mac-style bar -->
+      <div class="flex items-center justify-between px-4 py-2 bg-gray-950/60 border-b border-gray-850 text-gray-500 select-none">
+        <div class="flex items-center space-x-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+          <span class="ml-2 text-gray-400 font-sans text-xs">websocket://healthzws &mdash; filtered for probe activity</span>
+        </div>
+        <span class="text-[11px] text-gray-500 hidden sm:inline">Kubernetes probe telemetry</span>
+      </div>
+
+      <!-- Scrollable Logs Stream -->
+      <div id="logs-container" class="h-80 overflow-y-auto p-3 space-y-1.5 divide-y divide-gray-900/40">
+        <!-- Empty placeholder -->
+        <div id="logs-empty" class="h-full flex flex-col items-center justify-center text-gray-500 py-12 space-y-2">
+          <svg class="w-8 h-8 text-gray-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+            </path>
+          </svg>
+          <p class="text-xs">Waiting for incoming liveness/readiness probe requests...</p>
+          <p class="text-[11px] text-gray-600">Click &ldquo;Probe /healthz&rdquo; or &ldquo;Probe /healthzr&rdquo; above to test live</p>
+        </div>
+        <!-- Dynamic log rows inserted here -->
       </div>
     </div>
   </div>
@@ -152,188 +279,376 @@ readinessProbe:
   </div>
 </div>
 
-<!-- Health Check Status Script -->
+<!-- Health Check & WebSocket Status Script -->
 <script>
 // Health check endpoints
 const HEALTHZ_URL = '/healthz';
 const HEALTHZR_URL = '/healthzr';
 
 // State tracking
-let livenessAlive = true;
-let readinessReady = true;
+let allLogs = [];
+let currentFilter = 'all'; // 'all', 'liveness', 'readiness', 'errors'
+let searchQuery = '';
+let autoScroll = true;
+let ws = null;
+let reconnectTimer = null;
 
-// Update UI for liveness
+// UI update for liveness
 function updateLivenessUI(alive, statusCode) {
-  livenessAlive = alive;
   const statusEl = document.getElementById('liveness-indicator');
   const textEl = document.getElementById('liveness-text');
   const codeEl = document.getElementById('liveness-code-badge');
   const switchEl = document.getElementById('liveness-switch');
   
-  if (alive) {
-    statusEl.className = 'w-4 h-4 rounded-full bg-green-500 animate-pulse';
-    textEl.className = 'text-sm font-medium text-green-400';
-    textEl.textContent = 'Alive';
-    codeEl.textContent = statusCode || 200;
-    codeEl.className = 'px-2 py-1 text-xs font-mono bg-green-500/20 text-green-300 rounded';
-    switchEl.checked = true;
-  } else {
-    statusEl.className = 'w-4 h-4 rounded-full bg-red-500';
-    textEl.className = 'text-sm font-medium text-red-400';
-    textEl.textContent = 'Dead';
-    codeEl.textContent = statusCode || 500;
-    codeEl.className = 'px-2 py-1 text-xs font-mono bg-red-500/20 text-red-300 rounded';
-    switchEl.checked = false;
+  if (statusEl && textEl && codeEl && switchEl) {
+    if (alive) {
+      statusEl.className = 'w-3.5 h-3.5 rounded-full bg-green-500 animate-pulse';
+      textEl.className = 'text-sm font-semibold text-green-400';
+      textEl.textContent = 'Alive';
+      codeEl.textContent = statusCode || 200;
+      codeEl.className = 'px-2 py-0.5 text-xs font-mono bg-green-500/20 text-green-300 border border-green-500/30 rounded-lg';
+      switchEl.checked = true;
+    } else {
+      statusEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500';
+      textEl.className = 'text-sm font-semibold text-red-400';
+      textEl.textContent = 'Dead';
+      codeEl.textContent = statusCode || 500;
+      codeEl.className = 'px-2 py-0.5 text-xs font-mono bg-red-500/20 text-red-300 border border-red-500/30 rounded-lg';
+      switchEl.checked = false;
+    }
   }
 }
 
-// Update UI for readiness
+// UI update for readiness
 function updateReadinessUI(ready, statusCode) {
-  readinessReady = ready;
   const statusEl = document.getElementById('readiness-indicator');
   const textEl = document.getElementById('readiness-text');
   const codeEl = document.getElementById('readiness-code-badge');
   const switchEl = document.getElementById('readiness-switch');
   
-  if (ready) {
-    statusEl.className = 'w-4 h-4 rounded-full bg-emerald-500 animate-pulse';
-    textEl.className = 'text-sm font-medium text-emerald-400';
-    textEl.textContent = 'Ready';
-    codeEl.textContent = statusCode || 200;
-    codeEl.className = 'px-2 py-1 text-xs font-mono bg-emerald-500/20 text-emerald-300 rounded';
-    switchEl.checked = true;
-  } else {
-    statusEl.className = 'w-4 h-4 rounded-full bg-red-500';
-    textEl.className = 'text-sm font-medium text-red-400';
-    textEl.textContent = 'Not Ready';
-    codeEl.textContent = statusCode || 503;
-    codeEl.className = 'px-2 py-1 text-xs font-mono bg-red-500/20 text-red-300 rounded';
-    switchEl.checked = false;
+  if (statusEl && textEl && codeEl && switchEl) {
+    if (ready) {
+      statusEl.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 animate-pulse';
+      textEl.className = 'text-sm font-semibold text-emerald-400';
+      textEl.textContent = 'Ready';
+      codeEl.textContent = statusCode || 200;
+      codeEl.className = 'px-2 py-0.5 text-xs font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-lg';
+      switchEl.checked = true;
+    } else {
+      statusEl.className = 'w-3.5 h-3.5 rounded-full bg-red-500';
+      textEl.className = 'text-sm font-semibold text-red-400';
+      textEl.textContent = 'Not Ready';
+      codeEl.textContent = statusCode || 503;
+      codeEl.className = 'px-2 py-0.5 text-xs font-mono bg-red-500/20 text-red-300 border border-red-500/30 rounded-lg';
+      switchEl.checked = false;
+    }
   }
 }
 
-// Send request to health endpoint
+// Update WebSocket connection badge
+function updateWsBadge(status) {
+  const badge = document.getElementById('wsStatusBadge');
+  const dot = document.getElementById('wsStatusDot');
+  const text = document.getElementById('wsStatusText');
+  if (!badge || !dot || !text) return;
+
+  if (status === 'connected') {
+    badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30';
+    dot.className = 'w-2 h-2 mr-2 rounded-full bg-green-400 animate-pulse';
+    text.textContent = 'Live Feed Connected';
+  } else if (status === 'connecting') {
+    badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30';
+    dot.className = 'w-2 h-2 mr-2 rounded-full bg-amber-400 animate-pulse';
+    text.textContent = 'Connecting WebSocket...';
+  } else {
+    badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30';
+    dot.className = 'w-2 h-2 mr-2 rounded-full bg-red-400';
+    text.textContent = 'Feed Disconnected';
+  }
+}
+
+// Send health probe requests
 async function sendHealthRequest(url, action) {
   try {
-    const response = await fetch(`${url}?${action}`, { method: 'GET' });
-    return { ok: true, status: response.status };
+    const query = action ? `?${action}` : '';
+    const response = await fetch(`${url}${query}`, { method: 'GET' });
+    return { ok: response.ok, status: response.status };
   } catch (err) {
     console.error('Health request failed:', err);
     return { ok: false, status: 0, error: err.message };
   }
 }
 
-// Check current status
-async function checkLiveness() {
-  try {
-    const response = await fetch(HEALTHZ_URL);
-    updateLivenessUI(response.ok, response.status);
-  } catch (err) {
-    console.error('Liveness check failed:', err);
-    updateLivenessUI(false, 0);
-  }
-}
-
-async function checkReadiness() {
-  try {
-    const response = await fetch(HEALTHZR_URL);
-    updateReadinessUI(response.ok, response.status);
-  } catch (err) {
-    console.error('Readiness check failed:', err);
-    updateReadinessUI(false, 0);
-  }
-}
-
-// Toggle liveness via switch
+// Toggle switches
 async function toggleLiveness() {
   const switchEl = document.getElementById('liveness-switch');
   const action = switchEl.checked ? 'live' : 'die';
-  
   switchEl.disabled = true;
   const result = await sendHealthRequest(HEALTHZ_URL, action);
-  
   if (result.ok) {
     updateLivenessUI(switchEl.checked, result.status);
   } else {
     switchEl.checked = !switchEl.checked;
-    console.error('Failed to toggle liveness:', result);
   }
   switchEl.disabled = false;
 }
 
-// Toggle readiness via switch
 async function toggleReadiness() {
   const switchEl = document.getElementById('readiness-switch');
   const action = switchEl.checked ? 'live' : 'die';
-  
   switchEl.disabled = true;
   const result = await sendHealthRequest(HEALTHZR_URL, action);
-  
   if (result.ok) {
     updateReadinessUI(switchEl.checked, result.status);
   } else {
     switchEl.checked = !switchEl.checked;
-    console.error('Failed to toggle readiness:', result);
   }
   switchEl.disabled = false;
 }
 
-// Button handlers
-async function setLivenessLive() {
-  const btn = document.getElementById('liveness-live-btn');
-  btn.disabled = true;
-  const result = await sendHealthRequest(HEALTHZ_URL, 'live');
-  if (result.ok) updateLivenessUI(true, result.status);
-  btn.disabled = false;
+// Connect WebSocket feed
+function connectWebSocket() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/healthzws`;
+
+  updateWsBadge('connecting');
+
+  try {
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      updateWsBadge('connected');
+    };
+
+    ws.onmessage = (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        handleWsMessage(msg);
+      } catch (err) {
+        console.error('Error parsing WebSocket message:', err);
+      }
+    };
+
+    ws.onclose = () => {
+      updateWsBadge('disconnected');
+      reconnectTimer = setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = () => {
+      updateWsBadge('disconnected');
+    };
+  } catch (err) {
+    console.error('WebSocket connection attempt error:', err);
+    updateWsBadge('disconnected');
+    reconnectTimer = setTimeout(connectWebSocket, 3000);
+  }
 }
 
-async function setLivenessDie() {
-  const btn = document.getElementById('liveness-die-btn');
-  btn.disabled = true;
-  const result = await sendHealthRequest(HEALTHZ_URL, 'die');
-  if (result.ok) updateLivenessUI(false, result.status);
-  btn.disabled = false;
+// Handle incoming WebSocket payload
+function handleWsMessage(msg) {
+  if (msg.type === 'init') {
+    allLogs = msg.logs || [];
+    renderLogs();
+    if (msg.livenessStatus) updateLivenessUI(msg.livenessStatus === 200, msg.livenessStatus);
+    if (msg.readinessStatus) updateReadinessUI(msg.readinessStatus === 200, msg.readinessStatus);
+  } else if (msg.type === 'log' && msg.log) {
+    allLogs.push(msg.log);
+    if (allLogs.length > 150) {
+      allLogs.shift();
+    }
+    renderLogs();
+    if (msg.livenessStatus) updateLivenessUI(msg.livenessStatus === 200, msg.livenessStatus);
+    if (msg.readinessStatus) updateReadinessUI(msg.readinessStatus === 200, msg.readinessStatus);
+  }
 }
 
-async function setReadinessLive() {
-  const btn = document.getElementById('readiness-live-btn');
-  btn.disabled = true;
-  const result = await sendHealthRequest(HEALTHZR_URL, 'live');
-  if (result.ok) updateReadinessUI(true, result.status);
-  btn.disabled = false;
+// Filter and render logs to DOM
+function renderLogs() {
+  const container = document.getElementById('logs-container');
+  const emptyEl = document.getElementById('logs-empty');
+  const countBadge = document.getElementById('log-count-badge');
+  if (!container) return;
+
+  const filtered = allLogs.filter((log) => {
+    // Probe type filter
+    if (currentFilter === 'liveness' && log.type !== 'liveness') return false;
+    if (currentFilter === 'readiness' && log.type !== 'readiness') return false;
+    if (currentFilter === 'errors' && log.status < 400 && log.level !== 'ERROR') return false;
+
+    // Search query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const target = `${log.timestamp} ${log.probe} ${log.path} ${log.status} ${log.statusText} ${log.remoteIp} ${log.userAgent} ${log.message} ${log.level}`.toLowerCase();
+      if (!target.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (countBadge) {
+    countBadge.textContent = `${filtered.length} of ${allLogs.length} logs`;
+  }
+
+  if (filtered.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'flex';
+    // Remove existing rows except empty element
+    const rows = container.querySelectorAll('.log-entry-row');
+    rows.forEach(r => r.remove());
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  // Build rows HTML
+  const rowsHTML = filtered.map(log => {
+    const isError = log.status >= 500 || log.level === 'ERROR';
+    const isWarn = log.status >= 400 && log.status < 500;
+    
+    // Status Badge
+    let statusClass = 'bg-green-500/20 text-green-300 border-green-500/30';
+    if (isError) statusClass = 'bg-red-500/20 text-red-300 border-red-500/30';
+    else if (isWarn) statusClass = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+
+    // Probe Badge
+    const isLive = log.type === 'liveness';
+    const probeClass = isLive ? 'bg-green-950/80 text-green-400 border-green-700/50' : 'bg-teal-950/80 text-teal-300 border-teal-700/50';
+    const probeText = isLive ? 'LIVENESS' : 'READINESS';
+
+    // Source / UserAgent pill
+    const isKube = (log.userAgent || '').includes('kube-probe');
+    const sourceClass = isKube ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-gray-800/80 text-gray-400 border-gray-700';
+    const sourceLabel = isKube ? 'kubelet probe' : (log.remoteIp ? log.remoteIp.split(':')[0] : 'client');
+
+    return `
+      <div class="log-entry-row py-1.5 px-2.5 rounded hover:bg-gray-900/80 transition flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
+        <span class="text-gray-500 font-mono text-[11px] select-none">${log.timestamp || ''}</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${probeClass}">${probeText}</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono border ${statusClass}">${log.status} ${log.statusText || ''}</span>
+        <span class="px-1.5 py-0.5 rounded text-[10px] font-sans border ${sourceClass}" title="${escapeHtml(log.userAgent || '')}">${sourceLabel}</span>
+        ${log.duration ? `<span class="text-gray-500 text-[11px]">${log.duration}</span>` : ''}
+        <span class="text-gray-200 font-mono flex-1 break-all">${escapeHtml(log.message || '')}</span>
+      </div>
+    `;
+  }).join('');
+
+  // Update container preserving emptyEl element
+  const currentRows = container.querySelectorAll('.log-entry-row');
+  currentRows.forEach(r => r.remove());
+  container.insertAdjacentHTML('beforeend', rowsHTML);
+
+  // Auto-scroll if enabled
+  if (autoScroll) {
+    container.scrollTop = container.scrollHeight;
+  }
 }
 
-async function setReadinessDie() {
-  const btn = document.getElementById('readiness-die-btn');
-  btn.disabled = true;
-  const result = await sendHealthRequest(HEALTHZR_URL, 'die');
-  if (result.ok) updateReadinessUI(false, result.status);
-  btn.disabled = false;
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>"']/g, function(m) {
+    switch (m) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#039;';
+      default: return m;
+    }
+  });
 }
 
-// Event listeners
+// Event Listeners setup
 document.addEventListener('DOMContentLoaded', () => {
-  // Initial status check
-  checkLiveness();
-  checkReadiness();
-  
-  // Switch listeners
-  document.getElementById('liveness-switch').addEventListener('change', toggleLiveness);
-  document.getElementById('readiness-switch').addEventListener('change', toggleReadiness);
-  
-  // Button listeners
-  document.getElementById('liveness-live-btn').addEventListener('click', setLivenessLive);
-  document.getElementById('liveness-die-btn').addEventListener('click', setLivenessDie);
-  document.getElementById('liveness-check-btn').addEventListener('click', checkLiveness);
-  document.getElementById('readiness-live-btn').addEventListener('click', setReadinessLive);
-  document.getElementById('readiness-die-btn').addEventListener('click', setReadinessDie);
-  document.getElementById('readiness-check-btn').addEventListener('click', checkReadiness);
-  
-  // Periodic status check (every 10 seconds)
-  setInterval(() => {
-    checkLiveness();
-    checkReadiness();
-  }, 10000);
+  // Connect WebSocket
+  connectWebSocket();
+
+  // Switch event listeners
+  const lSwitch = document.getElementById('liveness-switch');
+  if (lSwitch) lSwitch.addEventListener('change', toggleLiveness);
+
+  const rSwitch = document.getElementById('readiness-switch');
+  if (rSwitch) rSwitch.addEventListener('change', toggleReadiness);
+
+  // Quick probe buttons
+  const qpLive = document.getElementById('quick-probe-liveness');
+  if (qpLive) {
+    qpLive.addEventListener('click', async () => {
+      qpLive.disabled = true;
+      await sendHealthRequest(HEALTHZ_URL, '');
+      setTimeout(() => { qpLive.disabled = false; }, 300);
+    });
+  }
+
+  const qpReady = document.getElementById('quick-probe-readiness');
+  if (qpReady) {
+    qpReady.addEventListener('click', async () => {
+      qpReady.disabled = true;
+      await sendHealthRequest(HEALTHZR_URL, '');
+      setTimeout(() => { qpReady.disabled = false; }, 300);
+    });
+  }
+
+  // Filter Buttons
+  const filterTabs = {
+    'filter-all': 'all',
+    'filter-liveness': 'liveness',
+    'filter-readiness': 'readiness',
+    'filter-errors': 'errors'
+  };
+
+  Object.entries(filterTabs).forEach(([btnId, filterVal]) => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.addEventListener('click', () => {
+        currentFilter = filterVal;
+        document.querySelectorAll('.filter-tab').forEach(b => {
+          b.className = 'filter-tab px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition';
+        });
+        btn.className = 'filter-tab px-3 py-1.5 rounded-lg text-white bg-primary-600 shadow transition';
+        renderLogs();
+      });
+    }
+  });
+
+  // Search filter
+  const searchInput = document.getElementById('log-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      renderLogs();
+    });
+  }
+
+  // Auto-scroll toggle
+  const autoScrollBtn = document.getElementById('toggle-autoscroll');
+  const autoScrollDot = document.getElementById('autoscroll-dot');
+  const autoScrollText = document.getElementById('autoscroll-text');
+  if (autoScrollBtn) {
+    autoScrollBtn.addEventListener('click', () => {
+      autoScroll = !autoScroll;
+      if (autoScroll) {
+        autoScrollDot.className = 'w-2 h-2 rounded-full bg-green-400';
+        autoScrollText.textContent = 'ON';
+        const container = document.getElementById('logs-container');
+        if (container) container.scrollTop = container.scrollHeight;
+      } else {
+        autoScrollDot.className = 'w-2 h-2 rounded-full bg-gray-500';
+        autoScrollText.textContent = 'OFF';
+      }
+    });
+  }
+
+  // Clear feed
+  const clearBtn = document.getElementById('clear-logs-btn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      allLogs = [];
+      renderLogs();
+    });
+  }
 });
 </script>
 {{end}}

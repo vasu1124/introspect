@@ -101,6 +101,14 @@ func (s *Server) Run(stop <-chan int) {
 			logger.Log.Error(err, "[server] Graceful HTTPS server shutdown failed")
 		}
 	}
+
+	for _, h := range s.handlers {
+		if closer, ok := h.(Closer); ok {
+			if err := closer.Close(); err != nil {
+				logger.Log.Error(err, "[server] Error closing handler", "name", h.Name())
+			}
+		}
+	}
 }
 
 func (s *Server) startServer(ctx context.Context, handler http.Handler) *http.Server {

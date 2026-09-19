@@ -3,6 +3,8 @@ package logger
 import (
 	"fmt"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
@@ -14,6 +16,95 @@ import (
 
 // Log is the main logger
 var Log logr.Logger
+
+// LogEntry represents a captured log entry from zap
+type LogEntry struct {
+	Time    time.Time
+	Level   string
+	Message string
+	Fields  map[string]any
+}
+
+// LogSubscriber is a callback function for receiving log entries
+type LogSubscriber func(entry LogEntry)
+
+var (
+	subscribersMu sync.RWMutex
+	subscribers   = make(map[uint64]LogSubscriber)
+	nextSubID     uint64
+)
+
+// Subscribe registers a subscriber that receives log entries.
+// It returns an unsubscribe function.
+func Subscribe(sub LogSubscriber) func() {
+	subscribersMu.Lock()
+	defer subscribersMu.Unlock()
+	nextSubID++
+	id := nextSubID
+	subscribers[id] = sub
+	return func() {
+		subscribersMu.Lock()
+		delete(subscribers, id)
+		subscribersMu.Unlock()
+	}
+}
+
+type broadcastCore struct {
+	zapcore.LevelEnabler
+}
+
+func (c *broadcastCore) With(fields []zapcore.Field) zapcore.Core {
+	return c
+}
+
+func (c *broadcastCore) Check(entry zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
+	if c.Enabled(entry.Level) {
+		return ce.AddCore(entry, c)
+	}
+	return ce
+}
+
+func (c *broadcastCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
+	subscribersMu.RLock()
+	if len(subscribers) == 0 {
+		subscribersMu.RUnlock()
+		return nil
+	}
+	subs := make([]LogSubscriber, 0, len(subscribers))
+	for _, s := range subscribers {
+		subs = append(subs, s)
+	}
+	subscribersMu.RUnlock()
+
+	fieldMap := make(map[string]any, len(fields))
+	enc := zapcore.NewMapObjectEncoder()
+	for _, f := range fields {
+		f.AddTo(enc)
+	}
+	for k, v := range enc.Fields {
+		fieldMap[k] = v
+	}
+
+	le := LogEntry{
+		Time:    entry.Time,
+		Level:   entry.Level.String(),
+		Message: entry.Message,
+		Fields:  fieldMap,
+	}
+
+	for _, s := range subs {
+		s(le)
+	}
+	return nil
+}
+
+func (c *broadcastCore) Sync() error {
+	return nil
+}
+
+func init() {
+	InitZap()
+}
 
 // InitZap initializes the Zap based logging framework
 func InitZap() {
@@ -46,8 +137,12 @@ func InitZap() {
 
 	zapConfig.Level = level
 
-	log, _ := zapConfig.Build()
+	bCore := &broadcastCore{LevelEnabler: level}
+	log, _ := zapConfig.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
+		return zapcore.NewTee(c, bCore)
+	}))
 	Log = zapr.NewLogger(log)
 
 	klog.SetLogger(Log)
 }
+
