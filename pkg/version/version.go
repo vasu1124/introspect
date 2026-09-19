@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	gitVersion   = "1.3.0" // x-release-please-version
+	gitVersion   = "1.3.2" // x-release-please-version
 	gitCommit    = "dev"
 	gitTreeState = ""
 	buildDate    = "1970-01-01T00:00:00Z"
