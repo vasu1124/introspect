@@ -17,7 +17,7 @@ gitRefs:=$(shell git symbolic-ref HEAD)
 gitTreeState=$(shell [ -z git status --porcelain 2>/dev/null ] && echo clean || echo dirty)
 buildDate:=$(shell date --rfc-3339=seconds | sed 's/ /T/')
 
-LDFLAGS=""
+LDFLAGS=
 
 # Build the project
 ifeq ($(shell uname -s), Darwin)
@@ -71,7 +71,7 @@ ${GOPATH}/bin/cfssl:
 SOURCES := $(shell go list -f '{{$$I:=.Dir}}{{range .GoFiles }}{{$$I}}/{{.}} {{end}}' ./... )
 
 ${BINARY}-linux: ${SOURCES} .env
-	CGO_ENABLED=0 GOOS=linux go build ${LDFLAGS} -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o ${BINARY}-linux ./cmd
+	CGO_ENABLED=0 GOOS=linux go build ${LDFLAGS} -o ${BINARY}-linux ./cmd
 
 ${BINARY}-darwin: ${SOURCES} .env
 ifeq ($(shell uname -s), Darwin)
