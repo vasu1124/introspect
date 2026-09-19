@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.2](https://github.com/vasu1124/introspect/compare/1.3.1...1.3.2) (2026-09-19)
+
+
+### Features
+
+* add dynamic configuration support with live ConfigMap synchronization and UI editor ([c86625e](https://github.com/vasu1124/introspect/commit/c86625efdb9c736a8041caada9a0abf5b2dbf58b))
+* add WebSocket support for real-time health probe logging and status streaming ([f694287](https://github.com/vasu1124/introspect/commit/f694287010e7d56ccad5a3728738661686661b4e))
+
+
+### Bug Fixes
+
+* Makefile bug ([d3bdc81](https://github.com/vasu1124/introspect/commit/d3bdc819284aeae2b418b24185d906e630a60c36))
+
+
+### Miscellaneous Chores
+
+* release 1.3.2 ([1fbcae5](https://github.com/vasu1124/introspect/commit/1fbcae54e820b68b48c32e29af96d14439bf31e3))
+
 ## [1.3.1](https://github.com/vasu1124/introspect/compare/1.3.0...1.3.1) (2026-09-18)
 
 
