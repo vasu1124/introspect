@@ -7,6 +7,7 @@
 load('ext://restart_process', 'docker_build_with_restart')
 load('ext://local_output', 'local_output')
 load('ext://restart_process', 'custom_build_with_restart')
+load('ext://helm_remote', 'helm_remote')
 
 def podman_build(
   ref, context, entrypoint=None, dockerfile=None, ignore=None, deps=None, live_update=[]
@@ -242,11 +243,6 @@ k8s_resource(workload='introspect', objects=[
   'uselessmachine-viewer-role:clusterrole',
   'introspect-rolebinding:clusterrolebinding',
   'introspect-secret:secret',],
-  labels=['introspect']
-)
-k8s_resource(workload='mongodb', objects=[
-#  'mongodb:persistentvolumeclaim',
-  'mongodb-secret:secret'],
   labels=['introspect']
 )
 k8s_resource(workload='etcd', objects=[

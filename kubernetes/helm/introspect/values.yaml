@@ -68,8 +68,6 @@ tolerations: []
 
 affinity: {}
 
-mongodb: 
-  connect: "mongodb:27017"
 auth:
   username: root
   password: some-important-password

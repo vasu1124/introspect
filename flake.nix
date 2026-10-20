@@ -40,7 +40,6 @@ SPDX-License-Identifier: Apache-2.0
               gnumake   # standard make
 
               etcd
-              postgresql   # documentdb backend
               cfssl
               istioctl
               gettext

@@ -1,7 +1,6 @@
 {
-  "DBType": "mongodb",
+  "DBType": "etcd",
 
-  "Addrs": ["127.0.0.1:27017"],
   "Timeout": 5000000000,
   "FailFast": true,
 

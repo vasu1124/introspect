@@ -20,8 +20,7 @@ data:
   #@yaml/text-templated-strings
   config.json: |+
     {
-      "DBtype": "mongodb",
-      "Addrs": ["mongodb:(@= str(data.values.mongodb_port) @)"],
+      "DBtype": "etcd",
       "Timeout": 5000000000,
       "FailFast": true,
 
@@ -104,7 +103,7 @@ spec:
       volumes:
       - name: secret-volume
         secret:
-          secretName: mongodb-secret
+          secretName: valkey-secret
       - name: config-volume
         configMap:
           name: introspect-config

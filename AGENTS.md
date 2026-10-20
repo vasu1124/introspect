@@ -10,7 +10,7 @@ This document provides context and guidelines for AI agents working on the Intro
 - Leader election with Kubernetes leases
 - Kubernetes operators (controller-runtime)
 - Admission webhooks
-- Database integrations (MongoDB, etcd, Valkey/Redis)
+- Database integrations (etcd, Valkey)
 - Mandelbrot fractal HPA simulation
 - Prometheus metrics, health checks, structured logging
 
@@ -42,7 +42,7 @@ introspect/
 │   ├── dynconfig/        # Dynamic config reload (fsnotify + Viper)
 │   ├── validate/         # Admission webhook + UI for pod validation
 │   ├── election/         # Kubernetes leader election demo
-│   ├── guestbook/        # Multi-backend guestbook (MongoDB, etcd, Valkey)
+│   ├── guestbook/        # Multi-backend guestbook (etcd, Valkey)
 │   ├── mandelbrot/       # Mandelbrot fractal HPA demo + Prometheus metrics
 │   ├── healthz/          # Health/readiness endpoints
 │   ├── operator/         # Kubernetes operator (controller-runtime) + WebSocket

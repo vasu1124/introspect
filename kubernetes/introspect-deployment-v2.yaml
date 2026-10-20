@@ -55,7 +55,7 @@ spec:
       volumes:
       - name: secret-volume
         secret:
-          secretName: mongodb-secret
+          secretName: introspect-secret
       - name: config-volume
         configMap:
           name: introspect-config

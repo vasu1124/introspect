@@ -12,7 +12,7 @@
 
 ## ✨ Features
 - **Kubernetes Runtime Environment**: Inspect environment variables, configuration, and runtime information
-- **Database Integrations**: Work with MongoDB, etcd, and Valkey (Redis-compatible)
+- **Database Integrations**: Work with etcd and Valkey (Redis-compatible)
 - **Kubernetes Operators**: Custom Resource Definitions (CRDs) and controller patterns
 - **Leadership Election**: Distributed coordination using Kubernetes leases
 - **Admission Webhooks**: Validation webhook implementation
@@ -45,7 +45,7 @@ To develop and test Introspect locally, you'll need the following tools installe
 
 ### Optional Tools
 
-- **Helm** (for managing dependencies like MongoDB, etcd)
+- **Helm** (for managing dependencies like etcd)
 - **cfssl** (for TLS certificate generation)
 - **direnv** (for environment variable management)
 

@@ -12,9 +12,6 @@ imagePullPolicy: IfNotPresent
 introspect_labels:
   app: "introspect"
   visualize: "true"
-mongodb_port: 27017
-mongodb_labels:
-  app: "mongodb"
 persistent: false
 pvc_size: "5Gi"
 hpa: true

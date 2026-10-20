@@ -19,9 +19,6 @@ import (
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
 	etcdv3 "go.etcd.io/etcd/client/v3"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Backend is the interface for guestbook storage backends.
@@ -46,9 +43,9 @@ type Handler struct {
 
 // Entry represents a guestbook entry.
 type Entry struct {
-	Date    time.Time
-	Name    string
-	Comment string
+	Date    time.Time `json:"date"`
+	Name    string    `json:"name"`
+	Comment string    `json:"comment"`
 }
 
 // New creates a new guestbook handler.
@@ -104,7 +101,7 @@ func (h *Handler) readConfig(config *viper.Viper) {
 
 	dbtype := config.GetString("DBtype")
 	if dbtype == "" {
-		dbtype = "mongodb"
+		dbtype = "etcd"
 	}
 
 	username := h.username
@@ -114,8 +111,6 @@ func (h *Handler) readConfig(config *viper.Viper) {
 	var err error
 
 	switch dbtype {
-	case "mongodb":
-		backend, err = newMongoBackend(config, username, password)
 	case "etcd":
 		backend, err = newEtcdBackend(config, username, password)
 	case "valkey":
@@ -275,7 +270,7 @@ func (h *Handler) SwitchBackend(backendType string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if backendType != "mongodb" && backendType != "etcd" && backendType != "valkey" {
+	if backendType != "etcd" && backendType != "valkey" {
 		return fmt.Errorf("invalid backend: %s", backendType)
 	}
 
@@ -283,8 +278,6 @@ func (h *Handler) SwitchBackend(backendType string) error {
 	var err error
 
 	switch backendType {
-	case "mongodb":
-		backend, err = newMongoBackend(h.config, h.username, h.password)
 	case "etcd":
 		backend, err = newEtcdBackend(h.config, h.username, h.password)
 	case "valkey":
@@ -327,80 +320,6 @@ func (h *Handler) Close() error {
 
 // Ensure Handler implements handler.Handler.
 var _ handler.Handler = (*Handler)(nil)
-
-// --- MongoDB Backend ---
-
-type mongoBackend struct {
-	client *mongo.Client
-	coll   *mongo.Collection
-}
-
-func newMongoBackend(config *viper.Viper, username, password string) (*mongoBackend, error) {
-	addrs := config.GetStringSlice("Addrs")
-	database := config.GetString("Database")
-	if database == "" {
-		database = "guestbook"
-	}
-
-	if len(addrs) == 0 {
-		return nil, fmt.Errorf("no MongoDB addresses in config")
-	}
-
-	uri := fmt.Sprintf("mongodb://%s", strings.Join(addrs, ","))
-	clientOpts := options.Client().ApplyURI(uri)
-	clientOpts.SetAuth(options.Credential{
-		Username: username,
-		Password: password,
-	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := client.Ping(ctx, nil); err != nil {
-		return nil, err
-	}
-
-	coll := client.Database(database).Collection("guestbook")
-	logger.Log.Info("[guestbook] Connected to MongoDB", "Addrs", addrs, "Database", database)
-	return &mongoBackend{client: client, coll: coll}, nil
-}
-
-func (b *mongoBackend) Insert(ctx context.Context, entry Entry) error {
-	_, err := b.coll.InsertOne(ctx, entry)
-	return err
-}
-
-func (b *mongoBackend) Entries(ctx context.Context) ([]Entry, error) {
-	cursor, err := b.coll.Find(ctx, bson.D{})
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var entries []Entry
-	if err := cursor.All(ctx, &entries); err != nil {
-		return nil, err
-	}
-	return entries, nil
-}
-
-func (b *mongoBackend) Close() error {
-	if b == nil || b.client == nil {
-		return nil
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	return b.client.Disconnect(ctx)
-}
-
-func (b *mongoBackend) Ping(ctx context.Context) error {
-	return b.client.Ping(ctx, nil)
-}
 
 // --- etcd Backend ---
 
