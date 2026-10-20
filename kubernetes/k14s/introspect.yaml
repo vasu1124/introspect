@@ -129,6 +129,13 @@ rules:
   - update
   - patch
   - delete
+# allow introspect to read its own pod manifest (probe timings for /healthz/ui)
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

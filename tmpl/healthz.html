@@ -126,6 +126,150 @@
     </div>
   </div>
 
+  <!-- Probe Timers Section -->
+  <div>
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-2 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Probe Timers
+          <span class="text-xs font-normal text-gray-400 px-2.5 py-0.5 rounded-full bg-gray-800 border border-gray-700">synced to live probe events</span>
+        </h2>
+        <p class="text-sm text-gray-400 mt-1">Anchored to the actual probe requests appearing in the log feed below &mdash; the failure counter mirrors the kubelet&rsquo;s consecutive-failure evaluation</p>
+      </div>
+      <p class="text-[11px] text-gray-500">Timings read from the live pod manifest &middot; <span id="probe-config-source" class="font-semibold text-amber-300">source: defaults, waiting for pod spec&hellip;</span> &middot; failure counter resets after one missed period without events</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Liveness Timer Card -->
+      <div class="glass rounded-2xl p-6 border border-green-500/20 space-y-5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-white">Liveness <span class="text-xs font-mono text-gray-400">/healthz</span></h3>
+          <span id="timer-liveness-state" class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide rounded-lg bg-green-500/10 text-green-300 border border-green-500/30">alive</span>
+        </div>
+
+        <!-- Parameters -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="rounded-xl bg-gray-900/60 border border-gray-800 py-2">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500">period</div>
+            <div id="timer-liveness-period-val" class="text-base font-bold font-mono text-green-300">20s</div>
+          </div>
+          <div class="rounded-xl bg-gray-900/60 border border-gray-800 py-2">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500">timeout</div>
+            <div id="timer-liveness-timeout-val" class="text-base font-bold font-mono text-amber-300">2s</div>
+          </div>
+          <div class="rounded-xl bg-gray-900/60 border border-gray-800 py-2">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500">threshold</div>
+            <div id="timer-liveness-threshold-val" class="text-base font-bold font-mono text-red-300">3</div>
+          </div>
+        </div>
+
+        <!-- Period (cycle) progress bar -->
+        <div>
+          <div class="flex justify-between text-xs mb-1.5">
+            <span class="text-gray-400">Cycle <span class="text-gray-500">(periodSeconds = <span id="timer-liveness-period-txt">20s</span>)</span></span>
+            <span id="timer-liveness-period-label" class="font-mono text-gray-400">waiting for connection&hellip;</span>
+          </div>
+          <div class="relative h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div id="timer-liveness-period-bar" class="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-[width] duration-100 ease-linear" style="width: 0%"></div>
+          </div>
+          <p class="text-[11px] text-gray-500 mt-1.5">Anchored to observed probe events: each bar restart is a real request handled by the pod &mdash; the next is expected one period after the last.</p>
+        </div>
+
+        <!-- Timeout (probe window) progress bar -->
+        <div>
+          <div class="flex justify-between text-xs mb-1.5">
+            <span class="text-gray-400">Probe window <span class="text-gray-500">(timeoutSeconds = <span id="timer-liveness-timeout-txt">2s</span>)</span></span>
+            <span id="timer-liveness-timeout-label" class="font-mono text-gray-400">no probe observed yet</span>
+          </div>
+          <div class="h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div id="timer-liveness-timeout-bar" class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full opacity-40 transition-[width] duration-75 ease-linear" style="width: 0%"></div>
+          </div>
+          <p class="text-[11px] text-gray-500 mt-1.5">Replays each observed request&rsquo;s response time &mdash; the container must answer within this window or the probe counts as failed.</p>
+        </div>
+
+        <!-- Failure counter -->
+        <div class="pt-3 border-t border-gray-800/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs uppercase tracking-wider text-gray-500 font-medium">Consecutive failures</span>
+            <span id="timer-liveness-failures-label" class="text-xs font-mono text-gray-300">&mdash; / 3</span>
+          </div>
+          <div id="timer-liveness-pips" class="flex items-center gap-2">
+            <span class="timer-pip h-3 flex-1 rounded-full bg-gray-800 border border-gray-700 transition-colors duration-300"></span>
+            <span class="timer-pip h-3 flex-1 rounded-full bg-gray-800 border border-gray-700 transition-colors duration-300"></span>
+            <span class="timer-pip h-3 flex-1 rounded-full bg-gray-800 border border-gray-700 transition-colors duration-300"></span>
+          </div>
+          <p id="timer-liveness-hint" class="text-xs text-gray-400 mt-2.5 leading-snug">Waiting for liveness probe events&hellip; They usually arrive within one periodSeconds of pod start.</p>
+        </div>
+      </div>
+
+      <!-- Readiness Timer Card -->
+      <div class="glass rounded-2xl p-6 border border-emerald-500/20 space-y-5">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-white">Readiness <span class="text-xs font-mono text-gray-400">/healthzr</span></h3>
+          <span id="timer-readiness-state" class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">ready</span>
+        </div>
+
+        <!-- Parameters -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="rounded-xl bg-gray-900/60 border border-gray-800 py-2">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500">period</div>
+            <div id="timer-readiness-period-val" class="text-base font-bold font-mono text-emerald-300">15s</div>
+          </div>
+          <div class="rounded-xl bg-gray-900/60 border border-gray-800 py-2">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500">timeout</div>
+            <div id="timer-readiness-timeout-val" class="text-base font-bold font-mono text-amber-300">3s</div>
+          </div>
+          <div class="rounded-xl bg-gray-900/60 border border-gray-800 py-2">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500">threshold</div>
+            <div id="timer-readiness-threshold-val" class="text-base font-bold font-mono text-red-300">4</div>
+          </div>
+        </div>
+
+        <!-- Period (cycle) progress bar -->
+        <div>
+          <div class="flex justify-between text-xs mb-1.5">
+            <span class="text-gray-400">Cycle <span class="text-gray-500">(periodSeconds = <span id="timer-readiness-period-txt">15s</span>)</span></span>
+            <span id="timer-readiness-period-label" class="font-mono text-gray-400">waiting for connection&hellip;</span>
+          </div>
+          <div class="relative h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div id="timer-readiness-period-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-[width] duration-100 ease-linear" style="width: 0%"></div>
+          </div>
+          <p class="text-[11px] text-gray-500 mt-1.5">Anchored to observed probe events: each bar restart is a real request handled by the pod &mdash; the next is expected one period after the last.</p>
+        </div>
+
+        <!-- Timeout (probe window) progress bar -->
+        <div>
+          <div class="flex justify-between text-xs mb-1.5">
+            <span class="text-gray-400">Probe window <span class="text-gray-500">(timeoutSeconds = <span id="timer-readiness-timeout-txt">3s</span>)</span></span>
+            <span id="timer-readiness-timeout-label" class="font-mono text-gray-400">no probe observed yet</span>
+          </div>
+          <div class="h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div id="timer-readiness-timeout-bar" class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full opacity-40 transition-[width] duration-75 ease-linear" style="width: 0%"></div>
+          </div>
+          <p class="text-[11px] text-gray-500 mt-1.5">Replays each observed request&rsquo;s response time &mdash; the container must answer within this window or the probe counts as failed.</p>
+        </div>
+
+        <!-- Failure counter -->
+        <div class="pt-3 border-t border-gray-800/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs uppercase tracking-wider text-gray-500 font-medium">Consecutive failures</span>
+            <span id="timer-readiness-failures-label" class="text-xs font-mono text-gray-300">&mdash; / 4</span>
+          </div>
+          <div id="timer-readiness-pips" class="flex items-center gap-2">
+            <span class="timer-pip h-3 flex-1 rounded-full bg-gray-800 border border-gray-700 transition-colors duration-300"></span>
+            <span class="timer-pip h-3 flex-1 rounded-full bg-gray-800 border border-gray-700 transition-colors duration-300"></span>
+          </div>
+          <p id="timer-readiness-hint" class="text-xs text-gray-400 mt-2.5 leading-snug">Waiting for readiness probe events&hellip; They usually arrive within one periodSeconds of pod start.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Live Feed of Logs over WebSocket -->
   <div class="glass rounded-2xl border border-gray-800/80 shadow-2xl overflow-hidden">
     <!-- Header with Controls & Filters -->
@@ -253,29 +397,35 @@
     </div>
   </div>
 
-  <!-- Kubernetes Probe Config Reference -->
+  <!-- Kubernetes Probe Config Reference (filled from the live pod manifest) -->
   <div class="glass rounded-2xl p-6 border border-primary-500/20">
-    <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
-      <svg class="w-5 h-5 mr-2 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 16l4-16M6 16l-4-16m16 16l-4-16M3 12h18"></path>
-      </svg>
-      Kubernetes Probe Configuration Reference
-    </h3>
-    <pre class="bg-gray-900/50 rounded-xl p-4 overflow-x-auto text-sm text-gray-300"><code>livenessProbe:
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+      <h3 class="text-lg font-semibold text-white flex items-center">
+        <svg class="w-5 h-5 mr-2 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 16l4-16M6 16l-4-16m16 16l-4-16M3 12h18"></path>
+        </svg>
+        Kubernetes Probe Configuration
+      </h3>
+      <span id="probe-ref-meta" class="text-xs font-mono text-gray-500">loading pod spec&hellip;</span>
+    </div>
+    <pre class="bg-gray-900/50 rounded-xl p-4 overflow-x-auto text-sm text-gray-300"><code id="probe-config-yaml"># connecting to pod manifest feed&hellip;
+livenessProbe:
   httpGet:
     path: /healthz
     port: 9090
-  initialDelaySeconds: 10
-  periodSeconds: 10
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 2
   failureThreshold: 3
 
 readinessProbe:
   httpGet:
     path: /healthzr
     port: 9090
-  initialDelaySeconds: 5
-  periodSeconds: 5
-  failureThreshold: 3</code></pre>
+  initialDelaySeconds: 16
+  periodSeconds: 15
+  timeoutSeconds: 3
+  failureThreshold: 4</code></pre>
   </div>
 </div>
 
@@ -372,6 +522,7 @@ async function sendHealthRequest(url, action) {
   try {
     const query = action ? `?${action}` : '';
     const response = await fetch(`${url}${query}`, { method: 'GET' });
+    // Probe events arrive over the WebSocket log feed; timers replay them there.
     return { ok: response.ok, status: response.status };
   } catch (err) {
     console.error('Health request failed:', err);
@@ -456,6 +607,8 @@ function handleWsMessage(msg) {
     renderLogs();
     if (msg.livenessStatus) updateLivenessUI(msg.livenessStatus === 200, msg.livenessStatus);
     if (msg.readinessStatus) updateReadinessUI(msg.readinessStatus === 200, msg.readinessStatus);
+    if (msg.probeConfig) applyProbeConfig(msg.probeConfig);
+    reseedTimerAnchors();
   } else if (msg.type === 'log' && msg.log) {
     allLogs.push(msg.log);
     if (allLogs.length > 150) {
@@ -464,6 +617,8 @@ function handleWsMessage(msg) {
     renderLogs();
     if (msg.livenessStatus) updateLivenessUI(msg.livenessStatus === 200, msg.livenessStatus);
     if (msg.readinessStatus) updateReadinessUI(msg.readinessStatus === 200, msg.readinessStatus);
+    // Sync the probe timers with the actual probe event
+    handleProbeEvent(msg.log);
   }
 }
 
@@ -560,10 +715,412 @@ function escapeHtml(str) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Probe Timers — synced with actual probe events from the log feed
+// Threshold values mirror kubernetes/introspect/deployment.yaml
+// ---------------------------------------------------------------------------
+// Parse a Go-style duration string like "185\u00b5s", "2.1ms", "1.02s" to ms.
+function parseDurationMs(d) {
+  if (!d) return null;
+  const m = /^([\d.]+)(ns|us|\u00b5s|ms|s|m)$/.exec(String(d).trim());
+  if (!m) return null;
+  const v = parseFloat(m[1]);
+  switch (m[2]) {
+    case 'ns': return v / 1e6;
+    case 'us':
+    case '\u00b5s': return v / 1e3;
+    case 'ms': return v;
+    case 's': return v * 1e3;
+    case 'm': return v * 60e3;
+    default: return null;
+  }
+}
+
+function fmtLatencyHuman(ms) {
+  if (ms === null || ms === undefined || isNaN(ms)) return 'unknown';
+  if (ms < 1) return '<1ms';
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  return `${(ms / 1000).toFixed(2)}s`;
+}
+
+function fmtClock(ts) {
+  const d = new Date(ts);
+  const p = (n, l) => String(n).padStart(l || 2, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`;
+}
+
+// Parameters are delivered by the server via the WebSocket "init" message
+// (read from the pod manifest). These are display defaults matching
+// kubernetes/introspect/deployment.yaml until the init payload arrives.
+const PROBE_CONFIG = {
+  liveness:  { periodSeconds: 20, timeoutSeconds: 1, failureThreshold: 3 },
+  readiness: { periodSeconds: 20, timeoutSeconds: 1, failureThreshold: 2 }
+};
+
+function periodMs(key)  { return PROBE_CONFIG[key].periodSeconds * 1000; }
+function timeoutMs(key) { return PROBE_CONFIG[key].timeoutSeconds * 1000; }
+// Staleness: after one full period + its timeout without any probe event we
+// consider the anchor lost, reset the failure counter (a restarted container
+// starts at 0), and go back to the "waiting" state.
+function staleMs(key)   { return periodMs(key) + timeoutMs(key); }
+
+const timerState = {
+  liveness:  { lastEventAt: null, consecutiveFailures: null, lastHint: '', timeoutAnim: null, breached: false },
+  readiness: { lastEventAt: null, consecutiveFailures: null, lastHint: '', timeoutAnim: null, breached: false }
+};
+
+const timerEls = {};
+timerEls.liveness  = { periodBar: null, periodLabel: null, timeoutBar: null, timeoutLabel: null, failuresLabel: null, pips: [], stateBadge: null, hint: null };
+timerEls.readiness = { periodBar: null, periodLabel: null, timeoutBar: null, timeoutLabel: null, failuresLabel: null, pips: [], stateBadge: null, hint: null };
+
+function initTimerElements() {
+  ['liveness', 'readiness'].forEach(k => {
+    timerEls[k].periodBar      = document.getElementById(`timer-${k}-period-bar`);
+    timerEls[k].periodLabel    = document.getElementById(`timer-${k}-period-label`);
+    timerEls[k].timeoutBar     = document.getElementById(`timer-${k}-timeout-bar`);
+    timerEls[k].timeoutLabel   = document.getElementById(`timer-${k}-timeout-label`);
+    timerEls[k].failuresLabel  = document.getElementById(`timer-${k}-failures-label`);
+    timerEls[k].pipsContainer  = document.getElementById(`timer-${k}-pips`);
+    timerEls[k].pips           = timerEls[k].pipsContainer ? timerEls[k].pipsContainer.querySelectorAll('.timer-pip') : [];
+    timerEls[k].stateBadge     = document.getElementById(`timer-${k}-state`);
+    timerEls[k].hint           = document.getElementById(`timer-${k}-hint`);
+    timerEls[k].periodVal      = document.getElementById(`timer-${k}-period-val`);
+    timerEls[k].timeoutVal     = document.getElementById(`timer-${k}-timeout-val`);
+    timerEls[k].thresholdVal   = document.getElementById(`timer-${k}-threshold-val`);
+    timerEls[k].periodTxt      = document.getElementById(`timer-${k}-period-txt`);
+    timerEls[k].timeoutTxt     = document.getElementById(`timer-${k}-timeout-txt`);
+  });
+}
+
+// Apply probe timing received from the server (read out of the pod manifest).
+// Rebuilds the failure pips when failureThreshold changes and refreshes all
+// static labels so everything on the page reflects the manifest values.
+function applyProbeConfig(pc) {
+  if (!pc) return;
+  ['liveness', 'readiness'].forEach(key => {
+    const src = pc[key];
+    if (!src) return;
+    const next = {
+      periodSeconds:    src.periodSeconds    || PROBE_CONFIG[key].periodSeconds,
+      timeoutSeconds:   src.timeoutSeconds   || PROBE_CONFIG[key].timeoutSeconds,
+      failureThreshold: src.failureThreshold || PROBE_CONFIG[key].failureThreshold
+    };
+    PROBE_CONFIG[key] = next;
+
+    const els = timerEls[key];
+    if (els.periodVal)    els.periodVal.textContent    = `${next.periodSeconds}s`;
+    if (els.timeoutVal)   els.timeoutVal.textContent   = `${next.timeoutSeconds}s`;
+    if (els.thresholdVal) els.thresholdVal.textContent = `${next.failureThreshold}`;
+    if (els.periodTxt)    els.periodTxt.textContent    = `${next.periodSeconds}s`;
+    if (els.timeoutTxt)   els.timeoutTxt.textContent   = `${next.timeoutSeconds}s`;
+
+    // updateFailurePips rebuilds the pip row when the threshold changed
+    updateFailurePips(key);
+    // Force re-render of labels/hints that embed config values
+    timerState[key].lastHint = '';
+  });
+
+  const srcEl = document.getElementById('probe-config-source');
+  if (srcEl) {
+    if (pc.source === 'pod') {
+      srcEl.textContent = 'source: pod manifest';
+      srcEl.className = 'font-semibold text-green-300';
+    } else {
+      srcEl.textContent = 'source: fallback defaults (pod manifest unavailable)';
+      srcEl.className = 'font-semibold text-amber-300';
+    }
+  }
+
+  // Fill the configuration reference widget with the actual manifest content
+  const yamlEl = document.getElementById('probe-config-yaml');
+  if (yamlEl && pc.yaml) {
+    yamlEl.textContent = pc.yaml;
+  }
+  const metaEl = document.getElementById('probe-ref-meta');
+  if (metaEl) {
+    if (pc.source === 'pod') {
+      metaEl.textContent = `live from pod ${pc.podName || '?'} \u00b7 ns ${pc.namespace || '?'} \u00b7 container ${pc.container || '?'}`;
+      metaEl.className = 'text-xs font-mono text-green-300';
+    } else {
+      metaEl.textContent = 'fallback defaults \u2014 pod manifest unavailable (running outside a cluster?)';
+      metaEl.className = 'text-xs font-mono text-amber-300';
+    }
+  }
+}
+
+// Re-seed the timer anchors from the current log buffer (e.g. after a
+// WebSocket (re)connect init snapshot). Only sets anchors that are missing.
+function reseedTimerAnchors() {
+  let any = false;
+  ['liveness', 'readiness'].forEach(key => {
+    if (timerState[key].lastEventAt !== null) return;
+    for (let i = allLogs.length - 1; i >= 0; i--) {
+      const l = allLogs[i];
+      if (l && l.method && l.method !== 'LOG' && l.type === key) {
+        timerState[key].lastEventAt = Date.now();
+        any = true;
+        break;
+      }
+    }
+  });
+  if (any) tickProbeTimers(Date.now());
+}
+
+// Entry point from the WebSocket log feed: a real probe request was just
+// handled by the pod. Anchors the cycle, replays the timeout window, and
+// updates the consecutive-failure counter exactly like the kubelet does.
+function handleProbeEvent(log) {
+  if (!log || !log.method || log.method === 'LOG') return;
+  const key = log.type === 'readiness' ? 'readiness' : (log.type === 'liveness' ? 'liveness' : null);
+  if (!key) return;
+
+  const cfg = PROBE_CONFIG[key];
+  const st = timerState[key];
+  const now = Date.now();
+  const latencyMs = parseDurationMs(log.duration);
+  const failed = log.status >= 400;
+  const wasFailing = (st.consecutiveFailures || 0) > 0;
+
+  st.lastEventAt = now;
+  if (st.consecutiveFailures === null) st.consecutiveFailures = 0;
+
+  if (failed) {
+    st.consecutiveFailures++;
+    st.breached = st.consecutiveFailures >= cfg.failureThreshold;
+  } else {
+    st.consecutiveFailures = 0;
+    st.breached = false;
+  }
+
+  updateFailurePips(key);
+
+  const source = (log.userAgent || '').includes('kube-probe') ? 'kubelet' : (log.remoteIp ? log.remoteIp.split(':')[0] : 'client');
+  const latencyTxt = latencyMs !== null ? fmtLatencyHuman(latencyMs) : 'unknown';
+  const clock = fmtClock(now);
+
+  if (failed) {
+    setStateBadge(key, st.breached ? 'breached' : 'failing');
+    if (st.breached) {
+      setTimerHint(key,
+        key === 'liveness'
+          ? `${clock} \u00b7 probe from ${source} returned ${log.status} \u2014 failure threshold ${cfg.failureThreshold}/${cfg.failureThreshold} reached: kubelet RESTARTS the container. The counter then resets to 0.`
+          : `${clock} \u00b7 probe from ${source} returned ${log.status} \u2014 failure threshold ${cfg.failureThreshold}/${cfg.failureThreshold} reached: pod is REMOVED from Service endpoints until probes pass again.`);
+    } else {
+      const consequence = key === 'liveness'
+        ? 'if this repeats ' + (cfg.failureThreshold - st.consecutiveFailures) + ' more time(s) in a row, the container is restarted.'
+        : 'if this repeats ' + (cfg.failureThreshold - st.consecutiveFailures) + ' more time(s) in a row, the pod is removed from Service endpoints.';
+      setTimerHint(key,
+        `${clock} \u00b7 probe from ${source} returned ${log.status} ${log.statusText || ''} after ${latencyTxt} \u2014 consecutive failure ${st.consecutiveFailures}/${cfg.failureThreshold}; ${consequence}`);
+    }
+  } else {
+    setStateBadge(key, 'ok');
+    setTimerHint(key, wasFailing
+      ? `${clock} \u00b7 probe from ${source} answered ${log.status} OK in ${latencyTxt} \u2014 consecutive failure counter reset 0/${cfg.failureThreshold}.` + (key === 'readiness' ? ' The pod re-joins Service endpoints.' : '')
+      : `${clock} \u00b7 probe from ${source} answered ${log.status} OK in ${latencyTxt}, within the ${cfg.timeoutSeconds}s timeout \u2014 failure counter already 0.`);
+  }
+
+  // Replay the observed response window on the timeout bar. Latencies far
+  // below the rAF frame budget get a brief minimum playback so it is visible.
+  playTimeoutReplay(key, latencyMs);
+}
+
+function playTimeoutReplay(key, latencyMs) {
+  const st = timerState[key];
+  if (st.timeoutAnim && st.timeoutAnim.raf) cancelAnimationFrame(st.timeoutAnim.raf);
+  const duration = (latencyMs !== null && latencyMs > 40) ? latencyMs : 300;
+  st.timeoutAnim = { start: performance.now(), duration: duration, raf: null };
+  const step = (t) => {
+    const a = timerState[key].timeoutAnim;
+    if (!a) return;
+    updateTimeoutReplayUI(key, t);
+    if (t - a.start < a.duration) {
+      a.raf = requestAnimationFrame(step);
+    } else {
+      a.raf = null;
+    }
+  };
+  st.timeoutAnim.raf = requestAnimationFrame(step);
+}
+
+function updateTimeoutReplayUI(key, t) {
+  const cfg = PROBE_CONFIG[key];
+  const st = timerState[key];
+  const els = timerEls[key];
+  const a = st.timeoutAnim;
+  if (!a) return;
+  const limitMs = timeoutMs(key);
+  const elapsed = Math.max(0, t - a.start);
+  const fraction = Math.min(1, a.duration > 0 ? elapsed / a.duration : 1);
+  const respondedMs = fraction * a.duration;
+  // Countdown (right \u2192 left): remaining share of the timeout window.
+  const pctLeft = Math.max(0, Math.min(100, 100 * (1 - respondedMs / limitMs)));
+  const leftMs = Math.max(0, limitMs - respondedMs);
+
+  if (els.timeoutBar) {
+    els.timeoutBar.style.width = `${pctLeft}%`;
+    els.timeoutBar.classList.remove('opacity-40');
+  }
+  if (els.timeoutLabel) {
+    if (fraction < 1) {
+      els.timeoutLabel.textContent = `probe in flight\u2026 responded after ${fmtLatencyHuman(respondedMs)} \u2014 ${fmtLatencyHuman(leftMs)} of ${cfg.timeoutSeconds}s left`;
+      els.timeoutLabel.className = 'font-mono text-amber-300';
+    } else {
+      els.timeoutLabel.textContent = `response arrived in ${fmtLatencyHuman(a.duration)}, ${fmtLatencyHuman(leftMs)} of the ${cfg.timeoutSeconds}s window left \u2014 window closed`;
+      els.timeoutLabel.className = 'font-mono text-gray-400';
+    }
+  }
+}
+
+function setTimerHint(key, text) {
+  const st = timerState[key];
+  if (st.lastHint === text) return;
+  st.lastHint = text;
+  const el = timerEls[key].hint;
+  if (el) el.textContent = text;
+}
+
+function setStateBadge(key, mode) {
+  const el = timerEls[key].stateBadge;
+  if (!el) return;
+  const base = 'px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide rounded-lg border ';
+  if (mode === 'ok') {
+    el.className = base + (key === 'liveness'
+      ? 'bg-green-500/10 text-green-300 border-green-500/30'
+      : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30');
+    el.textContent = key === 'liveness' ? 'alive' : 'ready';
+  } else if (mode === 'failing') {
+    el.className = base + 'bg-amber-500/10 text-amber-300 border-amber-500/30';
+    el.textContent = 'failing';
+  } else {
+    el.className = base + 'bg-red-500/10 text-red-300 border-red-500/30';
+    el.textContent = key === 'liveness' ? 'dead' : 'unready';
+  }
+}
+
+function updateFailurePips(key) {
+  const cfg = PROBE_CONFIG[key];
+  const st = timerState[key];
+  const els = timerEls[key];
+  if (els.failuresLabel) {
+    if (st.consecutiveFailures === null) {
+      els.failuresLabel.textContent = `\u2014 / ${cfg.failureThreshold}`;
+    } else {
+      els.failuresLabel.textContent = `${st.consecutiveFailures} / ${cfg.failureThreshold}`;
+    }
+  }
+  // Keep the number of pips in sync with failureThreshold (starts from the
+  // static markup, corrected here whenever a manifest config arrives).
+  if (els.pipsContainer && els.pips.length !== cfg.failureThreshold) {
+    els.pipsContainer.innerHTML = '';
+    for (let i = 0; i < cfg.failureThreshold; i++) {
+      const pip = document.createElement('span');
+      pip.className = 'timer-pip h-3 flex-1 rounded-full bg-gray-800 border border-gray-700 transition-colors duration-300';
+      els.pipsContainer.appendChild(pip);
+    }
+    els.pips = els.pipsContainer.querySelectorAll('.timer-pip');
+  }
+  els.pips.forEach((pip, i) => {
+    if (st.consecutiveFailures !== null && i < st.consecutiveFailures) {
+      pip.className = 'timer-pip h-3 flex-1 rounded-full bg-red-500 border border-red-500 transition-colors duration-300';
+    } else {
+      pip.className = 'timer-pip h-3 flex-1 rounded-full bg-gray-800 border border-gray-700 transition-colors duration-300';
+    }
+  });
+}
+
+// Per-frame render: period bar counting down from the last observed probe
+// event, staleness detection, and in-flight timeout replays.
+function tickProbeTimers(now) {
+  ['liveness', 'readiness'].forEach(key => {
+    const st = timerState[key];
+    const els = timerEls[key];
+    const period = periodMs(key);
+
+    // Keep an in-flight timeout replay on the 60fps main loop.
+    if (st.timeoutAnim && st.timeoutAnim.raf) {
+      updateTimeoutReplayUI(key, now);
+    }
+
+    if (st.lastEventAt === null) {
+      if (els.periodBar) els.periodBar.style.width = '0%';
+      if (els.periodLabel) {
+        els.periodLabel.textContent = 'waiting for first probe\u2026';
+        els.periodLabel.className = 'font-mono text-gray-400';
+      }
+      return;
+    }
+
+    const elapsed = now - st.lastEventAt;
+
+    if (elapsed > staleMs(key)) {
+      // No events for ~one full period + timeout: the anchor is lost
+      // (container restarted, web UI not receiving probes, etc.).
+      st.lastEventAt = null;
+      st.consecutiveFailures = null;
+      st.breached = false;
+      if (st.timeoutAnim && st.timeoutAnim.raf) {
+        cancelAnimationFrame(st.timeoutAnim.raf);
+        st.timeoutAnim = { start: 0, duration: 0, raf: null };
+      }
+      if (els.timeoutBar) {
+        els.timeoutBar.style.width = '0%';
+        els.timeoutBar.classList.add('opacity-40');
+      }
+      if (els.timeoutLabel) {
+        els.timeoutLabel.textContent = 'no probe observed yet';
+        els.timeoutLabel.className = 'font-mono text-gray-400';
+      }
+      updateFailurePips(key);
+      setStateBadge(key, 'ok');
+      const elapsedSec = (elapsed / 1000).toFixed(0);
+      setTimerHint(key,
+        `No probe events for ${elapsedSec}s (~one full period) \u2014 the timer anchor was lost. If kubelet probes stopped, the container was likely restarted; the failure counter restarts at 0. Waiting for new events\u2026`);
+      if (els.periodBar) els.periodBar.style.width = '0%';
+      if (els.periodLabel) {
+        els.periodLabel.textContent = 'waiting for first probe\u2026';
+        els.periodLabel.className = 'font-mono text-gray-400';
+      }
+      return;
+    }
+
+    // Countdown (right \u2192 left): full bar right after a probe event,
+    // empty when the next probe is due.
+    const remainPct = Math.max(0, Math.min(100, 100 * (1 - elapsed / period)));
+    if (els.periodBar) els.periodBar.style.width = `${remainPct}%`;
+    if (els.periodLabel) {
+      if (elapsed <= period) {
+        const remaining = (period - elapsed) / 1000;
+        els.periodLabel.textContent = `next probe expected in ${remaining.toFixed(1)}s`;
+        els.periodLabel.className = 'font-mono text-gray-400';
+      } else {
+        const overdue = ((elapsed - period) / 1000).toFixed(1);
+        els.periodLabel.textContent = `probe overdue by ${overdue}s`;
+        els.periodLabel.className = 'font-mono text-amber-300';
+      }
+    }
+  });
+}
+
 // Event Listeners setup
 document.addEventListener('DOMContentLoaded', () => {
   // Connect WebSocket
   connectWebSocket();
+
+  // Initialize the probe timers, seed anchors from recent log events, and
+  // start a low-frequency refresh loop (timeout replays run at 60fps on top).
+  initTimerElements();
+  ['liveness', 'readiness'].forEach(key => {
+    for (let i = allLogs.length - 1; i >= 0; i--) {
+      const l = allLogs[i];
+      if (l && l.method && l.method !== 'LOG' && l.type === key) {
+        timerState[key].lastEventAt = Date.now(); // anchor; failure replay starts below
+        break;
+      }
+    }
+    updateFailurePips(key);
+  });
+  setInterval(() => tickProbeTimers(Date.now()), 250);
+  tickProbeTimers(Date.now());
 
   // Switch event listeners
   const lSwitch = document.getElementById('liveness-switch');

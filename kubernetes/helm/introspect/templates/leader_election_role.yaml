@@ -16,4 +16,11 @@ rules:
   - update
   - patch
   - delete
+# allow introspect to read its own pod manifest (probe timings for /healthz/ui)
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
 

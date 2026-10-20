@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -14,6 +15,11 @@ import (
 	"github.com/vasu1124/introspect/pkg/handler"
 	"github.com/vasu1124/introspect/pkg/logger"
 	"github.com/vasu1124/introspect/pkg/version"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 // ProbeLog represents a structured log entry for a liveness or readiness probe event.
@@ -36,11 +42,101 @@ type ProbeLog struct {
 
 // WebSocketMessage represents the payload sent over WebSocket to clients.
 type WebSocketMessage struct {
-	Type            string     `json:"type"` // "init", "log", "status"
-	Log             *ProbeLog  `json:"log,omitempty"`
-	Logs            []ProbeLog `json:"logs,omitempty"`
-	LivenessStatus  int        `json:"livenessStatus"`
-	ReadinessStatus int        `json:"readinessStatus"`
+	Type            string       `json:"type"` // "init", "log", "status"
+	Log             *ProbeLog    `json:"log,omitempty"`
+	Logs            []ProbeLog   `json:"logs,omitempty"`
+	LivenessStatus  int          `json:"livenessStatus"`
+	ReadinessStatus int          `json:"readinessStatus"`
+	ProbeConfig     *ProbeConfig `json:"probeConfig,omitempty"`
+}
+
+// ProbeSpec holds the full Kubernetes probe definition the UI displays/
+// mirrors. Timings drive the timers; the rest feeds the manifest reference
+// widget.
+type ProbeSpec struct {
+	Path                      string `json:"path"`
+	Port                      int    `json:"port"`
+	Scheme                    string `json:"scheme"`
+	InitialDelaySeconds       int32  `json:"initialDelaySeconds"`
+	PeriodSeconds             int32  `json:"periodSeconds"`
+	TimeoutSeconds            int32  `json:"timeoutSeconds"`
+	SuccessThreshold          int32  `json:"successThreshold"`
+	FailureThreshold          int32  `json:"failureThreshold"`
+	TerminationGracePeriodSet bool   `json:"terminationGracePeriodSet"`
+	TerminationGracePeriod    int64  `json:"terminationGracePeriodSeconds"`
+}
+
+// ProbeConfig holds both probe definitions, read from the pod spec, plus the
+// rendered YAML used by the configuration reference widget.
+type ProbeConfig struct {
+	PodName   string    `json:"podName,omitempty"`
+	Namespace string    `json:"namespace,omitempty"`
+	Container string    `json:"container,omitempty"`
+	Liveness  ProbeSpec `json:"liveness"`
+	Readiness ProbeSpec `json:"readiness"`
+	Source    string    `json:"source"` // "pod" or "default"
+	YAML      string    `json:"yaml"`
+}
+
+// defaultProbeConfig mirrors kubernetes/introspect/deployment.yaml.
+func defaultProbeConfig() *ProbeConfig {
+	cfg := &ProbeConfig{
+		Liveness: ProbeSpec{
+			Path: "/healthz", Port: 9090, Scheme: "HTTPS",
+			InitialDelaySeconds: 15, PeriodSeconds: 20, TimeoutSeconds: 2,
+			SuccessThreshold: 1, FailureThreshold: 3,
+		},
+		Readiness: ProbeSpec{
+			Path: "/healthzr", Port: 9090, Scheme: "HTTPS",
+			InitialDelaySeconds: 16, PeriodSeconds: 15, TimeoutSeconds: 3,
+			SuccessThreshold: 1, FailureThreshold: 4,
+		},
+		Source: "default",
+	}
+	cfg.YAML = renderProbeYAML(cfg)
+	return cfg
+}
+
+// renderProbeYAML renders the effective probe configuration as it appears in
+// the pod manifest container spec.
+func renderProbeYAML(pc *ProbeConfig) string {
+	probe := func(name string, p ProbeSpec) string {
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "        %s:\n", name)
+		fmt.Fprintf(&sb, "          httpGet:\n")
+		fmt.Fprintf(&sb, "            path: %s\n", p.Path)
+		fmt.Fprintf(&sb, "            port: %d\n", p.Port)
+		fmt.Fprintf(&sb, "            scheme: %s\n", p.Scheme)
+		fmt.Fprintf(&sb, "          initialDelaySeconds: %d\n", p.InitialDelaySeconds)
+		fmt.Fprintf(&sb, "          periodSeconds: %d\n", p.PeriodSeconds)
+		fmt.Fprintf(&sb, "          timeoutSeconds: %d\n", p.TimeoutSeconds)
+		fmt.Fprintf(&sb, "          successThreshold: %d\n", p.SuccessThreshold)
+		fmt.Fprintf(&sb, "          failureThreshold: %d\n", p.FailureThreshold)
+		if p.TerminationGracePeriodSet {
+			fmt.Fprintf(&sb, "          terminationGracePeriodSeconds: %d\n", p.TerminationGracePeriod)
+		}
+		return sb.String()
+	}
+
+	var sb strings.Builder
+	if pc.PodName != "" {
+		fmt.Fprintf(&sb, "# live spec from pod %s", pc.PodName)
+		if pc.Namespace != "" {
+			fmt.Fprintf(&sb, " (namespace %s)", pc.Namespace)
+		}
+		sb.WriteString("\n")
+	} else {
+		sb.WriteString("# fallback defaults \u2014 live pod manifest unavailable\n")
+	}
+	fmt.Fprintf(&sb, "      containers:\n")
+	name := pc.Container
+	if name == "" {
+		name = "introspect"
+	}
+	fmt.Fprintf(&sb, "      - name: %s\n", name)
+	sb.WriteString(probe("livenessProbe", pc.Liveness))
+	sb.WriteString(probe("readinessProbe", pc.Readiness))
+	return sb.String()
 }
 
 // Handler implements handler.Handler and handler.Closer for the healthz endpoints.
@@ -51,15 +147,17 @@ type Handler struct {
 	logs           []ProbeLog
 	melody         *melody.Melody
 	unsubscribeLog func()
+	probeConfig    *ProbeConfig
 }
 
 // New creates a new healthz handler.
 func New() *Handler {
 	h := &Handler{
-		statusl: http.StatusOK,
-		statusr: http.StatusOK,
-		logs:    make([]ProbeLog, 0, 100),
-		melody:  melody.New(),
+		statusl:     http.StatusOK,
+		statusr:     http.StatusOK,
+		logs:        make([]ProbeLog, 0, 100),
+		melody:      melody.New(),
+		probeConfig: defaultProbeConfig(),
 	}
 
 	h.setupMelody()
@@ -82,6 +180,7 @@ func (h *Handler) setupMelody() {
 			Logs:            logsCopy,
 			LivenessStatus:  lStatus,
 			ReadinessStatus: rStatus,
+			ProbeConfig:     h.getProbeConfig(),
 		}
 		if b, err := json.Marshal(msg); err == nil {
 			_ = s.Write(b)
@@ -170,7 +269,146 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux, ctx context.Context) {
 	mux.HandleFunc("/healthz/ws", func(w http.ResponseWriter, r *http.Request) {
 		_ = h.melody.HandleRequest(w, r)
 	})
+
+	// Best-effort: resolve probe timing from this pod's manifest so the UI
+	// reflects the real livenessProbe/readinessProbe configuration.
+	h.loadProbeConfig(ctx)
+
 	logger.Log.Info("[healthz] registered /healthz, /healthzr, /healthz/ui, and /healthzws")
+}
+
+// getProbeConfig returns the current probe timing config (thread-safe).
+func (h *Handler) getProbeConfig() *ProbeConfig {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	cfg := *h.probeConfig
+	return &cfg
+}
+
+// loadProbeConfig reads periodSeconds/timeoutSeconds/failureThreshold of the
+// liveness and readiness probes from this pod's own spec (i.e. the manifest
+// the kubelet actually uses). Falls back to the deployment.yaml defaults when
+// the API server is unreachable or the pod spec has no probes defined.
+func (h *Handler) loadProbeConfig(ctx context.Context) {
+	rc, err := config.GetConfig()
+	if err != nil {
+		logger.Log.Info("[healthz] no kubeconfig available; using deployment.yaml probe defaults", "error", err.Error())
+		return
+	}
+	clientset, err := kubernetes.NewForConfig(rc)
+	if err != nil {
+		logger.Log.Error(err, "[healthz] failed to create clientset; using probe defaults")
+		return
+	}
+
+	podName, err := os.Hostname()
+	if err != nil || podName == "" {
+		logger.Log.Error(err, "[healthz] unable to determine hostname; using probe defaults")
+		return
+	}
+	namespace := os.Getenv("NAMESPACE")
+	if namespace == "" {
+		if b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+			namespace = strings.TrimSpace(string(b))
+		}
+	}
+	if namespace == "" {
+		namespace = "default"
+	}
+
+	pod, err := clientset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		logger.Log.Error(err, "[healthz] unable to read own pod manifest; using probe defaults",
+			"namespace", namespace, "pod", podName)
+		return
+	}
+
+	pc := defaultProbeConfig()
+	pc.Source = "pod"
+	pc.PodName = podName
+	pc.Namespace = namespace
+
+	var container *corev1.Container
+	for i := range pod.Spec.Containers {
+		c := &pod.Spec.Containers[i]
+		if c.Name == "introspect" {
+			container = c
+			break
+		}
+	}
+	if container == nil && len(pod.Spec.Containers) > 0 {
+		container = &pod.Spec.Containers[0]
+	}
+	if container == nil {
+		logger.Log.Info("[healthz] pod spec has no containers; using probe defaults", "pod", podName)
+		return
+	}
+	pc.Container = container.Name
+
+	// applyProbe copies the effective probe definition from the pod spec,
+	// resolving Kubernetes defaults where fields are omitted.
+	applyProbe := func(dst *ProbeSpec, p *corev1.Probe, path string, port int) {
+		if p == nil {
+			return
+		}
+		dst.Path = path
+		dst.Port = port
+		dst.Scheme = "HTTP"
+		dst.InitialDelaySeconds = p.InitialDelaySeconds
+		if p.HTTPGet != nil {
+			if p.HTTPGet.Path != "" {
+				dst.Path = p.HTTPGet.Path
+			}
+			if p.HTTPGet.Port.Type == intstr.Int && p.HTTPGet.Port.IntVal > 0 {
+				dst.Port = int(p.HTTPGet.Port.IntVal)
+			} else if p.HTTPGet.Port.Type == intstr.String {
+				dst.Port = port // named port, keep default in display
+			}
+			if string(p.HTTPGet.Scheme) != "" {
+				dst.Scheme = string(p.HTTPGet.Scheme)
+			}
+		}
+		if p.PeriodSeconds > 0 {
+			dst.PeriodSeconds = p.PeriodSeconds
+		} else {
+			dst.PeriodSeconds = 10 // k8s default
+		}
+		if p.TimeoutSeconds > 0 {
+			dst.TimeoutSeconds = p.TimeoutSeconds
+		} else {
+			dst.TimeoutSeconds = 1 // k8s default
+		}
+		if p.SuccessThreshold > 0 {
+			dst.SuccessThreshold = p.SuccessThreshold
+		} else {
+			dst.SuccessThreshold = 1 // k8s default
+		}
+		if p.FailureThreshold > 0 {
+			dst.FailureThreshold = p.FailureThreshold
+		} else {
+			dst.FailureThreshold = 3 // k8s default
+		}
+		if p.TerminationGracePeriodSeconds != nil {
+			dst.TerminationGracePeriodSet = true
+			dst.TerminationGracePeriod = *p.TerminationGracePeriodSeconds
+		}
+	}
+	applyProbe(&pc.Liveness, container.LivenessProbe, "/healthz", 9090)
+	applyProbe(&pc.Readiness, container.ReadinessProbe, "/healthzr", 9090)
+	pc.YAML = renderProbeYAML(pc)
+
+	h.mu.Lock()
+	h.probeConfig = pc
+	h.mu.Unlock()
+
+	logger.Log.Info("[healthz] probe config loaded from pod manifest",
+		"pod", podName, "namespace", namespace, "container", container.Name,
+		"livenessPeriod", pc.Liveness.PeriodSeconds,
+		"livenessTimeout", pc.Liveness.TimeoutSeconds,
+		"livenessFailureThreshold", pc.Liveness.FailureThreshold,
+		"readinessPeriod", pc.Readiness.PeriodSeconds,
+		"readinessTimeout", pc.Readiness.TimeoutSeconds,
+		"readinessFailureThreshold", pc.Readiness.FailureThreshold)
 }
 
 // handleHealthz handles the liveness check endpoint.
