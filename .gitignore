@@ -39,7 +39,8 @@ version.env
 *.exe
 *.test
 *.prof
-introspect-*
+introspect-linux*
+introspect-darwin*
 debug
 pkg/operator/useless/bin/
 

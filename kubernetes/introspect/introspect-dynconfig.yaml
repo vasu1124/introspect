@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: introspect-dynconfig
+data:
+  example.yaml: |+
+    foo: bar
+    exact: true
+    timeout: 18
