@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/vasu1124/introspect/compare/1.3.2...1.4.0) (2026-10-22)
+
+
+### Features
+
+* healthz add probe timers UI and sync with live probe events ([ee6c7b2](https://github.com/vasu1124/introspect/commit/ee6c7b2da8efe4871916d1c0874045e5350d6d99))
+* refactor guestbook application ([84888b2](https://github.com/vasu1124/introspect/commit/84888b2bc51c93ba2ad8a204ef0d9c0715f4403c))
+
+
+### Bug Fixes
+
+* update .gitignore & add introspect-dynconfig.yaml ([b6b9e4c](https://github.com/vasu1124/introspect/commit/b6b9e4cd227807bbdf9fcb2b9b83e3b46af085ce))
+
 ## [1.3.2](https://github.com/vasu1124/introspect/compare/1.3.1...1.3.2) (2026-09-19)
 
 
